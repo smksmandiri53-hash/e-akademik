@@ -626,6 +626,23 @@
       </div>
     </div>
 
+    <div id="panelPersetujuanNilai" style="display:none;margin:20px 0;padding:18px;border:1px solid #cfe2ff;border-radius:10px;background:#f8fbff;">
+      <h3 style="margin-top:0;">Persetujuan Nilai</h3>
+      <p style="margin-bottom:15px;color:#555;">Nilai yang diajukan Guru akan muncul di sini. Admin dapat menyetujui atau menolak pengajuan.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th><th>Siswa</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Semester</th><th>Nilai Akhir</th><th>Status</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabelPersetujuanNilai">
+            <tr><td colspan="9" style="text-align:center;">Memuat pengajuan...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="table-wrapper">
       <table>
         <thead>
@@ -1381,7 +1398,10 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     const profilBerhasil = await muatProfilPengguna(user);
-    if (profilBerhasil) tampilkanSiswa();
+    if (profilBerhasil) {
+      tampilkanSiswa();
+      tampilkanPersetujuanNilai();
+    }
   } else {
     window.location.href = "index.html";
   }
@@ -3800,12 +3820,108 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
     }
     document.getElementById("formNilai").style.display = "none";
     kosongkanFormNilai();
-    tampilkanNilai();
+    await tampilkanNilai();
+    await tampilkanPersetujuanNilai();
   } catch (error) {
     console.error(error);
     tampilkanPesanNilai("Gagal menyimpan nilai: " + error.message, "error");
   }
 });
+
+async function tampilkanPersetujuanNilai() {
+  const panel = document.getElementById("panelPersetujuanNilai");
+  const tabel = document.getElementById("tabelPersetujuanNilai");
+  if (roleUser !== "admin") {
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+  tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Memuat pengajuan...</td></tr>';
+
+  try {
+    const snapshot = await getDocs(collection(db, "nilai"));
+    const pengajuan = [];
+    snapshot.forEach(d => {
+      const item = { id: d.id, ...d.data() };
+      if (item.status === "menunggu_persetujuan") pengajuan.push(item);
+    });
+
+    pengajuan.sort((a,b) => String(b.submittedAt?.seconds || 0).localeCompare(String(a.submittedAt?.seconds || 0)));
+
+    if (!pengajuan.length) {
+      tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Tidak ada pengajuan nilai yang menunggu persetujuan.</td></tr>';
+      return;
+    }
+
+    tabel.innerHTML = "";
+    pengajuan.forEach((n, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${index + 1}</td>
+        <td>${n.siswaNama || "-"}</td>
+        <td>${n.kelas || "-"}</td>
+        <td>${n.mapel || "-"}</td>
+        <td>${n.submittedByNama || n.guru || "-"}</td>
+        <td>${n.semester || "-"}</td>
+        <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
+        <td>Menunggu Persetujuan</td>
+        <td><div class="aksi">
+          <button class="btn-primary" onclick="setujuiNilai('${n.id}')">Setujui</button>
+          <button class="btn-danger" onclick="tolakNilai('${n.id}')">Tolak</button>
+        </div></td>`;
+      tabel.appendChild(tr);
+    });
+  } catch (error) {
+    console.error(error);
+    tabel.innerHTML = `<tr><td colspan="9" style="color:red;text-align:center;">Gagal mengambil pengajuan: ${error.message}</td></tr>`;
+  }
+}
+
+window.setujuiNilai = async function(id) {
+  if (roleUser !== "admin") return;
+  const n = dataNilai.find(item => item.id === id);
+  if (!confirm(`Setujui nilai ${n?.siswaNama || "siswa"} - ${n?.mapel || "mata pelajaran"}?`)) return;
+  try {
+    await updateDoc(doc(db, "nilai", id), {
+      status: "disetujui",
+      approvedByUid: currentUser?.uid || "",
+      approvedByNama: profilUser?.nama || currentUser?.email || "Admin",
+      approvedAt: serverTimestamp(),
+      rejectionReason: ""
+    });
+    tampilkanPesanNilai("Nilai berhasil disetujui dan menjadi data resmi.", "sukses");
+    await tampilkanPersetujuanNilai();
+    await tampilkanNilai();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanNilai("Gagal menyetujui nilai: " + error.message, "error");
+  }
+};
+
+window.tolakNilai = async function(id) {
+  if (roleUser !== "admin") return;
+  const n = dataNilai.find(item => item.id === id);
+  const alasan = prompt("Masukkan alasan penolakan nilai:", "Mohon periksa kembali nilai.");
+  if (alasan === null) return;
+  if (!alasan.trim()) {
+    alert("Alasan penolakan wajib diisi.");
+    return;
+  }
+  try {
+    await updateDoc(doc(db, "nilai", id), {
+      status: "ditolak",
+      rejectionReason: alasan.trim(),
+      rejectedByUid: currentUser?.uid || "",
+      rejectedByNama: profilUser?.nama || currentUser?.email || "Admin",
+      rejectedAt: serverTimestamp()
+    });
+    tampilkanPesanNilai(`Nilai ${n?.siswaNama || "siswa"} ditolak dan dikembalikan kepada Guru.`, "sukses");
+    await tampilkanPersetujuanNilai();
+    await tampilkanNilai();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanNilai("Gagal menolak nilai: " + error.message, "error");
+  }
+};
 
 async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
