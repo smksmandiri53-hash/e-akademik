@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Akademik - Dashboard Admin</title>
-  <meta name="e-akademik-version" content="persetujuan-nilai-v2">
 
   <style>
     * {
@@ -3842,19 +3841,6 @@ async function tampilkanPersetujuanNilai() {
     const pengajuan = [];
     snapshot.forEach(d => {
       const item = { id: d.id, ...d.data() };
-      // Data lama yang dibuat Guru sebelum field status tersedia
-      // tetap dianggap sebagai pengajuan jika memiliki identitas pengirim.
-      if (!item.status && item.submittedByUid) {
-        try {
-          await updateDoc(doc(db, "nilai", d.id), {
-            status: "menunggu_persetujuan"
-          });
-          item.status = "menunggu_persetujuan";
-        } catch (migrationError) {
-          console.warn("Gagal melengkapi status nilai lama:", migrationError);
-        }
-      }
-
       if (item.status === "menunggu_persetujuan") pengajuan.push(item);
     });
 
