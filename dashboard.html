@@ -162,7 +162,8 @@
     }
 
     #formSiswa,
-    #formGuru {
+    #formGuru,
+    #formKelas {
       display: none;
       margin-top: 20px;
       padding: 20px;
@@ -170,7 +171,8 @@
       border-radius: 10px;
     }
 
-    #panelGuru {
+    #panelGuru,
+    #panelKelas {
       display: none;
     }
 
@@ -227,7 +229,7 @@
       <p>Kelola data guru.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuKelas">
       <h3>🏫 Data Kelas</h3>
       <p>Kelola kelas.</p>
     </div>
@@ -414,6 +416,115 @@
             </td>
           </tr>
 
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       PANEL KELAS
+  ========================== -->
+
+  <div class="panel" id="panelKelas">
+
+    <div class="topbar">
+      <h2>🏫 Data Kelas</h2>
+
+      <button class="btn-primary" id="btnTambahKelas">
+        + Tambah Kelas
+      </button>
+    </div>
+
+    <div id="pesanKelas" class="pesan"></div>
+
+    <div id="formKelas">
+
+      <h3 id="judulFormKelas">Tambah Kelas</h3>
+
+      <input type="hidden" id="idKelas">
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label>Nama Kelas</label>
+          <input type="text" id="namaKelas" placeholder="Contoh: X TKJ">
+        </div>
+
+        <div class="field">
+          <label>Tingkat</label>
+          <select id="tingkatKelas">
+            <option value="">-- Pilih Tingkat --</option>
+            <option value="X">X</option>
+            <option value="XI">XI</option>
+            <option value="XII">XII</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Jurusan</label>
+          <select id="jurusanKelas">
+            <option value="">-- Pilih Jurusan --</option>
+            <option value="TKJ">TKJ</option>
+            <option value="AKL">AKL</option>
+            <option value="TBSM">TBSM</option>
+            <option value="Pemasaran">Pemasaran</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Wali Kelas</label>
+          <select id="waliKelas">
+            <option value="">-- Pilih Wali Kelas --</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Status</label>
+          <select id="statusKelas">
+            <option value="Aktif">Aktif</option>
+            <option value="Nonaktif">Nonaktif</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanKelas">
+          Simpan
+        </button>
+
+        <button class="btn-secondary" id="btnBatalKelas">
+          Batal
+        </button>
+      </div>
+
+    </div>
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Kelas</th>
+            <th>Tingkat</th>
+            <th>Jurusan</th>
+            <th>Wali Kelas</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+
+        <tbody id="tabelKelas">
+          <tr>
+            <td colspan="7" style="text-align:center;">
+              Memuat data...
+            </td>
+          </tr>
         </tbody>
 
       </table>
@@ -674,12 +785,17 @@ let dataSiswa = [];
 
 let dataGuru = [];
 
+let dataKelas = [];
+
 
 const formSiswa =
   document.getElementById("formSiswa");
 
 const formGuru =
   document.getElementById("formGuru");
+
+const formKelas =
+  document.getElementById("formKelas");
 
 
 /* =========================
@@ -741,6 +857,10 @@ document
       .getElementById("panelGuru")
       .style.display = "none";
 
+    document
+      .getElementById("panelKelas")
+      .style.display = "none";
+
 
     document
       .getElementById("menuSiswa")
@@ -749,6 +869,10 @@ document
 
     document
       .getElementById("menuGuru")
+      .classList.remove("aktif");
+
+    document
+      .getElementById("menuKelas")
       .classList.remove("aktif");
 
   });
@@ -771,6 +895,10 @@ document
       .getElementById("panelGuru")
       .style.display = "block";
 
+    document
+      .getElementById("panelKelas")
+      .style.display = "none";
+
 
     document
       .getElementById("menuSiswa")
@@ -781,10 +909,415 @@ document
       .getElementById("menuGuru")
       .classList.add("aktif");
 
+    document
+      .getElementById("menuKelas")
+      .classList.remove("aktif");
+
 
     tampilkanGuru();
 
   });
+
+
+/* =========================
+   MENU KELAS
+========================= */
+
+document
+  .getElementById("menuKelas")
+  .addEventListener("click", async () => {
+
+    document.getElementById("panelSiswa").style.display = "none";
+    document.getElementById("panelGuru").style.display = "none";
+    document.getElementById("panelKelas").style.display = "block";
+
+    document.getElementById("menuSiswa").classList.remove("aktif");
+    document.getElementById("menuGuru").classList.remove("aktif");
+    document.getElementById("menuKelas").classList.add("aktif");
+
+    await tampilkanGuru();
+    await tampilkanKelas();
+
+  });
+
+
+/* =====================================================
+   BAGIAN KELAS
+===================================================== */
+
+document
+  .getElementById("btnTambahKelas")
+  .addEventListener("click", async () => {
+
+    await isiPilihanWaliKelas();
+
+    formKelas.style.display = "block";
+
+    document.getElementById("judulFormKelas").textContent = "Tambah Kelas";
+
+    kosongkanFormKelas();
+
+  });
+
+
+document
+  .getElementById("btnBatalKelas")
+  .addEventListener("click", () => {
+
+    formKelas.style.display = "none";
+
+    kosongkanFormKelas();
+
+  });
+
+
+document
+  .getElementById("btnSimpanKelas")
+  .addEventListener("click", async () => {
+
+    const id = document.getElementById("idKelas").value;
+    const nama = document.getElementById("namaKelas").value.trim();
+    const tingkat = document.getElementById("tingkatKelas").value;
+    const jurusan = document.getElementById("jurusanKelas").value;
+    const waliKelas = document.getElementById("waliKelas").value;
+    const status = document.getElementById("statusKelas").value;
+
+    if (!nama || !tingkat || !jurusan || !waliKelas) {
+
+      tampilkanPesanKelas(
+        "Mohon lengkapi semua data kelas.",
+        "error"
+      );
+
+      return;
+    }
+
+    try {
+
+      const data = {
+        nama,
+        tingkat,
+        jurusan,
+        waliKelas,
+        status
+      };
+
+      if (id) {
+
+        await updateDoc(
+          doc(db, "kelas", id),
+          data
+        );
+
+        tampilkanPesanKelas(
+          "Data kelas berhasil diperbarui.",
+          "sukses"
+        );
+
+      } else {
+
+        await addDoc(
+          collection(db, "kelas"),
+          data
+        );
+
+        tampilkanPesanKelas(
+          "Data kelas berhasil ditambahkan.",
+          "sukses"
+        );
+
+      }
+
+      formKelas.style.display = "none";
+      kosongkanFormKelas();
+      tampilkanKelas();
+
+    } catch (error) {
+
+      console.error(error);
+
+      tampilkanPesanKelas(
+        "Gagal menyimpan data: " + error.message,
+        "error"
+      );
+
+    }
+
+  });
+
+
+async function isiPilihanWaliKelas() {
+
+  const select = document.getElementById("waliKelas");
+
+  select.innerHTML =
+    '<option value="">-- Pilih Wali Kelas --</option>';
+
+  if (!dataGuru.length) {
+    await tampilkanGuru();
+  }
+
+  dataGuru
+    .filter(guru => (guru.status || "Aktif") === "Aktif")
+    .forEach(guru => {
+
+      const option = document.createElement("option");
+
+      option.value = guru.nama || "";
+      option.textContent = guru.nama || "-";
+
+      select.appendChild(option);
+
+    });
+
+}
+
+
+async function tampilkanKelas() {
+
+  const tabel = document.getElementById("tabelKelas");
+
+  try {
+
+    tabel.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center;">
+          Memuat data...
+        </td>
+      </tr>
+    `;
+
+    const snapshot =
+      await getDocs(
+        collection(db, "kelas")
+      );
+
+    dataKelas = [];
+
+    snapshot.forEach((dokumen) => {
+
+      dataKelas.push({
+        id: dokumen.id,
+        ...dokumen.data()
+      });
+
+    });
+
+    if (dataKelas.length === 0) {
+
+      tabel.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center;">
+            Belum ada data kelas.
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    dataKelas.sort((a, b) =>
+      String(a.nama || a.namaKelas || a.kelas || "")
+        .localeCompare(
+          String(b.nama || b.namaKelas || b.kelas || ""),
+          "id"
+        )
+    );
+
+    tabel.innerHTML = "";
+
+    dataKelas.forEach((kelas, index) => {
+
+      const baris = document.createElement("tr");
+
+      const namaKelas =
+        kelas.nama ||
+        kelas.namaKelas ||
+        kelas.kelas ||
+        "-";
+
+      const wali =
+        kelas.waliKelas ||
+        kelas.wali ||
+        "-";
+
+      baris.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${namaKelas}</td>
+        <td>${kelas.tingkat || "-"}</td>
+        <td>${kelas.jurusan || "-"}</td>
+        <td>${wali}</td>
+        <td>${kelas.status || "Aktif"}</td>
+        <td>
+          <div class="aksi">
+
+            <button
+              class="btn-warning"
+              onclick="editKelas('${kelas.id}')">
+              Edit
+            </button>
+
+            <button
+              class="btn-danger"
+              onclick="hapusKelas('${kelas.id}')">
+              Hapus
+            </button>
+
+          </div>
+        </td>
+      `;
+
+      tabel.appendChild(baris);
+
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    tabel.innerHTML = `
+      <tr>
+        <td colspan="7" style="color:red;text-align:center;">
+          Gagal mengambil data: ${error.message}
+        </td>
+      </tr>
+    `;
+
+  }
+
+}
+
+
+window.editKelas =
+  async function(id) {
+
+    const kelas =
+      dataKelas.find(
+        item => item.id === id
+      );
+
+    if (!kelas) return;
+
+    await isiPilihanWaliKelas();
+
+    document.getElementById("idKelas").value = kelas.id;
+
+    document.getElementById("namaKelas").value =
+      kelas.nama ||
+      kelas.namaKelas ||
+      kelas.kelas ||
+      "";
+
+    document.getElementById("tingkatKelas").value =
+      kelas.tingkat || "";
+
+    document.getElementById("jurusanKelas").value =
+      kelas.jurusan || "";
+
+    document.getElementById("waliKelas").value =
+      kelas.waliKelas ||
+      kelas.wali ||
+      "";
+
+    document.getElementById("statusKelas").value =
+      kelas.status || "Aktif";
+
+    document.getElementById("judulFormKelas").textContent =
+      "Edit Kelas";
+
+    formKelas.style.display = "block";
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  };
+
+
+window.hapusKelas =
+  async function(id) {
+
+    const kelas =
+      dataKelas.find(
+        item => item.id === id
+      );
+
+    if (!kelas) return;
+
+    const nama =
+      kelas.nama ||
+      kelas.namaKelas ||
+      kelas.kelas ||
+      "ini";
+
+    const yakin =
+      confirm(
+        "Apakah Anda yakin ingin menghapus data kelas " +
+        nama +
+        "?"
+      );
+
+    if (!yakin) return;
+
+    try {
+
+      await deleteDoc(
+        doc(db, "kelas", id)
+      );
+
+      tampilkanPesanKelas(
+        "Data kelas berhasil dihapus.",
+        "sukses"
+      );
+
+      tampilkanKelas();
+
+    } catch (error) {
+
+      console.error(error);
+
+      tampilkanPesanKelas(
+        "Gagal menghapus data: " + error.message,
+        "error"
+      );
+
+    }
+
+  };
+
+
+function kosongkanFormKelas() {
+
+  document.getElementById("idKelas").value = "";
+  document.getElementById("namaKelas").value = "";
+  document.getElementById("tingkatKelas").value = "";
+  document.getElementById("jurusanKelas").value = "";
+  document.getElementById("waliKelas").value = "";
+  document.getElementById("statusKelas").value = "Aktif";
+
+}
+
+
+function tampilkanPesanKelas(
+  teks,
+  tipe
+) {
+
+  const pesan =
+    document.getElementById("pesanKelas");
+
+  pesan.textContent = teks;
+  pesan.className = "pesan " + tipe;
+  pesan.style.display = "block";
+
+  setTimeout(() => {
+
+    pesan.style.display = "none";
+
+  }, 4000);
+
+}
 
 
 /* =====================================================
