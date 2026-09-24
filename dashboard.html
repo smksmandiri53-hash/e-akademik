@@ -3,259 +3,301 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Dashboard Admin - E-Akademik</title>
+  <title>E-Akademik SMKS Mandiri</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
-
     body {
-      background: #f1f5f9;
-      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
     }
 
     header {
-      background: #0f766e;
+      background: #0d6efd;
       color: white;
-      padding: 18px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 20px;
     }
 
     header h1 {
-      font-size: 20px;
+      margin: 0 0 8px;
     }
 
-    #logout {
-      background: white;
-      color: #0f766e;
-      border: none;
-      padding: 9px 14px;
-      border-radius: 7px;
-      font-weight: bold;
-      cursor: pointer;
+    header p {
+      margin: 0;
     }
 
     .container {
-      padding: 20px;
-      max-width: 1100px;
+      padding: 25px;
+      max-width: 1200px;
       margin: auto;
     }
 
-    .welcome {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    }
-
-    .welcome h2 {
-      color: #164e63;
-      margin-bottom: 8px;
-    }
-
-    .cards {
+    .menu {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 15px;
+      margin-top: 25px;
     }
 
     .card {
       background: white;
-      padding: 22px;
+      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: 0.2s;
     }
 
-    .card .icon {
-      font-size: 32px;
-      margin-bottom: 10px;
+    .card:hover {
+      transform: translateY(-3px);
     }
 
     .card h3 {
-      color: #334155;
-      margin-bottom: 5px;
+      margin-top: 0;
     }
 
-    .card p {
-      color: #64748b;
-      font-size: 14px;
+    button {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
     }
 
-    .menu {
-      margin-top: 25px;
+    button:hover {
+      background: #bb2d3b;
+    }
+
+    #hasilSiswa {
+      margin-top: 30px;
       background: white;
       padding: 20px;
       border-radius: 12px;
     }
 
-    .menu h2 {
-      margin-bottom: 15px;
-      color: #164e63;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
     }
 
-    .menu button {
-      padding: 12px 15px;
-      margin: 5px;
-      border: none;
-      border-radius: 8px;
-      background: #0f766e;
-      color: white;
-      cursor: pointer;
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <h1>🎓 E-AKADEMIK</h1>
+<header>
+  <h1>E-Akademik SMKS Mandiri Bandar Agung</h1>
+  <p id="emailAdmin">Memeriksa login...</p>
+  <button id="logout">Logout</button>
+</header>
 
-    <button id="logout">
-      Logout
-    </button>
-  </header>
+<div class="container">
 
-  <div class="container">
+  <h2>Dashboard Admin</h2>
 
-    <div class="welcome">
+  <div class="menu">
 
-      <h2>Dashboard Admin</h2>
-
-      <p>
-        Selamat datang di Sistem E-Akademik
-        SMKS Mandiri Bandar Agung.
-      </p>
-
-      <p id="emailAdmin"></p>
-
+    <div class="card" id="menuSiswa">
+      <h3>👨‍🎓 Data Siswa</h3>
+      <p>Lihat data siswa dari Firebase.</p>
     </div>
 
-
-    <div class="cards">
-
-      <div class="card">
-        <div class="icon">👨‍🎓</div>
-        <h3>Data Siswa</h3>
-        <p>Kelola data siswa</p>
-      </div>
-
-      <div class="card">
-        <div class="icon">👨‍🏫</div>
-        <h3>Data Guru</h3>
-        <p>Kelola data guru</p>
-      </div>
-
-      <div class="card">
-        <div class="icon">🏫</div>
-        <h3>Kelas</h3>
-        <p>Kelola data kelas</p>
-      </div>
-
-      <div class="card">
-        <div class="icon">📚</div>
-        <h3>Mata Pelajaran</h3>
-        <p>Kelola mata pelajaran</p>
-      </div>
-
+    <div class="card">
+      <h3>👨‍🏫 Data Guru</h3>
+      <p>Menu guru</p>
     </div>
 
+    <div class="card">
+      <h3>🏫 Data Kelas</h3>
+      <p>Menu kelas</p>
+    </div>
 
-    <div class="menu">
+    <div class="card">
+      <h3>📚 Mata Pelajaran</h3>
+      <p>Menu mata pelajaran</p>
+    </div>
 
-      <h2>Menu Akademik</h2>
+    <div class="card">
+      <h3>🗓️ Jadwal</h3>
+      <p>Menu jadwal</p>
+    </div>
 
-      <button>📅 Jadwal</button>
+    <div class="card">
+      <h3>📝 Nilai</h3>
+      <p>Menu nilai</p>
+    </div>
 
-      <button>📝 Nilai</button>
+    <div class="card">
+      <h3>📋 Absensi</h3>
+      <p>Menu absensi</p>
+    </div>
 
-      <button>📋 Absensi</button>
-
-      <button>📢 Pengumuman</button>
-
+    <div class="card">
+      <h3>📢 Pengumuman</h3>
+      <p>Menu pengumuman</p>
     </div>
 
   </div>
 
+  <div id="hasilSiswa">
+    <h2>Data Siswa</h2>
+    <p>Klik menu <b>Data Siswa</b> untuk mengambil data dari Firestore.</p>
+  </div>
 
-  <script type="module">
+</div>
 
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+<script type="module">
 
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
-    const firebaseConfig = {
-
-      apiKey: "AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
-
-      authDomain:
-        "e-akademik-smks-mandiri-128fd.firebaseapp.com",
-
-      projectId:
-        "e-akademik-smks-mandiri-128fd",
-
-      storageBucket:
-        "e-akademik-smks-mandiri-128fd.firebasestorage.app",
-
-      messagingSenderId:
-        "551692981969",
-
-      appId:
-        "1:551692981969:web:97513dca9fe111f96a57f0"
-    };
+  import {
+    getFirestore,
+    collection,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 
-    const app =
-      initializeApp(firebaseConfig);
+  // KONFIGURASI FIREBASE
+  const firebaseConfig = {
+    apiKey: "AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
+    authDomain: "e-akademik-smks-mandiri-128fd.firebaseapp.com",
+    projectId: "e-akademik-smks-mandiri-128fd",
+    storageBucket: "e-akademik-smks-mandiri-128fd.firebasestorage.app",
+    messagingSenderId: "551692981969",
+    appId: "1:551692981969:web:97513dca9fe111f96a57f0"
+  };
 
-    const auth =
-      getAuth(app);
+
+  // INISIALISASI FIREBASE
+  const app = initializeApp(firebaseConfig);
+
+  const auth = getAuth(app);
+
+  const db = getFirestore(app);
 
 
-    onAuthStateChanged(auth, (user) => {
+  // CEK LOGIN
+  onAuthStateChanged(auth, (user) => {
 
-      if (user) {
+    if (user) {
 
-        document
-          .getElementById("emailAdmin")
-          .textContent =
-          "Login sebagai: " + user.email;
+      document.getElementById("emailAdmin").textContent =
+        "Login sebagai: " + user.email;
 
-      } else {
+    } else {
 
-        window.location.href =
-          "index.html";
+      window.location.href = "index.html";
 
+    }
+
+  });
+
+
+  // LOGOUT
+  document.getElementById("logout").addEventListener("click", async () => {
+
+    await signOut(auth);
+
+    window.location.href = "index.html";
+
+  });
+
+
+  // AMBIL DATA SISWA
+  document.getElementById("menuSiswa").addEventListener("click", async () => {
+
+    const hasil = document.getElementById("hasilSiswa");
+
+    hasil.innerHTML = "<h2>Data Siswa</h2><p>Mengambil data...</p>";
+
+    try {
+
+      const querySnapshot = await getDocs(collection(db, "siswa"));
+
+      if (querySnapshot.empty) {
+
+        hasil.innerHTML = `
+          <h2>Data Siswa</h2>
+          <p>Belum ada data siswa.</p>
+        `;
+
+        return;
       }
 
-    });
+
+      let tabel = `
+        <h2>Data Siswa</h2>
+
+        <table>
+
+          <tr>
+            <th>Nama</th>
+            <th>NIS</th>
+            <th>Tingkat</th>
+            <th>Jurusan</th>
+            <th>Kelas</th>
+            <th>Status</th>
+          </tr>
+      `;
 
 
-    document
-      .getElementById("logout")
-      .addEventListener("click", async () => {
+      querySnapshot.forEach((doc) => {
 
-        await signOut(auth);
+        const data = doc.data();
 
-        window.location.href =
-          "index.html";
+        tabel += `
+          <tr>
+            <td>${data.nama || "-"}</td>
+            <td>${data.nis || "-"}</td>
+            <td>${data.tingkat || "-"}</td>
+            <td>${data.jurusan || "-"}</td>
+            <td>${data.kelas || "-"}</td>
+            <td>${data.status || "-"}</td>
+          </tr>
+        `;
 
       });
 
-  </script>
+
+      tabel += "</table>";
+
+      hasil.innerHTML = tabel;
+
+    } catch (error) {
+
+      console.error(error);
+
+      hasil.innerHTML = `
+        <h2>Data Siswa</h2>
+        <p style="color:red;">
+          Gagal mengambil data siswa.
+        </p>
+        <p>${error.message}</p>
+      `;
+
+    }
+
+  });
+
+</script>
 
 </body>
 </html>
