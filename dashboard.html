@@ -1362,16 +1362,14 @@ async function muatProfilPengguna(user) {
       profilUser = snapProfil.data();
       roleUser = profilUser.role === "admin" ? "admin" : "guru";
     } else {
-      // Profil akun akan dibuat pada langkah berikutnya.
-      profilUser = {
-        nama: user.displayName || user.email || "Pengguna",
-        email: user.email || "",
-        role: "guru",
-        nip: "",
-        mapel: "",
-        kelasWali: ""
-      };
-      roleUser = "guru";
+      // Role wajib berasal dari profil Firestore.
+      profilUser = null;
+      roleUser = "";
+      document.getElementById("emailAdmin").textContent = "Login: " + (user.email || "-");
+      document.getElementById("roleUser").textContent = "Role belum terdaftar. Buat users/" + user.uid + " dengan role admin atau guru.";
+      document.getElementById("judulDashboard").textContent = "Profil Belum Terdaftar";
+      console.error("Profil users/" + user.uid + " tidak ditemukan.");
+      return false;
     }
 
     const namaTampil = profilUser.nama || user.email || "Pengguna";
