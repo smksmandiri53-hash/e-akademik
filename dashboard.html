@@ -3829,6 +3829,7 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
 async function tampilkanPersetujuanNilai() {
   const panel = document.getElementById("panelPersetujuanNilai");
   const tabel = document.getElementById("tabelPersetujuanNilai");
+  if (!panel || !tabel) return;
   if (roleUser !== "admin") {
     panel.style.display = "none";
     return;
@@ -3844,7 +3845,7 @@ async function tampilkanPersetujuanNilai() {
       if (item.status === "menunggu_persetujuan") pengajuan.push(item);
     });
 
-    pengajuan.sort((a,b) => String(b.submittedAt?.seconds || 0).localeCompare(String(a.submittedAt?.seconds || 0)));
+    pengajuan.sort((a,b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
 
     if (!pengajuan.length) {
       tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Tidak ada pengajuan nilai yang menunggu persetujuan.</td></tr>';
