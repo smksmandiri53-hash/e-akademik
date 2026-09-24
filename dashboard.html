@@ -235,12 +235,14 @@
 <header>
   <h1>E-Akademik SMKS Mandiri Bandar Agung</h1>
   <p id="emailAdmin">Memeriksa login...</p>
+  <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
+  <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
   <button class="btn-danger" id="logout">Logout</button>
 </header>
 
 <div class="container">
 
-  <h2>Dashboard Admin</h2>
+  <h2 id="judulDashboard">Dashboard</h2>
 
   <div class="menu">
 
@@ -1205,6 +1207,7 @@ from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
 import {
   getFirestore,
+  getDoc,
   collection,
   getDocs,
   addDoc,
@@ -1284,25 +1287,56 @@ const formMapel =
    CEK LOGIN
 ========================= */
 
-onAuthStateChanged(auth, (user) => {
+let profilUser = null;
+let roleUser = "guru";
 
-  if (user) {
+async function muatProfilPengguna(user) {
+  try {
+    const snapProfil = await getDoc(doc(db, "users", user.uid));
 
-    document
-      .getElementById("emailAdmin")
-      .textContent =
-      "Login sebagai: " + user.email;
+    if (snapProfil.exists()) {
+      profilUser = snapProfil.data();
+      roleUser = profilUser.role === "admin" ? "admin" : "guru";
+    } else {
+      // Profil akun akan dibuat pada langkah berikutnya.
+      profilUser = {
+        nama: user.displayName || user.email || "Pengguna",
+        email: user.email || "",
+        role: "guru",
+        nip: "",
+        mapel: "",
+        kelasWali: ""
+      };
+      roleUser = "guru";
+    }
 
+    const namaTampil = profilUser.nama || user.email || "Pengguna";
+    const roleTampil = roleUser === "admin" ? "ADMIN" : "GURU";
 
-    tampilkanSiswa();
+    document.getElementById("emailAdmin").textContent =
+      "Login sebagai: " + namaTampil + " (" + (user.email || "") + ")";
+    document.getElementById("roleUser").textContent =
+      "Role: " + roleTampil + (profilUser.kelasWali ? " • Wali Kelas: " + profilUser.kelasWali : "");
+    document.getElementById("judulDashboard").textContent =
+      roleUser === "admin" ? "Dashboard Admin" : "Dashboard Guru";
 
-  } else {
-
-    window.location.href =
-      "index.html";
-
+    return true;
+  } catch (error) {
+    console.error("Gagal membaca profil pengguna:", error);
+    document.getElementById("emailAdmin").textContent =
+      "Login: " + (user.email || "-");
+    document.getElementById("roleUser").textContent = "Role: belum tersedia";
+    return false;
   }
+}
 
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const profilBerhasil = await muatProfilPengguna(user);
+    if (profilBerhasil) tampilkanSiswa();
+  } else {
+    window.location.href = "index.html";
+  }
 });
 
 
