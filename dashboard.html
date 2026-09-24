@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<meta name="e-akademik-version" content="nilai-refresh-v1">
   <meta name="e-akademik-version" content="persetujuan-panel-fix-v1">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3705,10 +3706,12 @@ function tampilkanPesanGuru(
 ===================================================== */
 
 async function isiPilihanNilai() {
-  if (!dataSiswa.length) await tampilkanSiswa();
-  if (!dataKelas.length) await tampilkanKelas();
-  if (!dataMapel.length) await tampilkanMapel();
-  if (!dataGuru.length) await tampilkanGuru();
+  // Selalu refresh data dari Firestore saat form Tambah Nilai dibuka.
+  // Ini penting agar siswa yang baru ditambahkan dari HP/perangkat lain langsung muncul.
+  await tampilkanSiswa();
+  await tampilkanKelas();
+  await tampilkanMapel();
+  await tampilkanGuru();
 
   const kelas = document.getElementById("kelasNilai");
   const siswa = document.getElementById("siswaNilai");
