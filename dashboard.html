@@ -164,7 +164,8 @@
     #formSiswa,
     #formGuru,
     #formKelas,
-    #formMapel {
+    #formMapel,
+    #formJadwal {
       display: none;
       margin-top: 20px;
       padding: 20px;
@@ -174,7 +175,8 @@
 
     #panelGuru,
     #panelKelas,
-    #panelMapel {
+    #panelMapel,
+    #panelJadwal {
       display: none;
     }
 
@@ -241,7 +243,7 @@
       <p>Kelola mata pelajaran.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuJadwal">
       <h3>🗓️ Jadwal</h3>
       <p>Kelola jadwal.</p>
     </div>
@@ -613,6 +615,93 @@
   </div>
 
   <!-- =========================
+       PANEL JADWAL
+  ========================== -->
+
+  <div class="panel" id="panelJadwal">
+
+    <div class="topbar">
+      <h2>🗓️ Jadwal Pelajaran</h2>
+      <button class="btn-primary" id="btnTambahJadwal">+ Tambah Jadwal</button>
+    </div>
+
+    <div id="pesanJadwal" class="pesan"></div>
+
+    <div id="formJadwal">
+      <h3 id="judulFormJadwal">Tambah Jadwal</h3>
+      <input type="hidden" id="idJadwal">
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Hari</label>
+          <select id="hariJadwal">
+            <option value="">-- Pilih Hari --</option>
+            <option>Senin</option>
+            <option>Selasa</option>
+            <option>Rabu</option>
+            <option>Kamis</option>
+            <option>Jumat</option>
+            <option>Sabtu</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Kelas</label>
+          <select id="kelasJadwal"><option value="">-- Pilih Kelas --</option></select>
+        </div>
+        <div class="field">
+          <label>Mata Pelajaran</label>
+          <select id="mapelJadwal"><option value="">-- Pilih Mata Pelajaran --</option></select>
+        </div>
+        <div class="field">
+          <label>Guru</label>
+          <select id="guruJadwal"><option value="">-- Pilih Guru --</option></select>
+        </div>
+        <div class="field">
+          <label>Jam Mulai</label>
+          <input type="time" id="jamMulaiJadwal">
+        </div>
+        <div class="field">
+          <label>Jam Selesai</label>
+          <input type="time" id="jamSelesaiJadwal">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="statusJadwal">
+            <option value="Aktif">Aktif</option>
+            <option value="Nonaktif">Nonaktif</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanJadwal">Simpan</button>
+        <button class="btn-secondary" id="btnBatalJadwal">Batal</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Hari</th>
+            <th>Jam</th>
+            <th>Kelas</th>
+            <th>Mata Pelajaran</th>
+            <th>Guru</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabelJadwal">
+          <tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- =========================
        PANEL GURU
   ========================== -->
 
@@ -867,6 +956,8 @@ let dataKelas = [];
 
 let dataMapel = [];
 
+let dataJadwal = [];
+
 
 const formSiswa =
   document.getElementById("formSiswa");
@@ -1030,11 +1121,13 @@ document
     document.getElementById("panelGuru").style.display = "none";
     document.getElementById("panelKelas").style.display = "block";
     document.getElementById("panelMapel").style.display = "none";
+    document.getElementById("panelJadwal").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
     document.getElementById("menuKelas").classList.add("aktif");
     document.getElementById("menuMapel").classList.remove("aktif");
+    document.getElementById("menuJadwal").classList.remove("aktif");
 
     await tampilkanGuru();
     await tampilkanKelas();
@@ -1054,6 +1147,7 @@ document
     document.getElementById("panelGuru").style.display = "none";
     document.getElementById("panelKelas").style.display = "none";
     document.getElementById("panelMapel").style.display = "block";
+    document.getElementById("panelJadwal").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
@@ -1063,6 +1157,29 @@ document
     await tampilkanGuru();
     await tampilkanMapel();
   });
+
+/* =========================
+   MENU JADWAL
+========================= */
+
+document.getElementById("menuJadwal").addEventListener("click", async () => {
+  document.getElementById("panelSiswa").style.display = "none";
+  document.getElementById("panelGuru").style.display = "none";
+  document.getElementById("panelKelas").style.display = "none";
+  document.getElementById("panelMapel").style.display = "none";
+  document.getElementById("panelJadwal").style.display = "block";
+
+  document.getElementById("menuSiswa").classList.remove("aktif");
+  document.getElementById("menuGuru").classList.remove("aktif");
+  document.getElementById("menuKelas").classList.remove("aktif");
+  document.getElementById("menuMapel").classList.remove("aktif");
+  document.getElementById("menuJadwal").classList.add("aktif");
+
+  await tampilkanGuru();
+  await tampilkanKelas();
+  await tampilkanMapel();
+  await tampilkanJadwal();
+});
 
 /* =====================================================
    BAGIAN MATA PELAJARAN
@@ -1202,6 +1319,189 @@ function tampilkanPesanMapel(teks, tipe) {
   setTimeout(() => { pesan.style.display = "none"; }, 4000);
 }
 
+
+/* =====================================================
+   BAGIAN JADWAL
+===================================================== */
+
+async function isiPilihanJadwal() {
+  const kelasSelect = document.getElementById("kelasJadwal");
+  const mapelSelect = document.getElementById("mapelJadwal");
+  const guruSelect = document.getElementById("guruJadwal");
+
+  if (!dataKelas.length) await tampilkanKelas();
+  if (!dataMapel.length) await tampilkanMapel();
+  if (!dataGuru.length) await tampilkanGuru();
+
+  kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+  dataKelas
+    .filter(k => (k.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || a.namaKelas || a.kelas || "").localeCompare(String(b.nama || b.namaKelas || b.kelas || ""), "id"))
+    .forEach(k => {
+      const nama = k.nama || k.namaKelas || k.kelas || "-";
+      const o = document.createElement("option");
+      o.value = nama;
+      o.textContent = nama;
+      kelasSelect.appendChild(o);
+    });
+
+  mapelSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+  dataMapel
+    .filter(m => (m.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"))
+    .forEach(m => {
+      const o = document.createElement("option");
+      o.value = m.nama || "";
+      o.textContent = `${m.kode ? m.kode + " - " : ""}${m.nama || "-"}`;
+      mapelSelect.appendChild(o);
+    });
+
+  guruSelect.innerHTML = '<option value="">-- Pilih Guru --</option>';
+  dataGuru
+    .filter(g => (g.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"))
+    .forEach(g => {
+      const o = document.createElement("option");
+      o.value = g.nama || "";
+      o.textContent = g.nama || "-";
+      guruSelect.appendChild(o);
+    });
+}
+
+document.getElementById("btnTambahJadwal").addEventListener("click", async () => {
+  kosongkanFormJadwal();
+  await isiPilihanJadwal();
+  document.getElementById("judulFormJadwal").textContent = "Tambah Jadwal";
+  document.getElementById("formJadwal").style.display = "block";
+});
+
+document.getElementById("btnBatalJadwal").addEventListener("click", () => {
+  document.getElementById("formJadwal").style.display = "none";
+  kosongkanFormJadwal();
+});
+
+document.getElementById("btnSimpanJadwal").addEventListener("click", async () => {
+  const id = document.getElementById("idJadwal").value;
+  const hari = document.getElementById("hariJadwal").value;
+  const kelas = document.getElementById("kelasJadwal").value;
+  const mapel = document.getElementById("mapelJadwal").value;
+  const guru = document.getElementById("guruJadwal").value;
+  const jamMulai = document.getElementById("jamMulaiJadwal").value;
+  const jamSelesai = document.getElementById("jamSelesaiJadwal").value;
+  const status = document.getElementById("statusJadwal").value;
+
+  if (!hari || !kelas || !mapel || !guru || !jamMulai || !jamSelesai) {
+    tampilkanPesanJadwal("Mohon lengkapi hari, kelas, mata pelajaran, guru, dan jam.", "error");
+    return;
+  }
+  if (jamMulai >= jamSelesai) {
+    tampilkanPesanJadwal("Jam selesai harus lebih besar dari jam mulai.", "error");
+    return;
+  }
+
+  try {
+    const data = { hari, kelas, mapel, guru, jamMulai, jamSelesai, status };
+    if (id) {
+      await updateDoc(doc(db, "jadwal", id), data);
+      tampilkanPesanJadwal("Jadwal berhasil diperbarui.", "sukses");
+    } else {
+      await addDoc(collection(db, "jadwal"), data);
+      tampilkanPesanJadwal("Jadwal berhasil ditambahkan.", "sukses");
+    }
+    document.getElementById("formJadwal").style.display = "none";
+    kosongkanFormJadwal();
+    tampilkanJadwal();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanJadwal("Gagal menyimpan jadwal: " + error.message, "error");
+  }
+});
+
+async function tampilkanJadwal() {
+  const tabel = document.getElementById("tabelJadwal");
+  tabel.innerHTML = '<tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>';
+  try {
+    const snapshot = await getDocs(collection(db, "jadwal"));
+    dataJadwal = [];
+    snapshot.forEach(d => dataJadwal.push({ id: d.id, ...d.data() }));
+    const urutanHari = { Senin:1, Selasa:2, Rabu:3, Kamis:4, Jumat:5, Sabtu:6 };
+    dataJadwal.sort((a,b) => (urutanHari[a.hari] || 99) - (urutanHari[b.hari] || 99) || String(a.jamMulai || "").localeCompare(String(b.jamMulai || "")));
+    if (!dataJadwal.length) {
+      tabel.innerHTML = '<tr><td colspan="8" style="text-align:center;">Belum ada data jadwal.</td></tr>';
+      return;
+    }
+    tabel.innerHTML = "";
+    dataJadwal.forEach((j, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${j.hari || "-"}</td>
+        <td>${j.jamMulai || "-"} - ${j.jamSelesai || "-"}</td>
+        <td>${j.kelas || "-"}</td>
+        <td>${j.mapel || "-"}</td>
+        <td>${j.guru || "-"}</td>
+        <td>${j.status || "Aktif"}</td>
+        <td><div class="aksi">
+          <button class="btn-warning" onclick="editJadwal('${j.id}')">Edit</button>
+          <button class="btn-danger" onclick="hapusJadwal('${j.id}')">Hapus</button>
+        </div></td>`;
+      tabel.appendChild(tr);
+    });
+  } catch (error) {
+    console.error(error);
+    tabel.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
+  }
+}
+
+window.editJadwal = async function(id) {
+  const j = dataJadwal.find(item => item.id === id);
+  if (!j) return;
+  await isiPilihanJadwal();
+  document.getElementById("idJadwal").value = j.id;
+  document.getElementById("hariJadwal").value = j.hari || "";
+  document.getElementById("kelasJadwal").value = j.kelas || "";
+  document.getElementById("mapelJadwal").value = j.mapel || "";
+  document.getElementById("guruJadwal").value = j.guru || "";
+  document.getElementById("jamMulaiJadwal").value = j.jamMulai || "";
+  document.getElementById("jamSelesaiJadwal").value = j.jamSelesai || "";
+  document.getElementById("statusJadwal").value = j.status || "Aktif";
+  document.getElementById("judulFormJadwal").textContent = "Edit Jadwal";
+  document.getElementById("formJadwal").style.display = "block";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+window.hapusJadwal = async function(id) {
+  const j = dataJadwal.find(item => item.id === id);
+  if (!j) return;
+  if (!confirm(`Apakah Anda yakin ingin menghapus jadwal ${j.hari || ""} ${j.mapel || ""} untuk ${j.kelas || ""}?`)) return;
+  try {
+    await deleteDoc(doc(db, "jadwal", id));
+    tampilkanPesanJadwal("Jadwal berhasil dihapus.", "sukses");
+    tampilkanJadwal();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanJadwal("Gagal menghapus jadwal: " + error.message, "error");
+  }
+};
+
+function kosongkanFormJadwal() {
+  document.getElementById("idJadwal").value = "";
+  document.getElementById("hariJadwal").value = "";
+  document.getElementById("kelasJadwal").innerHTML = '<option value="">-- Pilih Kelas --</option>';
+  document.getElementById("mapelJadwal").innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+  document.getElementById("guruJadwal").innerHTML = '<option value="">-- Pilih Guru --</option>';
+  document.getElementById("jamMulaiJadwal").value = "";
+  document.getElementById("jamSelesaiJadwal").value = "";
+  document.getElementById("statusJadwal").value = "Aktif";
+}
+
+function tampilkanPesanJadwal(teks, tipe) {
+  const pesan = document.getElementById("pesanJadwal");
+  pesan.textContent = teks;
+  pesan.className = "pesan " + tipe;
+  pesan.style.display = "block";
+  setTimeout(() => { pesan.style.display = "none"; }, 4000);
+}
 
 /* =====================================================
    BAGIAN KELAS
