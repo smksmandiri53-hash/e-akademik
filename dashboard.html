@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+  <meta name="e-akademik-version" content="persetujuan-panel-fix-v1">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Akademik - Dashboard Admin</title>
@@ -626,23 +627,7 @@
       </div>
     </div>
 
-    <div id="panelPersetujuanNilai" style="display:none;margin:20px 0;padding:18px;border:1px solid #cfe2ff;border-radius:10px;background:#f8fbff;">
-      <h3 style="margin-top:0;">Persetujuan Nilai</h3>
-      <p style="margin-bottom:15px;color:#555;">Nilai yang diajukan Guru akan muncul di sini. Admin dapat menyetujui atau menolak pengajuan.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>No</th><th>Siswa</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Semester</th><th>Nilai Akhir</th><th>Status</th><th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="tabelPersetujuanNilai">
-            <tr><td colspan="9" style="text-align:center;">Memuat pengajuan...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
+    
     <div class="table-wrapper">
       <table>
         <thead>
@@ -834,6 +819,25 @@
         </tbody>
       </table>
     </div>
+
+
+<div id="panelPersetujuanNilai" style="display:none;margin:20px 0;padding:18px;border:1px solid #cfe2ff;border-radius:10px;background:#f8fbff;">
+      <h3 style="margin-top:0;">Persetujuan Nilai</h3>
+      <p style="margin-bottom:15px;color:#555;">Nilai yang diajukan Guru akan muncul di sini. Admin dapat menyetujui atau menolak pengajuan.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th><th>Siswa</th><th>Kelas</th><th>Mapel</th><th>Guru</th><th>Semester</th><th>Nilai Akhir</th><th>Status</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabelPersetujuanNilai">
+            <tr><td colspan="9" style="text-align:center;">Memuat pengajuan...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <!-- =========================
