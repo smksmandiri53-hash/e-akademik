@@ -165,7 +165,8 @@
     #formGuru,
     #formKelas,
     #formMapel,
-    #formJadwal {
+    #formJadwal,
+    #formNilai {
       display: none;
       margin-top: 20px;
       padding: 20px;
@@ -176,7 +177,8 @@
     #panelGuru,
     #panelKelas,
     #panelMapel,
-    #panelJadwal {
+    #panelJadwal,
+    #panelNilai {
       display: none;
     }
 
@@ -248,9 +250,9 @@
       <p>Kelola jadwal.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuNilai">
       <h3>📝 Nilai</h3>
-      <p>Kelola nilai.</p>
+      <p>Kelola nilai siswa.</p>
     </div>
 
     <div class="card">
@@ -702,6 +704,91 @@
 
 
   <!-- =========================
+       PANEL NILAI
+  ========================== -->
+
+  <div class="panel" id="panelNilai">
+    <div class="topbar">
+      <h2>📝 Nilai Siswa</h2>
+      <button class="btn-primary" id="btnTambahNilai">+ Tambah Nilai</button>
+    </div>
+
+    <div id="pesanNilai" class="pesan"></div>
+
+    <div id="formNilai">
+      <h3 id="judulFormNilai">Tambah Nilai</h3>
+      <input type="hidden" id="idNilai">
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Kelas</label>
+          <select id="kelasNilai"><option value="">-- Pilih Kelas --</option></select>
+        </div>
+        <div class="field">
+          <label>Siswa</label>
+          <select id="siswaNilai"><option value="">-- Pilih Siswa --</option></select>
+        </div>
+        <div class="field">
+          <label>Mata Pelajaran</label>
+          <select id="mapelNilai"><option value="">-- Pilih Mata Pelajaran --</option></select>
+        </div>
+        <div class="field">
+          <label>Guru</label>
+          <select id="guruNilai"><option value="">-- Pilih Guru --</option></select>
+        </div>
+        <div class="field">
+          <label>Semester</label>
+          <select id="semesterNilai">
+            <option value="">-- Pilih Semester --</option>
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap">Genap</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nilai Tugas</label>
+          <input type="number" id="tugasNilai" min="0" max="100" step="0.01" placeholder="0 - 100">
+        </div>
+        <div class="field">
+          <label>Nilai UTS</label>
+          <input type="number" id="utsNilai" min="0" max="100" step="0.01" placeholder="0 - 100">
+        </div>
+        <div class="field">
+          <label>Nilai UAS</label>
+          <input type="number" id="uasNilai" min="0" max="100" step="0.01" placeholder="0 - 100">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanNilai">Simpan</button>
+        <button class="btn-secondary" id="btnBatalNilai">Batal</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Siswa</th>
+            <th>Kelas</th>
+            <th>Mata Pelajaran</th>
+            <th>Guru</th>
+            <th>Semester</th>
+            <th>Tugas</th>
+            <th>UTS</th>
+            <th>UAS</th>
+            <th>Nilai Akhir</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabelNilai">
+          <tr><td colspan="11" style="text-align:center;">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- =========================
        PANEL GURU
   ========================== -->
 
@@ -957,6 +1044,7 @@ let dataKelas = [];
 let dataMapel = [];
 
 let dataJadwal = [];
+let dataNilai = [];
 
 
 const formSiswa =
@@ -1122,12 +1210,14 @@ document
     document.getElementById("panelKelas").style.display = "block";
     document.getElementById("panelMapel").style.display = "none";
     document.getElementById("panelJadwal").style.display = "none";
+    document.getElementById("panelNilai").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
     document.getElementById("menuKelas").classList.add("aktif");
     document.getElementById("menuMapel").classList.remove("aktif");
     document.getElementById("menuJadwal").classList.remove("aktif");
+    document.getElementById("menuNilai").classList.remove("aktif");
 
     await tampilkanGuru();
     await tampilkanKelas();
@@ -1148,6 +1238,7 @@ document
     document.getElementById("panelKelas").style.display = "none";
     document.getElementById("panelMapel").style.display = "block";
     document.getElementById("panelJadwal").style.display = "none";
+    document.getElementById("panelNilai").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
@@ -1179,6 +1270,30 @@ document.getElementById("menuJadwal").addEventListener("click", async () => {
   await tampilkanKelas();
   await tampilkanMapel();
   await tampilkanJadwal();
+});
+
+/* =========================
+   MENU NILAI
+========================= */
+
+document.getElementById("menuNilai").addEventListener("click", async () => {
+  document.getElementById("panelSiswa").style.display = "none";
+  document.getElementById("panelGuru").style.display = "none";
+  document.getElementById("panelKelas").style.display = "none";
+  document.getElementById("panelMapel").style.display = "none";
+  document.getElementById("panelJadwal").style.display = "none";
+  document.getElementById("panelNilai").style.display = "block";
+
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai"].forEach(id => {
+    document.getElementById(id).classList.remove("aktif");
+  });
+  document.getElementById("menuNilai").classList.add("aktif");
+
+  await tampilkanSiswa();
+  await tampilkanGuru();
+  await tampilkanKelas();
+  await tampilkanMapel();
+  await tampilkanNilai();
 });
 
 /* =====================================================
@@ -3047,6 +3162,205 @@ function tampilkanPesanGuru(
 
   }, 4000);
 
+}
+
+
+/* =====================================================
+   BAGIAN NILAI
+===================================================== */
+
+async function isiPilihanNilai() {
+  if (!dataSiswa.length) await tampilkanSiswa();
+  if (!dataKelas.length) await tampilkanKelas();
+  if (!dataMapel.length) await tampilkanMapel();
+  if (!dataGuru.length) await tampilkanGuru();
+
+  const kelas = document.getElementById("kelasNilai");
+  const siswa = document.getElementById("siswaNilai");
+  const mapel = document.getElementById("mapelNilai");
+  const guru = document.getElementById("guruNilai");
+
+  kelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+  dataKelas.filter(k => (k.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || a.namaKelas || a.kelas || "").localeCompare(String(b.nama || b.namaKelas || b.kelas || ""), "id"))
+    .forEach(k => {
+      const nama = k.nama || k.namaKelas || k.kelas || "-";
+      const o = document.createElement("option");
+      o.value = nama; o.textContent = nama; kelas.appendChild(o);
+    });
+
+  mapel.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+  dataMapel.filter(m => (m.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"))
+    .forEach(m => {
+      const o = document.createElement("option");
+      o.value = m.nama || "";
+      o.textContent = `${m.kode ? m.kode + " - " : ""}${m.nama || "-"}`;
+      mapel.appendChild(o);
+    });
+
+  guru.innerHTML = '<option value="">-- Pilih Guru --</option>';
+  dataGuru.filter(g => (g.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"))
+    .forEach(g => {
+      const o = document.createElement("option");
+      o.value = g.nama || ""; o.textContent = g.nama || "-"; guru.appendChild(o);
+    });
+
+  await isiPilihanSiswaNilai();
+}
+
+async function isiPilihanSiswaNilai() {
+  const kelasDipilih = document.getElementById("kelasNilai").value;
+  const siswa = document.getElementById("siswaNilai");
+  const sebelumnya = siswa.value;
+  siswa.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+  dataSiswa
+    .filter(s => (s.status || "Aktif") === "Aktif" && (!kelasDipilih || s.kelas === kelasDipilih))
+    .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"))
+    .forEach(s => {
+      const o = document.createElement("option");
+      o.value = s.id;
+      o.textContent = `${s.nama || "-"}${s.nis ? " - " + s.nis : ""}`;
+      siswa.appendChild(o);
+    });
+  if ([...siswa.options].some(o => o.value === sebelumnya)) siswa.value = sebelumnya;
+}
+
+document.getElementById("kelasNilai").addEventListener("change", isiPilihanSiswaNilai);
+
+document.getElementById("btnTambahNilai").addEventListener("click", async () => {
+  kosongkanFormNilai();
+  await isiPilihanNilai();
+  document.getElementById("judulFormNilai").textContent = "Tambah Nilai";
+  document.getElementById("formNilai").style.display = "block";
+});
+
+document.getElementById("btnBatalNilai").addEventListener("click", () => {
+  document.getElementById("formNilai").style.display = "none";
+  kosongkanFormNilai();
+});
+
+document.getElementById("btnSimpanNilai").addEventListener("click", async () => {
+  const id = document.getElementById("idNilai").value;
+  const kelas = document.getElementById("kelasNilai").value;
+  const siswaId = document.getElementById("siswaNilai").value;
+  const mapel = document.getElementById("mapelNilai").value;
+  const guru = document.getElementById("guruNilai").value;
+  const semester = document.getElementById("semesterNilai").value;
+  const tugas = Number(document.getElementById("tugasNilai").value);
+  const uts = Number(document.getElementById("utsNilai").value);
+  const uas = Number(document.getElementById("uasNilai").value);
+
+  if (!kelas || !siswaId || !mapel || !guru || !semester || [tugas, uts, uas].some(n => Number.isNaN(n) || n < 0 || n > 100)) {
+    tampilkanPesanNilai("Mohon lengkapi data dan pastikan semua nilai berada di antara 0-100.", "error");
+    return;
+  }
+
+  const siswaData = dataSiswa.find(s => s.id === siswaId);
+  if (!siswaData) {
+    tampilkanPesanNilai("Data siswa tidak ditemukan.", "error");
+    return;
+  }
+
+  const nilaiAkhir = Number((tugas * 0.3 + uts * 0.3 + uas * 0.4).toFixed(2));
+  const data = {
+    siswaId, siswaNama: siswaData.nama || "-", nis: siswaData.nis || "-",
+    kelas, mapel, guru, semester, tugas, uts, uas, nilaiAkhir
+  };
+
+  try {
+    if (id) {
+      await updateDoc(doc(db, "nilai", id), data);
+      tampilkanPesanNilai("Data nilai berhasil diperbarui.", "sukses");
+    } else {
+      await addDoc(collection(db, "nilai"), data);
+      tampilkanPesanNilai("Data nilai berhasil ditambahkan.", "sukses");
+    }
+    document.getElementById("formNilai").style.display = "none";
+    kosongkanFormNilai();
+    tampilkanNilai();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanNilai("Gagal menyimpan nilai: " + error.message, "error");
+  }
+});
+
+async function tampilkanNilai() {
+  const tabel = document.getElementById("tabelNilai");
+  tabel.innerHTML = '<tr><td colspan="11" style="text-align:center;">Memuat data...</td></tr>';
+  try {
+    const snapshot = await getDocs(collection(db, "nilai"));
+    dataNilai = [];
+    snapshot.forEach(d => dataNilai.push({ id: d.id, ...d.data() }));
+    dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
+    if (!dataNilai.length) {
+      tabel.innerHTML = '<tr><td colspan="11" style="text-align:center;">Belum ada data nilai.</td></tr>';
+      return;
+    }
+    tabel.innerHTML = "";
+    dataNilai.forEach((n, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${index+1}</td><td>${n.siswaNama || "-"}</td><td>${n.kelas || "-"}</td><td>${n.mapel || "-"}</td><td>${n.guru || "-"}</td><td>${n.semester || "-"}</td><td>${n.tugas ?? "-"}</td><td>${n.uts ?? "-"}</td><td>${n.uas ?? "-"}</td><td><strong>${n.nilaiAkhir ?? "-"}</strong></td><td><div class="aksi"><button class="btn-warning" onclick="editNilai('${n.id}')">Edit</button><button class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button></div></td>`;
+      tabel.appendChild(tr);
+    });
+  } catch (error) {
+    console.error(error);
+    tabel.innerHTML = `<tr><td colspan="11" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
+  }
+}
+
+window.editNilai = async function(id) {
+  const n = dataNilai.find(item => item.id === id);
+  if (!n) return;
+  await isiPilihanNilai();
+  document.getElementById("idNilai").value = n.id;
+  document.getElementById("kelasNilai").value = n.kelas || "";
+  await isiPilihanSiswaNilai();
+  document.getElementById("siswaNilai").value = n.siswaId || "";
+  document.getElementById("mapelNilai").value = n.mapel || "";
+  document.getElementById("guruNilai").value = n.guru || "";
+  document.getElementById("semesterNilai").value = n.semester || "";
+  document.getElementById("tugasNilai").value = n.tugas ?? "";
+  document.getElementById("utsNilai").value = n.uts ?? "";
+  document.getElementById("uasNilai").value = n.uas ?? "";
+  document.getElementById("judulFormNilai").textContent = "Edit Nilai";
+  document.getElementById("formNilai").style.display = "block";
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+
+window.hapusNilai = async function(id) {
+  const n = dataNilai.find(item => item.id === id);
+  if (!n) return;
+  if (!confirm(`Apakah Anda yakin ingin menghapus nilai ${n.siswaNama || "siswa"} - ${n.mapel || "mata pelajaran"}?`)) return;
+  try {
+    await deleteDoc(doc(db, "nilai", id));
+    tampilkanPesanNilai("Data nilai berhasil dihapus.", "sukses");
+    tampilkanNilai();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanNilai("Gagal menghapus nilai: " + error.message, "error");
+  }
+};
+
+function kosongkanFormNilai() {
+  document.getElementById("idNilai").value = "";
+  document.getElementById("kelasNilai").value = "";
+  document.getElementById("siswaNilai").innerHTML = '<option value="">-- Pilih Siswa --</option>';
+  document.getElementById("mapelNilai").innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+  document.getElementById("guruNilai").innerHTML = '<option value="">-- Pilih Guru --</option>';
+  document.getElementById("semesterNilai").value = "";
+  document.getElementById("tugasNilai").value = "";
+  document.getElementById("utsNilai").value = "";
+  document.getElementById("uasNilai").value = "";
+}
+
+function tampilkanPesanNilai(teks, tipe) {
+  const pesan = document.getElementById("pesanNilai");
+  pesan.textContent = teks;
+  pesan.className = "pesan " + tipe;
+  pesan.style.display = "block";
+  setTimeout(() => { pesan.style.display = "none"; }, 4000);
 }
 
 </script>
