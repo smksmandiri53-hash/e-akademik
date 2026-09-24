@@ -163,7 +163,8 @@
 
     #formSiswa,
     #formGuru,
-    #formKelas {
+    #formKelas,
+    #formMapel {
       display: none;
       margin-top: 20px;
       padding: 20px;
@@ -172,7 +173,8 @@
     }
 
     #panelGuru,
-    #panelKelas {
+    #panelKelas,
+    #panelMapel {
       display: none;
     }
 
@@ -234,7 +236,7 @@
       <p>Kelola kelas.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuMapel">
       <h3>📚 Mata Pelajaran</h3>
       <p>Kelola mata pelajaran.</p>
     </div>
@@ -535,6 +537,82 @@
 
 
   <!-- =========================
+       PANEL MATA PELAJARAN
+  ========================== -->
+
+  <div class="panel" id="panelMapel">
+
+    <div class="topbar">
+      <h2>📚 Mata Pelajaran</h2>
+      <button class="btn-primary" id="btnTambahMapel">+ Tambah Mata Pelajaran</button>
+    </div>
+
+    <div id="pesanMapel" class="pesan"></div>
+
+    <div id="formMapel">
+      <h3 id="judulFormMapel">Tambah Mata Pelajaran</h3>
+      <input type="hidden" id="idMapel">
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Kode Mata Pelajaran</label>
+          <input type="text" id="kodeMapel" placeholder="Contoh: MP001">
+        </div>
+        <div class="field">
+          <label>Nama Mata Pelajaran</label>
+          <input type="text" id="namaMapel" placeholder="Contoh: Bahasa Indonesia">
+        </div>
+        <div class="field">
+          <label>Tingkat</label>
+          <select id="tingkatMapel">
+            <option value="">-- Semua Tingkat --</option>
+            <option value="X">X</option>
+            <option value="XI">XI</option>
+            <option value="XII">XII</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Guru Pengampu</label>
+          <select id="guruMapel">
+            <option value="">-- Pilih Guru --</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="statusMapel">
+            <option value="Aktif">Aktif</option>
+            <option value="Nonaktif">Nonaktif</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanMapel">Simpan</button>
+        <button class="btn-secondary" id="btnBatalMapel">Batal</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Kode</th>
+            <th>Mata Pelajaran</th>
+            <th>Tingkat</th>
+            <th>Guru Pengampu</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabelMapel">
+          <tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- =========================
        PANEL GURU
   ========================== -->
 
@@ -787,6 +865,8 @@ let dataGuru = [];
 
 let dataKelas = [];
 
+let dataMapel = [];
+
 
 const formSiswa =
   document.getElementById("formSiswa");
@@ -796,6 +876,9 @@ const formGuru =
 
 const formKelas =
   document.getElementById("formKelas");
+
+const formMapel =
+  document.getElementById("formMapel");
 
 
 /* =========================
@@ -861,6 +944,10 @@ document
       .getElementById("panelKelas")
       .style.display = "none";
 
+    document
+      .getElementById("panelMapel")
+      .style.display = "none";
+
 
     document
       .getElementById("menuSiswa")
@@ -873,6 +960,10 @@ document
 
     document
       .getElementById("menuKelas")
+      .classList.remove("aktif");
+
+    document
+      .getElementById("menuMapel")
       .classList.remove("aktif");
 
   });
@@ -899,6 +990,10 @@ document
       .getElementById("panelKelas")
       .style.display = "none";
 
+    document
+      .getElementById("panelMapel")
+      .style.display = "none";
+
 
     document
       .getElementById("menuSiswa")
@@ -911,6 +1006,10 @@ document
 
     document
       .getElementById("menuKelas")
+      .classList.remove("aktif");
+
+    document
+      .getElementById("menuMapel")
       .classList.remove("aktif");
 
 
@@ -930,15 +1029,178 @@ document
     document.getElementById("panelSiswa").style.display = "none";
     document.getElementById("panelGuru").style.display = "none";
     document.getElementById("panelKelas").style.display = "block";
+    document.getElementById("panelMapel").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
     document.getElementById("menuKelas").classList.add("aktif");
+    document.getElementById("menuMapel").classList.remove("aktif");
 
     await tampilkanGuru();
     await tampilkanKelas();
 
   });
+
+
+/* =========================
+   MENU MATA PELAJARAN
+========================= */
+
+document
+  .getElementById("menuMapel")
+  .addEventListener("click", async () => {
+
+    document.getElementById("panelSiswa").style.display = "none";
+    document.getElementById("panelGuru").style.display = "none";
+    document.getElementById("panelKelas").style.display = "none";
+    document.getElementById("panelMapel").style.display = "block";
+
+    document.getElementById("menuSiswa").classList.remove("aktif");
+    document.getElementById("menuGuru").classList.remove("aktif");
+    document.getElementById("menuKelas").classList.remove("aktif");
+    document.getElementById("menuMapel").classList.add("aktif");
+
+    await tampilkanGuru();
+    await tampilkanMapel();
+  });
+
+/* =====================================================
+   BAGIAN MATA PELAJARAN
+===================================================== */
+
+async function isiPilihanGuruMapel() {
+  const select = document.getElementById("guruMapel");
+  select.innerHTML = '<option value="">-- Pilih Guru --</option>';
+  if (!dataGuru.length) await tampilkanGuru();
+  dataGuru.filter(g => (g.status || "Aktif") === "Aktif").forEach(guru => {
+    const option = document.createElement("option");
+    option.value = guru.nama || "";
+    option.textContent = guru.nama || "-";
+    select.appendChild(option);
+  });
+}
+
+document.getElementById("btnTambahMapel").addEventListener("click", async () => {
+  kosongkanFormMapel();
+  await isiPilihanGuruMapel();
+  document.getElementById("judulFormMapel").textContent = "Tambah Mata Pelajaran";
+  formMapel.style.display = "block";
+});
+
+document.getElementById("btnBatalMapel").addEventListener("click", () => {
+  formMapel.style.display = "none";
+  kosongkanFormMapel();
+});
+
+document.getElementById("btnSimpanMapel").addEventListener("click", async () => {
+  const id = document.getElementById("idMapel").value;
+  const kode = document.getElementById("kodeMapel").value.trim();
+  const nama = document.getElementById("namaMapel").value.trim();
+  const tingkat = document.getElementById("tingkatMapel").value;
+  const guru = document.getElementById("guruMapel").value;
+  const status = document.getElementById("statusMapel").value;
+
+  if (!kode || !nama || !tingkat) {
+    tampilkanPesanMapel("Kode, nama mata pelajaran, dan tingkat wajib diisi.", "error");
+    return;
+  }
+
+  try {
+    const data = { kode, nama, tingkat, guru: guru || "-", status };
+    if (id) {
+      await updateDoc(doc(db, "mataPelajaran", id), data);
+      tampilkanPesanMapel("Mata pelajaran berhasil diperbarui.", "sukses");
+    } else {
+      await addDoc(collection(db, "mataPelajaran"), data);
+      tampilkanPesanMapel("Mata pelajaran berhasil ditambahkan.", "sukses");
+    }
+    formMapel.style.display = "none";
+    kosongkanFormMapel();
+    tampilkanMapel();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanMapel("Gagal menyimpan data: " + error.message, "error");
+  }
+});
+
+async function tampilkanMapel() {
+  const tabel = document.getElementById("tabelMapel");
+  tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>';
+  try {
+    const snapshot = await getDocs(collection(db, "mataPelajaran"));
+    dataMapel = [];
+    snapshot.forEach(dokumen => dataMapel.push({ id: dokumen.id, ...dokumen.data() }));
+    if (!dataMapel.length) {
+      tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada data mata pelajaran.</td></tr>';
+      return;
+    }
+    tabel.innerHTML = "";
+    dataMapel.forEach((mapel, index) => {
+      const baris = document.createElement("tr");
+      baris.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${mapel.kode || "-"}</td>
+        <td>${mapel.nama || "-"}</td>
+        <td>${mapel.tingkat || "-"}</td>
+        <td>${mapel.guru || "-"}</td>
+        <td>${mapel.status || "-"}</td>
+        <td><div class="aksi">
+          <button class="btn-warning" onclick="editMapel('${mapel.id}')">Edit</button>
+          <button class="btn-danger" onclick="hapusMapel('${mapel.id}')">Hapus</button>
+        </div></td>`;
+      tabel.appendChild(baris);
+    });
+  } catch (error) {
+    console.error(error);
+    tabel.innerHTML = `<tr><td colspan="7" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
+  }
+}
+
+window.editMapel = async function(id) {
+  const mapel = dataMapel.find(item => item.id === id);
+  if (!mapel) return;
+  await isiPilihanGuruMapel();
+  document.getElementById("idMapel").value = mapel.id;
+  document.getElementById("kodeMapel").value = mapel.kode || "";
+  document.getElementById("namaMapel").value = mapel.nama || "";
+  document.getElementById("tingkatMapel").value = mapel.tingkat || "";
+  document.getElementById("guruMapel").value = mapel.guru || "";
+  document.getElementById("statusMapel").value = mapel.status || "Aktif";
+  document.getElementById("judulFormMapel").textContent = "Edit Mata Pelajaran";
+  formMapel.style.display = "block";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+window.hapusMapel = async function(id) {
+  const mapel = dataMapel.find(item => item.id === id);
+  if (!mapel) return;
+  if (!confirm("Apakah Anda yakin ingin menghapus mata pelajaran " + mapel.nama + "?")) return;
+  try {
+    await deleteDoc(doc(db, "mataPelajaran", id));
+    tampilkanPesanMapel("Mata pelajaran berhasil dihapus.", "sukses");
+    tampilkanMapel();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanMapel("Gagal menghapus data: " + error.message, "error");
+  }
+};
+
+function kosongkanFormMapel() {
+  document.getElementById("idMapel").value = "";
+  document.getElementById("kodeMapel").value = "";
+  document.getElementById("namaMapel").value = "";
+  document.getElementById("tingkatMapel").value = "";
+  document.getElementById("guruMapel").value = "";
+  document.getElementById("statusMapel").value = "Aktif";
+}
+
+function tampilkanPesanMapel(teks, tipe) {
+  const pesan = document.getElementById("pesanMapel");
+  pesan.textContent = teks;
+  pesan.className = "pesan " + tipe;
+  pesan.style.display = "block";
+  setTimeout(() => { pesan.style.display = "none"; }, 4000);
+}
 
 
 /* =====================================================
