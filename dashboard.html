@@ -50,10 +50,15 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
       cursor: pointer;
+      transition: .2s;
     }
 
     .card:hover {
       transform: translateY(-2px);
+    }
+
+    .card.aktif {
+      border: 2px solid #0d6efd;
     }
 
     .card h3 {
@@ -65,6 +70,7 @@
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      margin-bottom: 25px;
     }
 
     .topbar {
@@ -155,12 +161,17 @@
       flex-wrap: wrap;
     }
 
-    #formSiswa {
+    #formSiswa,
+    #formGuru {
       display: none;
       margin-top: 20px;
       padding: 20px;
       background: #f8f9fa;
       border-radius: 10px;
+    }
+
+    #panelGuru {
+      display: none;
     }
 
     .pesan {
@@ -206,12 +217,12 @@
 
   <div class="menu">
 
-    <div class="card" id="menuSiswa">
+    <div class="card aktif" id="menuSiswa">
       <h3>👨‍🎓 Data Siswa</h3>
       <p>Kelola data siswa.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuGuru">
       <h3>👨‍🏫 Data Guru</h3>
       <p>Kelola data guru.</p>
     </div>
@@ -248,17 +259,24 @@
 
   </div>
 
-  <div class="panel">
+
+  <!-- =========================
+       PANEL SISWA
+  ========================== -->
+
+  <div class="panel" id="panelSiswa">
 
     <div class="topbar">
+
       <h2>👨‍🎓 Data Siswa</h2>
 
       <button class="btn-primary" id="btnTambah">
         + Tambah Siswa
       </button>
+
     </div>
 
-    <div id="pesan" class="pesan"></div>
+    <div id="pesanSiswa" class="pesan"></div>
 
     <div id="formSiswa">
 
@@ -280,29 +298,44 @@
 
         <div class="field">
           <label>Tingkat</label>
+
           <select id="tingkat">
+
             <option value="">-- Pilih Tingkat --</option>
+
             <option value="X">X</option>
             <option value="XI">XI</option>
             <option value="XII">XII</option>
+
           </select>
+
         </div>
 
         <div class="field">
+
           <label>Jurusan</label>
+
           <select id="jurusan">
+
             <option value="">-- Pilih Jurusan --</option>
+
             <option value="TKJ">TKJ</option>
             <option value="AKL">AKL</option>
             <option value="TBSM">TBSM</option>
             <option value="Pemasaran">Pemasaran</option>
+
           </select>
+
         </div>
 
         <div class="field">
+
           <label>Kelas</label>
+
           <select id="kelas">
+
             <option value="">-- Pilih Kelas --</option>
+
             <option value="X TKJ">X TKJ</option>
             <option value="X AKL">X AKL</option>
             <option value="X TBSM">X TBSM</option>
@@ -317,17 +350,24 @@
             <option value="XII AKL">XII AKL</option>
             <option value="XII TBSM">XII TBSM</option>
             <option value="XII Pemasaran">XII Pemasaran</option>
+
           </select>
+
         </div>
 
         <div class="field">
+
           <label>Status</label>
+
           <select id="status">
+
             <option value="Aktif">Aktif</option>
             <option value="Lulus">Lulus</option>
             <option value="Pindah">Pindah</option>
             <option value="Tidak Aktif">Tidak Aktif</option>
+
           </select>
+
         </div>
 
       </div>
@@ -346,11 +386,13 @@
 
     </div>
 
+
     <div class="table-wrapper">
 
       <table>
 
         <thead>
+
           <tr>
             <th>No</th>
             <th>Nama</th>
@@ -361,6 +403,7 @@
             <th>Status</th>
             <th>Aksi</th>
           </tr>
+
         </thead>
 
         <tbody id="tabelSiswa">
@@ -379,20 +422,202 @@
 
   </div>
 
+
+  <!-- =========================
+       PANEL GURU
+  ========================== -->
+
+  <div class="panel" id="panelGuru">
+
+    <div class="topbar">
+
+      <h2>👨‍🏫 Data Guru</h2>
+
+      <button class="btn-primary" id="btnTambahGuru">
+        + Tambah Guru
+      </button>
+
+    </div>
+
+    <div id="pesanGuru" class="pesan"></div>
+
+
+    <div id="formGuru">
+
+      <h3 id="judulFormGuru">
+        Tambah Guru
+      </h3>
+
+      <input type="hidden" id="idGuru">
+
+
+      <div class="form-grid">
+
+        <div class="field">
+
+          <label>Nama Guru</label>
+
+          <input
+            type="text"
+            id="namaGuru"
+            placeholder="Nama lengkap guru">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>NIP</label>
+
+          <input
+            type="text"
+            id="nipGuru"
+            placeholder="NIP">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>NUPTK</label>
+
+          <input
+            type="text"
+            id="nuptkGuru"
+            placeholder="NUPTK">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>Mata Pelajaran</label>
+
+          <input
+            type="text"
+            id="mapelGuru"
+            placeholder="Mata pelajaran yang diampu">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>Status</label>
+
+          <select id="statusGuru">
+
+            <option value="Aktif">
+              Aktif
+            </option>
+
+            <option value="Nonaktif">
+              Nonaktif
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <div style="margin-top:20px;">
+
+        <button
+          class="btn-primary"
+          id="btnSimpanGuru">
+
+          Simpan
+
+        </button>
+
+
+        <button
+          class="btn-secondary"
+          id="btnBatalGuru">
+
+          Batal
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>No</th>
+
+            <th>Nama Guru</th>
+
+            <th>NIP</th>
+
+            <th>NUPTK</th>
+
+            <th>Mata Pelajaran</th>
+
+            <th>Status</th>
+
+            <th>Aksi</th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody id="tabelGuru">
+
+          <tr>
+
+            <td
+              colspan="7"
+              style="text-align:center;">
+
+              Memuat data...
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
 </div>
 
 
 <script type="module">
 
+
+/* =========================
+   FIREBASE
+========================= */
+
 import {
   initializeApp
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+}
+from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
 
 import {
   getAuth,
   onAuthStateChanged,
   signOut
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+}
+from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
 
 import {
   getFirestore,
@@ -402,12 +627,14 @@ import {
   updateDoc,
   deleteDoc,
   doc
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+}
+from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
+  apiKey:
+    "AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
 
   authDomain:
     "e-akademik-smks-mandiri-128fd.firebaseapp.com",
@@ -423,27 +650,36 @@ const firebaseConfig = {
 
   appId:
     "1:551692981969:web:97513dca9fe111f96a57f0"
+
 };
 
 
-const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-
-const db = getFirestore(app);
+const app =
+  initializeApp(firebaseConfig);
 
 
-const tabelSiswa =
-  document.getElementById("tabelSiswa");
+const auth =
+  getAuth(app);
+
+
+const db =
+  getFirestore(app);
+
+
+/* =========================
+   VARIABEL
+========================= */
+
+let dataSiswa = [];
+
+let dataGuru = [];
+
 
 const formSiswa =
   document.getElementById("formSiswa");
 
-const pesan =
-  document.getElementById("pesan");
-
-
-let dataSiswa = [];
+const formGuru =
+  document.getElementById("formGuru");
 
 
 /* =========================
@@ -454,14 +690,18 @@ onAuthStateChanged(auth, (user) => {
 
   if (user) {
 
-    document.getElementById("emailAdmin").textContent =
+    document
+      .getElementById("emailAdmin")
+      .textContent =
       "Login sebagai: " + user.email;
+
 
     tampilkanSiswa();
 
   } else {
 
-    window.location.href = "index.html";
+    window.location.href =
+      "index.html";
 
   }
 
@@ -478,77 +718,182 @@ document
 
     await signOut(auth);
 
-    window.location.href = "index.html";
+    window.location.href =
+      "index.html";
 
   });
 
 
 /* =========================
-   TAMPILKAN FORM
+   MENU SISWA
+========================= */
+
+document
+  .getElementById("menuSiswa")
+  .addEventListener("click", () => {
+
+    document
+      .getElementById("panelSiswa")
+      .style.display = "block";
+
+
+    document
+      .getElementById("panelGuru")
+      .style.display = "none";
+
+
+    document
+      .getElementById("menuSiswa")
+      .classList.add("aktif");
+
+
+    document
+      .getElementById("menuGuru")
+      .classList.remove("aktif");
+
+  });
+
+
+/* =========================
+   MENU GURU
+========================= */
+
+document
+  .getElementById("menuGuru")
+  .addEventListener("click", () => {
+
+    document
+      .getElementById("panelSiswa")
+      .style.display = "none";
+
+
+    document
+      .getElementById("panelGuru")
+      .style.display = "block";
+
+
+    document
+      .getElementById("menuSiswa")
+      .classList.remove("aktif");
+
+
+    document
+      .getElementById("menuGuru")
+      .classList.add("aktif");
+
+
+    tampilkanGuru();
+
+  });
+
+
+/* =====================================================
+   BAGIAN SISWA
+===================================================== */
+
+
+/* =========================
+   TAMBAH SISWA
 ========================= */
 
 document
   .getElementById("btnTambah")
   .addEventListener("click", () => {
 
-    formSiswa.style.display = "block";
+    formSiswa.style.display =
+      "block";
 
-    document.getElementById("judulForm").textContent =
+
+    document
+      .getElementById("judulForm")
+      .textContent =
       "Tambah Siswa";
 
-    kosongkanForm();
+
+    kosongkanFormSiswa();
 
   });
 
 
 /* =========================
-   BATAL
+   BATAL SISWA
 ========================= */
 
 document
   .getElementById("btnBatal")
   .addEventListener("click", () => {
 
-    formSiswa.style.display = "none";
+    formSiswa.style.display =
+      "none";
 
-    kosongkanForm();
+
+    kosongkanFormSiswa();
 
   });
 
 
 /* =========================
-   SIMPAN
+   SIMPAN SISWA
 ========================= */
 
 document
   .getElementById("btnSimpan")
   .addEventListener("click", async () => {
 
+
     const id =
-      document.getElementById("idSiswa").value;
+      document
+        .getElementById("idSiswa")
+        .value;
+
 
     const nama =
-      document.getElementById("nama").value.trim();
+      document
+        .getElementById("nama")
+        .value
+        .trim();
+
 
     const nis =
-      document.getElementById("nis").value.trim();
+      document
+        .getElementById("nis")
+        .value
+        .trim();
+
 
     const tingkat =
-      document.getElementById("tingkat").value;
+      document
+        .getElementById("tingkat")
+        .value;
+
 
     const jurusan =
-      document.getElementById("jurusan").value;
+      document
+        .getElementById("jurusan")
+        .value;
+
 
     const kelas =
-      document.getElementById("kelas").value;
+      document
+        .getElementById("kelas")
+        .value;
+
 
     const status =
-      document.getElementById("status").value;
+      document
+        .getElementById("status")
+        .value;
 
 
-    if (!nama || !nis || !tingkat || !jurusan || !kelas) {
+    if (
+      !nama ||
+      !nis ||
+      !tingkat ||
+      !jurusan ||
+      !kelas
+    ) {
 
-      tampilkanPesan(
+      tampilkanPesanSiswa(
         "Mohon lengkapi semua data.",
         "error"
       );
@@ -560,19 +905,15 @@ document
 
     try {
 
+
       const data = {
 
-        nama: nama,
-
-        nis: nis,
-
-        tingkat: tingkat,
-
-        jurusan: jurusan,
-
-        kelas: kelas,
-
-        status: status
+        nama,
+        nis,
+        tingkat,
+        jurusan,
+        kelas,
+        status
 
       };
 
@@ -584,10 +925,12 @@ document
           data
         );
 
-        tampilkanPesan(
+
+        tampilkanPesanSiswa(
           "Data siswa berhasil diperbarui.",
           "sukses"
         );
+
 
       } else {
 
@@ -596,7 +939,8 @@ document
           data
         );
 
-        tampilkanPesan(
+
+        tampilkanPesanSiswa(
           "Data siswa berhasil ditambahkan.",
           "sukses"
         );
@@ -604,9 +948,12 @@ document
       }
 
 
-      formSiswa.style.display = "none";
+      formSiswa.style.display =
+        "none";
 
-      kosongkanForm();
+
+      kosongkanFormSiswa();
+
 
       tampilkanSiswa();
 
@@ -615,8 +962,10 @@ document
 
       console.error(error);
 
-      tampilkanPesan(
-        "Gagal menyimpan data: " + error.message,
+
+      tampilkanPesanSiswa(
+        "Gagal menyimpan data: " +
+        error.message,
         "error"
       );
 
@@ -626,24 +975,39 @@ document
 
 
 /* =========================
-   AMBIL DATA SISWA
+   TAMPILKAN SISWA
 ========================= */
 
 async function tampilkanSiswa() {
 
+  const tabel =
+    document.getElementById("tabelSiswa");
+
+
   try {
 
-    tabelSiswa.innerHTML = `
+
+    tabel.innerHTML = `
+
       <tr>
-        <td colspan="8" style="text-align:center;">
+
+        <td
+          colspan="8"
+          style="text-align:center;">
+
           Memuat data...
+
         </td>
+
       </tr>
+
     `;
 
 
     const snapshot =
-      await getDocs(collection(db, "siswa"));
+      await getDocs(
+        collection(db, "siswa")
+      );
 
 
     dataSiswa = [];
@@ -662,14 +1026,24 @@ async function tampilkanSiswa() {
     });
 
 
-    if (dataSiswa.length === 0) {
+    if (
+      dataSiswa.length === 0
+    ) {
 
-      tabelSiswa.innerHTML = `
+      tabel.innerHTML = `
+
         <tr>
-          <td colspan="8" style="text-align:center;">
+
+          <td
+            colspan="8"
+            style="text-align:center;">
+
             Belum ada data siswa.
+
           </td>
+
         </tr>
+
       `;
 
       return;
@@ -677,69 +1051,101 @@ async function tampilkanSiswa() {
     }
 
 
-    tabelSiswa.innerHTML = "";
+    tabel.innerHTML = "";
 
 
-    dataSiswa.forEach((siswa, index) => {
-
-      const baris =
-        document.createElement("tr");
+    dataSiswa.forEach(
+      (siswa, index) => {
 
 
-      baris.innerHTML = `
-
-        <td>${index + 1}</td>
-
-        <td>${siswa.nama || "-"}</td>
-
-        <td>${siswa.nis || "-"}</td>
-
-        <td>${siswa.tingkat || "-"}</td>
-
-        <td>${siswa.jurusan || "-"}</td>
-
-        <td>${siswa.kelas || "-"}</td>
-
-        <td>${siswa.status || "-"}</td>
-
-        <td>
-
-          <div class="aksi">
-
-            <button
-              class="btn-warning"
-              onclick="editSiswa('${siswa.id}')">
-              Edit
-            </button>
-
-            <button
-              class="btn-danger"
-              onclick="hapusSiswa('${siswa.id}')">
-              Hapus
-            </button>
-
-          </div>
-
-        </td>
-
-      `;
+        const baris =
+          document.createElement("tr");
 
 
-      tabelSiswa.appendChild(baris);
+        baris.innerHTML = `
 
-    });
+          <td>
+            ${index + 1}
+          </td>
+
+          <td>
+            ${siswa.nama || "-"}
+          </td>
+
+          <td>
+            ${siswa.nis || "-"}
+          </td>
+
+          <td>
+            ${siswa.tingkat || "-"}
+          </td>
+
+          <td>
+            ${siswa.jurusan || "-"}
+          </td>
+
+          <td>
+            ${siswa.kelas || "-"}
+          </td>
+
+          <td>
+            ${siswa.status || "-"}
+          </td>
+
+          <td>
+
+            <div class="aksi">
+
+              <button
+                class="btn-warning"
+                onclick="editSiswa('${siswa.id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="btn-danger"
+                onclick="hapusSiswa('${siswa.id}')">
+
+                Hapus
+
+              </button>
+
+            </div>
+
+          </td>
+
+        `;
+
+
+        tabel.appendChild(baris);
+
+      }
+    );
 
 
   } catch (error) {
 
     console.error(error);
 
-    tabelSiswa.innerHTML = `
+
+    tabel.innerHTML = `
+
       <tr>
-        <td colspan="8" style="color:red;text-align:center;">
-          Gagal mengambil data: ${error.message}
+
+        <td
+          colspan="8"
+          style="color:red;text-align:center;">
+
+          Gagal mengambil data:
+          ${error.message}
+
         </td>
+
       </tr>
+
     `;
 
   }
@@ -751,146 +1157,798 @@ async function tampilkanSiswa() {
    EDIT SISWA
 ========================= */
 
-window.editSiswa = function(id) {
-
-  const siswa =
-    dataSiswa.find(item => item.id === id);
+window.editSiswa =
+  function(id) {
 
 
-  if (!siswa) return;
+    const siswa =
+      dataSiswa.find(
+        item => item.id === id
+      );
 
 
-  document.getElementById("idSiswa").value =
-    siswa.id;
-
-  document.getElementById("nama").value =
-    siswa.nama || "";
-
-  document.getElementById("nis").value =
-    siswa.nis || "";
-
-  document.getElementById("tingkat").value =
-    siswa.tingkat || "";
-
-  document.getElementById("jurusan").value =
-    siswa.jurusan || "";
-
-  document.getElementById("kelas").value =
-    siswa.kelas || "";
-
-  document.getElementById("status").value =
-    siswa.status || "Aktif";
+    if (!siswa) return;
 
 
-  document.getElementById("judulForm").textContent =
-    "Edit Siswa";
+    document
+      .getElementById("idSiswa")
+      .value =
+      siswa.id;
 
 
-  formSiswa.style.display = "block";
+    document
+      .getElementById("nama")
+      .value =
+      siswa.nama || "";
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
 
-};
+    document
+      .getElementById("nis")
+      .value =
+      siswa.nis || "";
+
+
+    document
+      .getElementById("tingkat")
+      .value =
+      siswa.tingkat || "";
+
+
+    document
+      .getElementById("jurusan")
+      .value =
+      siswa.jurusan || "";
+
+
+    document
+      .getElementById("kelas")
+      .value =
+      siswa.kelas || "";
+
+
+    document
+      .getElementById("status")
+      .value =
+      siswa.status || "Aktif";
+
+
+    document
+      .getElementById("judulForm")
+      .textContent =
+      "Edit Siswa";
+
+
+    formSiswa.style.display =
+      "block";
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  };
 
 
 /* =========================
    HAPUS SISWA
 ========================= */
 
-window.hapusSiswa = async function(id) {
-
-  const siswa =
-    dataSiswa.find(item => item.id === id);
+window.hapusSiswa =
+  async function(id) {
 
 
-  if (!siswa) return;
+    const siswa =
+      dataSiswa.find(
+        item => item.id === id
+      );
 
 
-  const yakin =
-    confirm(
-      "Apakah Anda yakin ingin menghapus data siswa " +
-      siswa.nama +
-      "?"
+    if (!siswa) return;
+
+
+    const yakin =
+      confirm(
+        "Apakah Anda yakin ingin menghapus data siswa " +
+        siswa.nama +
+        "?"
+      );
+
+
+    if (!yakin) return;
+
+
+    try {
+
+
+      await deleteDoc(
+        doc(db, "siswa", id)
+      );
+
+
+      tampilkanPesanSiswa(
+        "Data siswa berhasil dihapus.",
+        "sukses"
+      );
+
+
+      tampilkanSiswa();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      tampilkanPesanSiswa(
+        "Gagal menghapus data: " +
+        error.message,
+        "error"
+      );
+
+    }
+
+  };
+
+
+/* =========================
+   KOSONGKAN SISWA
+========================= */
+
+function kosongkanFormSiswa() {
+
+  document
+    .getElementById("idSiswa")
+    .value = "";
+
+
+  document
+    .getElementById("nama")
+    .value = "";
+
+
+  document
+    .getElementById("nis")
+    .value = "";
+
+
+  document
+    .getElementById("tingkat")
+    .value = "";
+
+
+  document
+    .getElementById("jurusan")
+    .value = "";
+
+
+  document
+    .getElementById("kelas")
+    .value = "";
+
+
+  document
+    .getElementById("status")
+    .value = "Aktif";
+
+}
+
+
+/* =========================
+   PESAN SISWA
+========================= */
+
+function tampilkanPesanSiswa(
+  teks,
+  tipe
+) {
+
+  const pesan =
+    document.getElementById(
+      "pesanSiswa"
     );
 
 
-  if (!yakin) return;
+  pesan.textContent =
+    teks;
+
+
+  pesan.className =
+    "pesan " + tipe;
+
+
+  pesan.style.display =
+    "block";
+
+
+  setTimeout(() => {
+
+    pesan.style.display =
+      "none";
+
+  }, 4000);
+
+}
+
+
+/* =====================================================
+   BAGIAN GURU
+===================================================== */
+
+
+/* =========================
+   TAMBAH GURU
+========================= */
+
+document
+  .getElementById("btnTambahGuru")
+  .addEventListener(
+    "click",
+    () => {
+
+
+      formGuru.style.display =
+        "block";
+
+
+      document
+        .getElementById(
+          "judulFormGuru"
+        )
+        .textContent =
+        "Tambah Guru";
+
+
+      kosongkanFormGuru();
+
+    }
+  );
+
+
+/* =========================
+   BATAL GURU
+========================= */
+
+document
+  .getElementById("btnBatalGuru")
+  .addEventListener(
+    "click",
+    () => {
+
+
+      formGuru.style.display =
+        "none";
+
+
+      kosongkanFormGuru();
+
+    }
+  );
+
+
+/* =========================
+   SIMPAN GURU
+========================= */
+
+document
+  .getElementById("btnSimpanGuru")
+  .addEventListener(
+    "click",
+    async () => {
+
+
+      const id =
+        document
+          .getElementById("idGuru")
+          .value;
+
+
+      const nama =
+        document
+          .getElementById("namaGuru")
+          .value
+          .trim();
+
+
+      const nip =
+        document
+          .getElementById("nipGuru")
+          .value
+          .trim();
+
+
+      const nuptk =
+        document
+          .getElementById("nuptkGuru")
+          .value
+          .trim();
+
+
+      const mapel =
+        document
+          .getElementById("mapelGuru")
+          .value
+          .trim();
+
+
+      const status =
+        document
+          .getElementById("statusGuru")
+          .value;
+
+
+      if (
+        !nama ||
+        !mapel
+      ) {
+
+        tampilkanPesanGuru(
+          "Nama guru dan mata pelajaran wajib diisi.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+
+        const data = {
+
+          nama,
+          nip: nip || "-",
+          nuptk: nuptk || "-",
+          mapel,
+          status
+
+        };
+
+
+        if (id) {
+
+
+          await updateDoc(
+            doc(db, "guru", id),
+            data
+          );
+
+
+          tampilkanPesanGuru(
+            "Data guru berhasil diperbarui.",
+            "sukses"
+          );
+
+
+        } else {
+
+
+          await addDoc(
+            collection(db, "guru"),
+            data
+          );
+
+
+          tampilkanPesanGuru(
+            "Data guru berhasil ditambahkan.",
+            "sukses"
+          );
+
+        }
+
+
+        formGuru.style.display =
+          "none";
+
+
+        kosongkanFormGuru();
+
+
+        tampilkanGuru();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        tampilkanPesanGuru(
+          "Gagal menyimpan data: " +
+          error.message,
+          "error"
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================
+   TAMPILKAN GURU
+========================= */
+
+async function tampilkanGuru() {
+
+  const tabel =
+    document.getElementById(
+      "tabelGuru"
+    );
 
 
   try {
 
-    await deleteDoc(
-      doc(db, "siswa", id)
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="7"
+          style="text-align:center;">
+
+          Memuat data...
+
+        </td>
+
+      </tr>
+
+    `;
+
+
+    const snapshot =
+      await getDocs(
+        collection(db, "guru")
+      );
+
+
+    dataGuru = [];
+
+
+    snapshot.forEach(
+      (dokumen) => {
+
+        dataGuru.push({
+
+          id: dokumen.id,
+
+          ...dokumen.data()
+
+        });
+
+      }
     );
 
 
-    tampilkanPesan(
-      "Data siswa berhasil dihapus.",
-      "sukses"
+    if (
+      dataGuru.length === 0
+    ) {
+
+      tabel.innerHTML = `
+
+        <tr>
+
+          <td
+            colspan="7"
+            style="text-align:center;">
+
+            Belum ada data guru.
+
+          </td>
+
+        </tr>
+
+      `;
+
+      return;
+
+    }
+
+
+    tabel.innerHTML = "";
+
+
+    dataGuru.forEach(
+      (guru, index) => {
+
+
+        const baris =
+          document.createElement(
+            "tr"
+          );
+
+
+        baris.innerHTML = `
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td>
+            ${guru.nama || "-"}
+          </td>
+
+          <td>
+            ${guru.nip || "-"}
+          </td>
+
+          <td>
+            ${guru.nuptk || "-"}
+          </td>
+
+          <td>
+            ${guru.mapel || "-"}
+          </td>
+
+          <td>
+            ${guru.status || "-"}
+          </td>
+
+          <td>
+
+            <div class="aksi">
+
+              <button
+                class="btn-warning"
+                onclick="editGuru('${guru.id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="btn-danger"
+                onclick="hapusGuru('${guru.id}')">
+
+                Hapus
+
+              </button>
+
+            </div>
+
+          </td>
+
+        `;
+
+
+        tabel.appendChild(baris);
+
+      }
     );
-
-
-    tampilkanSiswa();
 
 
   } catch (error) {
 
     console.error(error);
 
-    tampilkanPesan(
-      "Gagal menghapus data: " +
-      error.message,
-      "error"
-    );
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="7"
+          style="color:red;text-align:center;">
+
+          Gagal mengambil data:
+          ${error.message}
+
+        </td>
+
+      </tr>
+
+    `;
 
   }
-
-};
-
-
-/* =========================
-   KOSONGKAN FORM
-========================= */
-
-function kosongkanForm() {
-
-  document.getElementById("idSiswa").value = "";
-
-  document.getElementById("nama").value = "";
-
-  document.getElementById("nis").value = "";
-
-  document.getElementById("tingkat").value = "";
-
-  document.getElementById("jurusan").value = "";
-
-  document.getElementById("kelas").value = "";
-
-  document.getElementById("status").value = "Aktif";
 
 }
 
 
 /* =========================
-   PESAN
+   EDIT GURU
 ========================= */
 
-function tampilkanPesan(teks, tipe) {
+window.editGuru =
+  function(id) {
 
-  pesan.textContent = teks;
+
+    const guru =
+      dataGuru.find(
+        item => item.id === id
+      );
+
+
+    if (!guru) return;
+
+
+    document
+      .getElementById("idGuru")
+      .value =
+      guru.id;
+
+
+    document
+      .getElementById("namaGuru")
+      .value =
+      guru.nama || "";
+
+
+    document
+      .getElementById("nipGuru")
+      .value =
+      guru.nip || "";
+
+
+    document
+      .getElementById("nuptkGuru")
+      .value =
+      guru.nuptk || "";
+
+
+    document
+      .getElementById("mapelGuru")
+      .value =
+      guru.mapel || "";
+
+
+    document
+      .getElementById("statusGuru")
+      .value =
+      guru.status || "Aktif";
+
+
+    document
+      .getElementById(
+        "judulFormGuru"
+      )
+      .textContent =
+      "Edit Guru";
+
+
+    formGuru.style.display =
+      "block";
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  };
+
+
+/* =========================
+   HAPUS GURU
+========================= */
+
+window.hapusGuru =
+  async function(id) {
+
+
+    const guru =
+      dataGuru.find(
+        item => item.id === id
+      );
+
+
+    if (!guru) return;
+
+
+    const yakin =
+      confirm(
+        "Apakah Anda yakin ingin menghapus data guru " +
+        guru.nama +
+        "?"
+      );
+
+
+    if (!yakin) return;
+
+
+    try {
+
+
+      await deleteDoc(
+        doc(db, "guru", id)
+      );
+
+
+      tampilkanPesanGuru(
+        "Data guru berhasil dihapus.",
+        "sukses"
+      );
+
+
+      tampilkanGuru();
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      tampilkanPesanGuru(
+        "Gagal menghapus data: " +
+        error.message,
+        "error"
+      );
+
+    }
+
+  };
+
+
+/* =========================
+   KOSONGKAN FORM GURU
+========================= */
+
+function kosongkanFormGuru() {
+
+  document
+    .getElementById("idGuru")
+    .value = "";
+
+
+  document
+    .getElementById("namaGuru")
+    .value = "";
+
+
+  document
+    .getElementById("nipGuru")
+    .value = "";
+
+
+  document
+    .getElementById("nuptkGuru")
+    .value = "";
+
+
+  document
+    .getElementById("mapelGuru")
+    .value = "";
+
+
+  document
+    .getElementById("statusGuru")
+    .value = "Aktif";
+
+}
+
+
+/* =========================
+   PESAN GURU
+========================= */
+
+function tampilkanPesanGuru(
+  teks,
+  tipe
+) {
+
+  const pesan =
+    document.getElementById(
+      "pesanGuru"
+    );
+
+
+  pesan.textContent =
+    teks;
+
 
   pesan.className =
     "pesan " + tipe;
 
-  pesan.style.display = "block";
+
+  pesan.style.display =
+    "block";
 
 
   setTimeout(() => {
 
-    pesan.style.display = "none";
+    pesan.style.display =
+      "none";
 
   }, 4000);
 
