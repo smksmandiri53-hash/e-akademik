@@ -236,7 +236,6 @@
   <h1>E-Akademik SMKS Mandiri Bandar Agung</h1>
   <p id="emailAdmin">Memeriksa login...</p>
   <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
-  <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
   <button class="btn-danger" id="logout">Logout</button>
 </header>
 
@@ -1145,6 +1144,50 @@
     <div id="pesanAkun" class="pesan"></div>
 
     <div class="akun-box">
+      <h3 style="margin-top:0;">👤 Profil Pengguna</h3>
+      <p style="color:#666;font-size:13px;">Profil ini terhubung langsung dengan UID akun Firebase yang sedang login.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Nama Lengkap</label>
+          <input type="text" id="profilNama" placeholder="Nama lengkap guru/admin">
+        </div>
+        <div class="field">
+          <label>NIP</label>
+          <input type="text" id="profilNip" placeholder="NIP (boleh dikosongkan)">
+        </div>
+        <div class="field">
+          <label>Mata Pelajaran</label>
+          <input type="text" id="profilMapel" placeholder="Contoh: Produktif TKJ">
+        </div>
+        <div class="field">
+          <label>Kelas Wali</label>
+          <select id="profilKelasWali">
+            <option value="">Bukan wali kelas</option>
+            <option value="X TKJ">X TKJ</option>
+            <option value="X AKL">X AKL</option>
+            <option value="X TBSM">X TBSM</option>
+            <option value="X Pemasaran">X Pemasaran</option>
+            <option value="XI TKJ">XI TKJ</option>
+            <option value="XI AKL">XI AKL</option>
+            <option value="XI TBSM">XI TBSM</option>
+            <option value="XI Pemasaran">XI Pemasaran</option>
+            <option value="XII TKJ">XII TKJ</option>
+            <option value="XII AKL">XII AKL</option>
+            <option value="XII TBSM">XII TBSM</option>
+            <option value="XII Pemasaran">XII Pemasaran</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanProfil">💾 Simpan Profil</button>
+      </div>
+
+      <p style="margin:15px 0 0;color:#666;font-size:13px;">Role akun tidak dapat diubah dari formulir ini. Role akan ditentukan oleh sistem/admin.</p>
+    </div>
+
+    <div class="akun-box">
       <div class="akun-info">
         <strong>Akun yang sedang digunakan</strong><br>
         <span id="akunEmailSekarang">Memuat...</span>
@@ -1208,6 +1251,7 @@ from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getFirestore,
   getDoc,
+  setDoc,
   collection,
   getDocs,
   addDoc,
@@ -3946,6 +3990,57 @@ function pesanAkun(teks, tipe){
   setTimeout(()=>e.style.display="none",5000);
 }
 
+async function muatFormProfil(user){
+  try{
+    const snap=await getDoc(doc(db,"users",user.uid));
+    const data=snap.exists()?snap.data():profilUser || {};
+    document.getElementById("profilNama").value=data.nama || user.displayName || "";
+    document.getElementById("profilNip").value=data.nip || "";
+    document.getElementById("profilMapel").value=data.mapel || "";
+    document.getElementById("profilKelasWali").value=data.kelasWali || "";
+  }catch(error){
+    console.error("Gagal memuat profil:",error);
+    pesanAkun("Gagal memuat profil pengguna: "+error.message,"error");
+  }
+}
+
+document.getElementById("btnSimpanProfil").addEventListener("click",async()=>{
+  const user=auth.currentUser;
+  if(!user){pesanAkun("Sesi login tidak ditemukan. Silakan login kembali.","error");return;}
+
+  const nama=document.getElementById("profilNama").value.trim();
+  const nip=document.getElementById("profilNip").value.trim();
+  const mapel=document.getElementById("profilMapel").value.trim();
+  const kelasWali=document.getElementById("profilKelasWali").value;
+
+  if(!nama){pesanAkun("Nama lengkap wajib diisi.","error");return;}
+
+  try{
+    const ref=doc(db,"users",user.uid);
+    const snap=await getDoc(ref);
+    const dataLama=snap.exists()?snap.data():profilUser || {};
+    const role=dataLama.role === "guru" ? "guru" : "admin";
+
+    await setDoc(ref,{
+      nama,
+      email:user.email || dataLama.email || "",
+      role,
+      nip,
+      mapel,
+      kelasWali
+    },{merge:true});
+
+    profilUser={...dataLama,nama,email:user.email || dataLama.email || "",role,nip,mapel,kelasWali};
+    roleUser=role;
+    document.getElementById("emailAdmin").textContent="Login sebagai: "+nama+" ("+(user.email || "")+")";
+    document.getElementById("roleUser").textContent="Role: "+(role === "admin" ? "ADMIN" : "GURU")+(kelasWali ? " • Wali Kelas: "+kelasWali : "");
+    pesanAkun("Profil pengguna berhasil disimpan.","sukses");
+  }catch(error){
+    console.error("Gagal menyimpan profil:",error);
+    pesanAkun("Gagal menyimpan profil: "+error.message,"error");
+  }
+});
+
 function kosongkanFormAkun(){
   document.getElementById("emailBaru").value="";
   document.getElementById("passwordSaatIni").value="";
@@ -3961,6 +4056,7 @@ function bukaPanelAkun(){
   const user=auth.currentUser;
   document.getElementById("akunEmailSekarang").textContent=user?.email || "-";
   document.getElementById("emailBaru").value=user?.email || "";
+  if(user) muatFormProfil(user);
 }
 
 document.getElementById("menuAkun").addEventListener("click",bukaPanelAkun);
