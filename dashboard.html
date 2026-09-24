@@ -808,11 +808,12 @@
             <th>UTS</th>
             <th>UAS</th>
             <th>Nilai Akhir</th>
+            <th>Status</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody id="tabelNilai">
-          <tr><td colspan="11" style="text-align:center;">Memuat data...</td></tr>
+          <tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1251,6 +1252,7 @@ from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getFirestore,
   getDoc,
+  serverTimestamp,
   setDoc,
   collection,
   getDocs,
@@ -1333,6 +1335,7 @@ const formMapel =
 
 let profilUser = null;
 let roleUser = "guru";
+let currentUser = null;
 
 async function muatProfilPengguna(user) {
   try {
@@ -1376,6 +1379,7 @@ async function muatProfilPengguna(user) {
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
+    currentUser = user;
     const profilBerhasil = await muatProfilPengguna(user);
     if (profilBerhasil) tampilkanSiswa();
   } else {
@@ -3741,6 +3745,9 @@ document.getElementById("kelasNilai").addEventListener("change", isiPilihanSiswa
 document.getElementById("btnTambahNilai").addEventListener("click", async () => {
   kosongkanFormNilai();
   await isiPilihanNilai();
+  if (roleUser === "guru" && profilUser?.nama) {
+    document.getElementById("guruNilai").value = profilUser.nama;
+  }
   document.getElementById("judulFormNilai").textContent = "Tambah Nilai";
   document.getElementById("formNilai").style.display = "block";
 });
@@ -3773,18 +3780,23 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
   }
 
   const nilaiAkhir = Number((tugas * 0.3 + uts * 0.3 + uas * 0.4).toFixed(2));
+  const statusBaru = roleUser === "admin" ? "disetujui" : "menunggu_persetujuan";
   const data = {
     siswaId, siswaNama: siswaData.nama || "-", nis: siswaData.nis || "-",
-    kelas, mapel, guru, semester, tugas, uts, uas, nilaiAkhir
+    kelas, mapel, guru, semester, tugas, uts, uas, nilaiAkhir,
+    status: statusBaru,
+    submittedByUid: currentUser?.uid || "",
+    submittedByNama: profilUser?.nama || currentUser?.email || "-",
+    submittedAt: serverTimestamp()
   };
 
   try {
     if (id) {
       await updateDoc(doc(db, "nilai", id), data);
-      tampilkanPesanNilai("Data nilai berhasil diperbarui.", "sukses");
+      tampilkanPesanNilai(roleUser === "admin" ? "Data nilai berhasil diperbarui." : "Perubahan nilai diajukan kembali untuk persetujuan Admin.", "sukses");
     } else {
       await addDoc(collection(db, "nilai"), data);
-      tampilkanPesanNilai("Data nilai berhasil ditambahkan.", "sukses");
+      tampilkanPesanNilai(roleUser === "admin" ? "Data nilai berhasil ditambahkan." : "Nilai berhasil diajukan dan menunggu persetujuan Admin.", "sukses");
     }
     document.getElementById("formNilai").style.display = "none";
     kosongkanFormNilai();
@@ -3797,25 +3809,34 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
 
 async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
-  tabel.innerHTML = '<tr><td colspan="11" style="text-align:center;">Memuat data...</td></tr>';
+  tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>';
   try {
     const snapshot = await getDocs(collection(db, "nilai"));
     dataNilai = [];
-    snapshot.forEach(d => dataNilai.push({ id: d.id, ...d.data() }));
+    snapshot.forEach(d => {
+      const item = { id: d.id, ...d.data() };
+      if (roleUser === "admin" || item.submittedByUid === currentUser?.uid) {
+        dataNilai.push(item);
+      }
+    });
     dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
     if (!dataNilai.length) {
-      tabel.innerHTML = '<tr><td colspan="11" style="text-align:center;">Belum ada data nilai.</td></tr>';
+      tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Belum ada data nilai.</td></tr>';
       return;
     }
     tabel.innerHTML = "";
     dataNilai.forEach((n, index) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${index+1}</td><td>${n.siswaNama || "-"}</td><td>${n.kelas || "-"}</td><td>${n.mapel || "-"}</td><td>${n.guru || "-"}</td><td>${n.semester || "-"}</td><td>${n.tugas ?? "-"}</td><td>${n.uts ?? "-"}</td><td>${n.uas ?? "-"}</td><td><strong>${n.nilaiAkhir ?? "-"}</strong></td><td><div class="aksi"><button class="btn-warning" onclick="editNilai('${n.id}')">Edit</button><button class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button></div></td>`;
+      const statusLabel = n.status === "disetujui" ? "Disetujui" : n.status === "ditolak" ? "Ditolak" : "Menunggu Persetujuan";
+      const aksi = roleUser === "admin" || n.status !== "disetujui"
+        ? `<button class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>${roleUser === "admin" ? `<button class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>` : ""}`
+        : `<span style="color:#198754;font-weight:bold;">Resmi</span>`;
+      tr.innerHTML = `<td>${index+1}</td><td>${n.siswaNama || "-"}</td><td>${n.kelas || "-"}</td><td>${n.mapel || "-"}</td><td>${n.guru || "-"}</td><td>${n.semester || "-"}</td><td>${n.tugas ?? "-"}</td><td>${n.uts ?? "-"}</td><td>${n.uas ?? "-"}</td><td><strong>${n.nilaiAkhir ?? "-"}</strong></td><td>${statusLabel}</td><td><div class="aksi">${aksi}</div></td>`;
       tabel.appendChild(tr);
     });
   } catch (error) {
     console.error(error);
-    tabel.innerHTML = `<tr><td colspan="11" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
+    tabel.innerHTML = `<tr><td colspan="12" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
   }
 }
 
