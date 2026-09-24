@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Akademik SMKS Mandiri</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f766e, #164e63);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #164e63;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 18px;
+      border: 1px solid #ccc;
+      border-radius: 9px;
+      font-size: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 9px;
+      background: #0f766e;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: .9;
+    }
+
+    #pesan {
+      margin-top: 15px;
+      text-align: center;
+      color: #d00;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-box">
+
+    <div class="logo">🎓</div>
+
+    <h1>E-AKADEMIK</h1>
+
+    <p class="subtitle">
+      SMKS Mandiri Bandar Agung
+    </p>
+
+    <form id="loginForm">
+
+      <label for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        placeholder="Masukkan email"
+        required
+      >
+
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        placeholder="Masukkan password"
+        required
+      >
+
+      <button type="submit">
+        LOGIN
+      </button>
+
+    </form>
+
+    <div id="pesan"></div>
+
+    <div class="footer">
+      © 2026 E-Akademik SMKS Mandiri
+    </div>
+
+  </div>
+
+  <script type="module">
+
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+    import {
+      getAuth,
+      signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+
+    // KONFIGURASI FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
+      authDomain: "e-akademik-smks-mandiri-128fd.firebaseapp.com",
+      projectId: "e-akademik-smks-mandiri-128fd",
+      storageBucket: "e-akademik-smks-mandiri-128fd.firebasestorage.app",
+      messagingSenderId: "551692981969",
+      appId: "1:551692981969:web:97513dca9fe111f96a57f0"
+    };
+
+
+    // HUBUNGKAN KE FIREBASE
+    const app = initializeApp(firebaseConfig);
+
+    const auth = getAuth(app);
+
+
+    // PROSES LOGIN
+    document
+      .getElementById("loginForm")
+      .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const email =
+          document.getElementById("email").value;
+
+        const password =
+          document.getElementById("password").value;
+
+        const pesan =
+          document.getElementById("pesan");
+
+        pesan.textContent = "Sedang login...";
+
+        try {
+
+          const userCredential =
+            await signInWithEmailAndPassword(
+              auth,
+              email,
+              password
+            );
+
+          pesan.style.color = "green";
+
+          pesan.textContent =
+            "Login berhasil!";
+
+          setTimeout(() => {
+
+            window.location.href =
+              "dashboard.html";
+
+          }, 1000);
+
+        } catch (error) {
+
+          pesan.style.color = "red";
+
+          pesan.textContent =
+            "Email atau password salah.";
+
+          console.error(error);
+
+        }
+
+      });
+
+  </script>
+
+</body>
+</html>
