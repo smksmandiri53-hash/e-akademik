@@ -269,6 +269,11 @@
       <p>Kelola pengumuman.</p>
     </div>
 
+    <div class="card" id="menuERapor">
+      <h3>📄 E-Rapor</h3>
+      <p>Lihat dan cetak rapor siswa.</p>
+    </div>
+
   </div>
 
 
@@ -1067,6 +1072,44 @@
 
 </div>
 
+
+  <!-- =========================
+       PANEL E-RAPOR
+  ========================== -->
+
+  <div class="panel" id="panelERapor" style="display:none;">
+    <div class="topbar">
+      <h2>📄 E-Rapor Siswa</h2>
+      <button class="btn-primary" id="btnCetakRapor">🖨️ Cetak Rapor</button>
+    </div>
+    <div id="pesanERapor" class="pesan"></div>
+
+    <div id="formERapor" style="display:block;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:10px;">
+      <div class="form-grid">
+        <div class="field">
+          <label>Kelas</label>
+          <select id="kelasERapor"><option value="">-- Pilih Kelas --</option></select>
+        </div>
+        <div class="field">
+          <label>Siswa</label>
+          <select id="siswaERapor"><option value="">-- Pilih Siswa --</option></select>
+        </div>
+        <div class="field">
+          <label>Semester</label>
+          <select id="semesterERapor">
+            <option value="">-- Pilih Semester --</option>
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap">Genap</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnTampilkanRapor" style="margin-top:20px;">Tampilkan Rapor</button>
+    </div>
+
+    <div id="previewERapor" style="margin-top:25px;">
+      <div style="text-align:center;padding:30px;">Pilih kelas, siswa, dan semester untuk menampilkan rapor.</div>
+    </div>
+  </div>
 
 <script type="module">
 
@@ -3685,9 +3728,9 @@ function tampilkanPesanNilai(teks, tipe) {
    MENU PENGUMUMAN
 ========================= */
 document.getElementById("menuPengumuman").addEventListener("click", async () => {
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman"].forEach(id => document.getElementById(id).style.display="none");
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor"].forEach(id => document.getElementById(id).style.display="none");
   document.getElementById("panelPengumuman").style.display="block";
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman"].forEach(id => document.getElementById(id).classList.remove("aktif"));
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor"].forEach(id => document.getElementById(id).classList.remove("aktif"));
   document.getElementById("menuPengumuman").classList.add("aktif");
   await tampilkanPengumuman();
 });
@@ -3707,7 +3750,7 @@ window.editPengumuman=function(id){const p=dataPengumuman.find(x=>x.id===id);if(
 window.hapusPengumuman=async function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;if(!confirm(`Hapus pengumuman "${p.judul||""}"?`))return;try{await deleteDoc(doc(db,"pengumuman",id));pesanPengumuman("Pengumuman berhasil dihapus.","sukses");await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menghapus pengumuman: "+error.message,"error");}};
 document.getElementById("tanggalPengumuman").value=tanggalHariIni();
 
-</script>
+\n/* =========================\n   MENU E-RAPOR\n========================= */\nlet dataERaporSiswa=[];\nlet dataERaporNilai=[];\n\nfunction pesanERapor(teks,tipe){\n  const e=document.getElementById("pesanERapor");\n  e.textContent=teks; e.className="pesan "+tipe; e.style.display="block";\n  setTimeout(()=>e.style.display="none",4000);\n}\n\nfunction hideAllPanelsERapor(){\n  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});\n  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});\n}\n\nasync function siapkanERapor(){\n  await tampilkanSiswa();\n  await tampilkanKelas();\n  const ks=document.getElementById("kelasERapor"), ss=document.getElementById("siswaERapor");\n  const sebelumnya=ks.value;\n  ks.innerHTML='<option value="">-- Pilih Kelas --</option>';\n  dataKelas.filter(k=>(k.status||"Aktif")==="Aktif").sort((a,b)=>String(a.nama||a.namaKelas||a.kelas||"").localeCompare(String(b.nama||b.namaKelas||b.kelas||"),"id")).forEach(k=>{const n=k.nama||k.namaKelas||k.kelas||"";if(n){const o=document.createElement("option");o.value=n;o.textContent=n;ks.appendChild(o);}});\n  if([...ks.options].some(o=>o.value===sebelumnya))ks.value=sebelumnya;\n  isiSiswaERapor();\n}\n\nfunction isiSiswaERapor(){\n  const kelas=document.getElementById("kelasERapor").value, ss=document.getElementById("siswaERapor"), sebelumnya=ss.value;\n  ss.innerHTML='<option value="">-- Pilih Siswa --</option>';\n  dataSiswa.filter(s=>(s.status||"Aktif")==="Aktif" && (!kelas||s.kelas===kelas)).sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id")).forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=(s.nama||"-")+" — "+(s.nis||"-");ss.appendChild(o);});\n  if([...ss.options].some(o=>o.value===sebelumnya))ss.value=sebelumnya;\n}\n\ndocument.getElementById("menuERapor").addEventListener("click",async()=>{\n  hideAllPanelsERapor(); document.getElementById("panelERapor").style.display="block"; document.getElementById("menuERapor").classList.add("aktif"); await siapkanERapor();\n});\n\ndocument.getElementById("kelasERapor").addEventListener("change",isiSiswaERapor);\n\ndocument.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{\n  const kelas=document.getElementById("kelasERapor").value, siswaId=document.getElementById("siswaERapor").value, semester=document.getElementById("semesterERapor").value;\n  if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}\n  try{\n    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});\n    const siswa=dataSiswa.find(s=>s.id===siswaId);\n    const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});\n    const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));\n    let total=0; rows.forEach(n=>total+=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4)));\n    const avg=rows.length?total/rows.length:0;\n    const esc=v=>String(v??"-").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));\n    document.getElementById("previewERapor").innerHTML=`\n      <div id="lembarRapor" style="background:white;padding:35px;border:1px solid #ddd;max-width:900px;margin:auto;">\n        <div style="text-align:center;border-bottom:3px double #222;padding-bottom:15px;margin-bottom:20px;">\n          <h2 style="margin:0;">E-RAPOR SISWA</h2><h3 style="margin:6px 0;">SMKS MANDIRI BANDAR AGUNG</h3>\n          <p style="margin:0;">Laporan Hasil Belajar Siswa</p>\n        </div>\n        <table style="width:100%;margin-bottom:20px;border-collapse:collapse;">\n          <tr><td style="padding:5px;width:20%;"><b>Nama</b></td><td>${esc(siswa?.nama)}</td><td style="width:20%;"><b>Kelas</b></td><td>${esc(kelas)}</td></tr>\n          <tr><td style="padding:5px;"><b>NIS</b></td><td>${esc(siswa?.nis)}</td><td><b>Semester</b></td><td>${esc(semester)}</td></tr>\n        </table>\n        <table style="width:100%;border-collapse:collapse;">\n          <thead><tr><th style="border:1px solid #222;padding:8px;">No</th><th style="border:1px solid #222;padding:8px;text-align:left;">Mata Pelajaran</th><th style="border:1px solid #222;padding:8px;">Tugas</th><th style="border:1px solid #222;padding:8px;">UTS</th><th style="border:1px solid #222;padding:8px;">UAS</th><th style="border:1px solid #222;padding:8px;">Nilai Akhir</th></tr></thead>\n          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>'}</tbody>\n          <tfoot><tr><td colspan="5" style="border:1px solid #222;padding:8px;text-align:right;"><b>Rata-rata</b></td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${avg.toFixed(2)}</b></td></tr></tfoot>\n        </table>\n        <div style="display:flex;justify-content:space-between;margin-top:55px;text-align:center;gap:30px;"><div style="flex:1;">Mengetahui,<br>Wali Kelas<br><br><br>________________________</div><div style="flex:1;">Orang Tua/Wali<br><br><br><br>________________________</div><div style="flex:1;">Kepala Sekolah<br><br><br><br>________________________</div></div>\n      </div>`;\n  }catch(e){console.error(e);pesanERapor("Gagal mengambil nilai: "+e.message,"error");}\n});\n\ndocument.getElementById("btnCetakRapor").addEventListener("click",()=>{\n  const el=document.getElementById("lembarRapor"); if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}\n  const w=window.open("","_blank"); w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;}@page{size:A4;margin:15mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}}</style></head><body>${el.outerHTML}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);\n});\n\n</script>
 
 </body>
 </html>
