@@ -203,6 +203,21 @@
       color: #842029;
     }
 
+    .akun-box {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 15px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .akun-info {
+      background: white;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
     @media (max-width: 600px) {
       .container {
         padding: 15px;
@@ -272,6 +287,11 @@
     <div class="card" id="menuERapor">
       <h3>📄 E-Rapor</h3>
       <p>Lihat dan cetak rapor siswa.</p>
+    </div>
+
+    <div class="card" id="menuAkun">
+      <h3>🔐 Akun Login</h3>
+      <p>Ubah username/email dan password.</p>
     </div>
 
   </div>
@@ -1111,6 +1131,53 @@
     </div>
   </div>
 
+  <!-- =========================
+       PANEL AKUN LOGIN
+  ========================== -->
+
+  <div class="panel" id="panelAkun" style="display:none;">
+    <div class="topbar">
+      <h2>🔐 Pengaturan Akun Login</h2>
+    </div>
+
+    <div id="pesanAkun" class="pesan"></div>
+
+    <div class="akun-box">
+      <div class="akun-info">
+        <strong>Akun yang sedang digunakan</strong><br>
+        <span id="akunEmailSekarang">Memuat...</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Username / Email Baru</label>
+          <input type="email" id="emailBaru" placeholder="Masukkan email login baru">
+        </div>
+        <div class="field">
+          <label>Password Saat Ini</label>
+          <input type="password" id="passwordSaatIni" placeholder="Wajib diisi untuk verifikasi">
+        </div>
+        <div class="field">
+          <label>Password Baru</label>
+          <input type="password" id="passwordBaru" placeholder="Kosongkan jika tidak ingin mengubah">
+        </div>
+        <div class="field">
+          <label>Konfirmasi Password Baru</label>
+          <input type="password" id="konfirmasiPasswordBaru" placeholder="Ulangi password baru">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanAkun">💾 Simpan Perubahan</button>
+        <button class="btn-secondary" id="btnBatalAkun">Batal</button>
+      </div>
+
+      <p style="margin:15px 0 0;color:#666;font-size:13px;">
+        Username pada sistem ini adalah <b>email login Firebase</b>. Untuk keamanan, password saat ini wajib dimasukkan sebelum username atau password diubah.
+      </p>
+    </div>
+  </div>
+
 <script type="module">
 
 
@@ -1127,7 +1194,11 @@ from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
-  signOut
+  signOut,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateEmail,
+  updatePassword
 }
 from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
@@ -3728,9 +3799,9 @@ function tampilkanPesanNilai(teks, tipe) {
    MENU PENGUMUMAN
 ========================= */
 document.getElementById("menuPengumuman").addEventListener("click", async () => {
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor"].forEach(id => document.getElementById(id).style.display="none");
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun"].forEach(id => document.getElementById(id).style.display="none");
   document.getElementById("panelPengumuman").style.display="block";
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor"].forEach(id => document.getElementById(id).classList.remove("aktif"));
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id => document.getElementById(id).classList.remove("aktif"));
   document.getElementById("menuPengumuman").classList.add("aktif");
   await tampilkanPengumuman();
 });
@@ -3764,8 +3835,8 @@ function pesanERapor(teks,tipe){
 }
 
 function hideAllPanelsERapor(){
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
 async function siapkanERapor(){
@@ -3828,6 +3899,81 @@ document.getElementById("btnCetakRapor").addEventListener("click",()=>{
   const w=window.open("","_blank"); w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;}@page{size:A4;margin:15mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}}</style></head><body>${el.outerHTML}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
 });
 
+
+
+/* =========================
+   BAGIAN AKUN LOGIN
+========================= */
+function pesanAkun(teks, tipe){
+  const e=document.getElementById("pesanAkun");
+  e.textContent=teks;
+  e.className="pesan "+tipe;
+  e.style.display="block";
+  setTimeout(()=>e.style.display="none",5000);
+}
+
+function kosongkanFormAkun(){
+  document.getElementById("emailBaru").value="";
+  document.getElementById("passwordSaatIni").value="";
+  document.getElementById("passwordBaru").value="";
+  document.getElementById("konfirmasiPasswordBaru").value="";
+}
+
+function bukaPanelAkun(){
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun"].forEach(id=>document.getElementById(id).style.display="none");
+  document.getElementById("panelAkun").style.display="block";
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>document.getElementById(id).classList.remove("aktif"));
+  document.getElementById("menuAkun").classList.add("aktif");
+  const user=auth.currentUser;
+  document.getElementById("akunEmailSekarang").textContent=user?.email || "-";
+  document.getElementById("emailBaru").value=user?.email || "";
+}
+
+document.getElementById("menuAkun").addEventListener("click",bukaPanelAkun);
+document.getElementById("btnBatalAkun").addEventListener("click",()=>{kosongkanFormAkun();bukaPanelAkun();});
+
+document.getElementById("btnSimpanAkun").addEventListener("click",async()=>{
+  const user=auth.currentUser;
+  if(!user){pesanAkun("Sesi login tidak ditemukan. Silakan login kembali.","error");return;}
+
+  const emailBaru=document.getElementById("emailBaru").value.trim();
+  const passwordSaatIni=document.getElementById("passwordSaatIni").value;
+  const passwordBaru=document.getElementById("passwordBaru").value;
+  const konfirmasi=document.getElementById("konfirmasiPasswordBaru").value;
+  const emailLama=user.email || "";
+
+  if(!passwordSaatIni){pesanAkun("Password saat ini wajib diisi untuk verifikasi.","error");return;}
+  if(!emailBaru){pesanAkun("Username/email baru wajib diisi.","error");return;}
+  if(passwordBaru && passwordBaru.length<6){pesanAkun("Password baru minimal 6 karakter.","error");return;}
+  if(passwordBaru!==konfirmasi){pesanAkun("Konfirmasi password baru tidak sama.","error");return;}
+  if(emailBaru===emailLama && !passwordBaru){pesanAkun("Tidak ada perubahan yang dilakukan.","error");return;}
+
+  try{
+    const credential=EmailAuthProvider.credential(emailLama,passwordSaatIni);
+    await reauthenticateWithCredential(user,credential);
+
+    if(emailBaru!==emailLama){
+      await updateEmail(user,emailBaru);
+    }
+    if(passwordBaru){
+      await updatePassword(user,passwordBaru);
+    }
+
+    document.getElementById("emailAdmin").textContent="Login sebagai: "+user.email;
+    document.getElementById("akunEmailSekarang").textContent=user.email;
+    kosongkanFormAkun();
+    document.getElementById("emailBaru").value=user.email;
+    pesanAkun("Perubahan akun berhasil disimpan. Gunakan username/email dan password baru saat login berikutnya.","sukses");
+  }catch(error){
+    console.error(error);
+    let pesan="Gagal mengubah akun: "+error.message;
+    if(error.code==="auth/wrong-password" || error.code==="auth/invalid-credential") pesan="Password saat ini salah.";
+    else if(error.code==="auth/email-already-in-use") pesan="Email baru sudah digunakan oleh akun lain.";
+    else if(error.code==="auth/invalid-email") pesan="Format email baru tidak valid.";
+    else if(error.code==="auth/requires-recent-login") pesan="Sesi login sudah terlalu lama. Silakan logout lalu login kembali, kemudian coba lagi.";
+    pesanAkun(pesan,"error");
+  }
+});
 </script>
 
 </body>
