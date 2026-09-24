@@ -3748,13 +3748,37 @@ async function isiPilihanNilai() {
   await isiPilihanSiswaNilai();
 }
 
+function normalisasiKelasNilai(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function namaKelasSiswaNilai(s) {
+  // Mendukung data siswa lama maupun data siswa yang menyimpan nama kelas pada field berbeda.
+  const langsung = s.kelas || s.namaKelas || s.kelasNama || "";
+  if (langsung) return langsung;
+
+  // Jika kelas disimpan terpisah sebagai tingkat + jurusan, gabungkan sebagai cadangan.
+  const tingkat = String(s.tingkat || "").trim();
+  const jurusan = String(s.jurusan || "").trim();
+  return [tingkat, jurusan].filter(Boolean).join(" ");
+}
+
 async function isiPilihanSiswaNilai() {
   const kelasDipilih = document.getElementById("kelasNilai").value;
+  const kelasNormal = normalisasiKelasNilai(kelasDipilih);
   const siswa = document.getElementById("siswaNilai");
   const sebelumnya = siswa.value;
   siswa.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+
   dataSiswa
-    .filter(s => (s.status || "Aktif") === "Aktif" && (!kelasDipilih || s.kelas === kelasDipilih))
+    .filter(s => {
+      if ((s.status || "Aktif") !== "Aktif") return false;
+      if (!kelasNormal) return true;
+      return normalisasiKelasNilai(namaKelasSiswaNilai(s)) === kelasNormal;
+    })
     .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"))
     .forEach(s => {
       const o = document.createElement("option");
@@ -3762,6 +3786,7 @@ async function isiPilihanSiswaNilai() {
       o.textContent = `${s.nama || "-"}${s.nis ? " - " + s.nis : ""}`;
       siswa.appendChild(o);
     });
+
   if ([...siswa.options].some(o => o.value === sebelumnya)) siswa.value = sebelumnya;
 }
 
