@@ -166,7 +166,8 @@
     #formKelas,
     #formMapel,
     #formJadwal,
-    #formNilai {
+    #formNilai,
+    #formAbsensi {
       display: none;
       margin-top: 20px;
       padding: 20px;
@@ -178,7 +179,8 @@
     #panelKelas,
     #panelMapel,
     #panelJadwal,
-    #panelNilai {
+    #panelNilai,
+    #panelAbsensi {
       display: none;
     }
 
@@ -255,9 +257,9 @@
       <p>Kelola nilai siswa.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuAbsensi">
       <h3>📋 Absensi</h3>
-      <p>Kelola absensi.</p>
+      <p>Kelola absensi siswa.</p>
     </div>
 
     <div class="card">
@@ -960,6 +962,79 @@
 
   </div>
 
+  <!-- =========================
+       PANEL ABSENSI
+  ========================== -->
+
+  <div class="panel" id="panelAbsensi">
+    <div class="topbar">
+      <h2>📋 Absensi Siswa</h2>
+    </div>
+
+    <div id="pesanAbsensi" class="pesan"></div>
+
+    <div id="formAbsensi">
+      <h3>Input Absensi</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Tanggal</label>
+          <input type="date" id="tanggalAbsensi">
+        </div>
+        <div class="field">
+          <label>Kelas</label>
+          <select id="kelasAbsensi">
+            <option value="">-- Pilih Kelas --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Siswa</th>
+              <th>NIS</th>
+              <th>Status Kehadiran</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabelAbsensi">
+            <tr><td colspan="5" style="text-align:center;">Pilih tanggal dan kelas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-primary" id="btnSimpanAbsensi">Simpan Absensi</button>
+        <button class="btn-secondary" id="btnResetAbsensi">Reset</button>
+      </div>
+    </div>
+
+    <div style="margin-top:25px;">
+      <h3>Riwayat Absensi</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tanggal</th>
+              <th>Nama Siswa</th>
+              <th>NIS</th>
+              <th>Kelas</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabelRiwayatAbsensi">
+            <tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 
 
@@ -1045,6 +1120,7 @@ let dataMapel = [];
 
 let dataJadwal = [];
 let dataNilai = [];
+let dataAbsensi = [];
 
 
 const formSiswa =
@@ -1211,6 +1287,7 @@ document
     document.getElementById("panelMapel").style.display = "none";
     document.getElementById("panelJadwal").style.display = "none";
     document.getElementById("panelNilai").style.display = "none";
+    document.getElementById("panelAbsensi").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
@@ -1218,6 +1295,7 @@ document
     document.getElementById("menuMapel").classList.remove("aktif");
     document.getElementById("menuJadwal").classList.remove("aktif");
     document.getElementById("menuNilai").classList.remove("aktif");
+    document.getElementById("menuAbsensi").classList.remove("aktif");
 
     await tampilkanGuru();
     await tampilkanKelas();
@@ -1239,6 +1317,7 @@ document
     document.getElementById("panelMapel").style.display = "block";
     document.getElementById("panelJadwal").style.display = "none";
     document.getElementById("panelNilai").style.display = "none";
+    document.getElementById("panelAbsensi").style.display = "none";
 
     document.getElementById("menuSiswa").classList.remove("aktif");
     document.getElementById("menuGuru").classList.remove("aktif");
@@ -1284,7 +1363,7 @@ document.getElementById("menuNilai").addEventListener("click", async () => {
   document.getElementById("panelJadwal").style.display = "none";
   document.getElementById("panelNilai").style.display = "block";
 
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai"].forEach(id => {
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi"].forEach(id => {
     document.getElementById(id).classList.remove("aktif");
   });
   document.getElementById("menuNilai").classList.add("aktif");
@@ -1295,6 +1374,214 @@ document.getElementById("menuNilai").addEventListener("click", async () => {
   await tampilkanMapel();
   await tampilkanNilai();
 });
+
+/* =========================
+   MENU ABSENSI
+========================= */
+
+document.getElementById("menuAbsensi").addEventListener("click", async () => {
+  const panels = ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi"];
+  panels.forEach(id => document.getElementById(id).style.display = "none");
+  document.getElementById("panelAbsensi").style.display = "block";
+
+  const menus = ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi"];
+  menus.forEach(id => document.getElementById(id).classList.remove("aktif"));
+  document.getElementById("menuAbsensi").classList.add("aktif");
+
+  await tampilkanSiswa();
+  await tampilkanKelas();
+  isiPilihanKelasAbsensi();
+  await tampilkanRiwayatAbsensi();
+  document.getElementById("formAbsensi").style.display = "block";
+});
+
+/* =====================================================
+   BAGIAN ABSENSI
+===================================================== */
+
+function hariIni() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
+}
+
+function isiPilihanKelasAbsensi() {
+  const select = document.getElementById("kelasAbsensi");
+  const sebelumnya = select.value;
+  select.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+  dataKelas
+    .filter(k => (k.status || "Aktif") === "Aktif")
+    .sort((a,b) => String(a.nama || a.namaKelas || a.kelas || "").localeCompare(String(b.nama || b.namaKelas || b.kelas || ""), "id"))
+    .forEach(k => {
+      const nama = k.nama || k.namaKelas || k.kelas || "";
+      if (!nama) return;
+      const o = document.createElement("option");
+      o.value = nama;
+      o.textContent = nama;
+      select.appendChild(o);
+    });
+  if ([...select.options].some(o => o.value === sebelumnya)) select.value = sebelumnya;
+}
+
+async function muatSiswaAbsensi() {
+  const tanggal = document.getElementById("tanggalAbsensi").value;
+  const kelas = document.getElementById("kelasAbsensi").value;
+  const tabel = document.getElementById("tabelAbsensi");
+
+  if (!tanggal || !kelas) {
+    tabel.innerHTML = '<tr><td colspan="5" style="text-align:center;">Pilih tanggal dan kelas.</td></tr>';
+    return;
+  }
+
+  if (!dataSiswa.length) await tampilkanSiswa();
+  if (!dataAbsensi.length) await ambilDataAbsensi();
+
+  const siswaKelas = dataSiswa
+    .filter(s => (s.status || "Aktif") === "Aktif" && s.kelas === kelas)
+    .sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"));
+
+  if (!siswaKelas.length) {
+    tabel.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada siswa aktif di kelas ini.</td></tr>';
+    return;
+  }
+
+  tabel.innerHTML = "";
+  siswaKelas.forEach((siswa, index) => {
+    const existing = dataAbsensi.find(a => a.tanggal === tanggal && a.kelas === kelas && a.siswaId === siswa.id);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${siswa.nama || "-"}</td>
+      <td>${siswa.nis || "-"}</td>
+      <td>
+        <select class="status-absensi" data-siswa-id="${siswa.id}">
+          <option value="Hadir" ${(existing?.status || "Hadir") === "Hadir" ? "selected" : ""}>Hadir</option>
+          <option value="Sakit" ${(existing?.status || "") === "Sakit" ? "selected" : ""}>Sakit</option>
+          <option value="Izin" ${(existing?.status || "") === "Izin" ? "selected" : ""}>Izin</option>
+          <option value="Alpa" ${(existing?.status || "") === "Alpa" ? "selected" : ""}>Alpa</option>
+        </select>
+      </td>
+      <td>
+        ${existing ? `<button class="btn-danger" onclick="hapusAbsensi('${existing.id}')">Hapus</button>` : "-"}
+      </td>`;
+    tabel.appendChild(tr);
+  });
+}
+
+async function ambilDataAbsensi() {
+  try {
+    const snapshot = await getDocs(collection(db, "absensi"));
+    dataAbsensi = [];
+    snapshot.forEach(d => dataAbsensi.push({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanAbsensi("Gagal mengambil data absensi: " + error.message, "error");
+  }
+}
+
+async function tampilkanRiwayatAbsensi() {
+  const tabel = document.getElementById("tabelRiwayatAbsensi");
+  tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>';
+  await ambilDataAbsensi();
+
+  dataAbsensi.sort((a,b) => String(b.tanggal || "").localeCompare(String(a.tanggal || "")) || String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
+  if (!dataAbsensi.length) {
+    tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada riwayat absensi.</td></tr>';
+    return;
+  }
+
+  tabel.innerHTML = "";
+  dataAbsensi.forEach((a, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${a.tanggal || "-"}</td>
+      <td>${a.siswaNama || "-"}</td>
+      <td>${a.nis || "-"}</td>
+      <td>${a.kelas || "-"}</td>
+      <td>${a.status || "-"}</td>
+      <td><div class="aksi">
+        <button class="btn-warning" onclick="editAbsensi('${a.id}')">Edit</button>
+        <button class="btn-danger" onclick="hapusAbsensi('${a.id}')">Hapus</button>
+      </div></td>`;
+    tabel.appendChild(tr);
+  });
+}
+
+document.getElementById("tanggalAbsensi").value = hariIni();
+document.getElementById("tanggalAbsensi").addEventListener("change", muatSiswaAbsensi);
+document.getElementById("kelasAbsensi").addEventListener("change", muatSiswaAbsensi);
+
+document.getElementById("btnSimpanAbsensi").addEventListener("click", async () => {
+  const tanggal = document.getElementById("tanggalAbsensi").value;
+  const kelas = document.getElementById("kelasAbsensi").value;
+  if (!tanggal || !kelas) {
+    tampilkanPesanAbsensi("Tanggal dan kelas wajib dipilih.", "error");
+    return;
+  }
+
+  const siswaKelas = dataSiswa.filter(s => (s.status || "Aktif") === "Aktif" && s.kelas === kelas);
+  const pilihan = [...document.querySelectorAll(".status-absensi")];
+  if (!pilihan.length) {
+    tampilkanPesanAbsensi("Tidak ada siswa untuk disimpan.", "error");
+    return;
+  }
+
+  try {
+    for (const select of pilihan) {
+      const siswa = siswaKelas.find(s => s.id === select.dataset.siswaId);
+      if (!siswa) continue;
+      const existing = dataAbsensi.find(a => a.tanggal === tanggal && a.kelas === kelas && a.siswaId === siswa.id);
+      const data = { tanggal, kelas, siswaId: siswa.id, siswaNama: siswa.nama || "-", nis: siswa.nis || "-", status: select.value };
+      if (existing) await updateDoc(doc(db, "absensi", existing.id), data);
+      else await addDoc(collection(db, "absensi"), data);
+    }
+    tampilkanPesanAbsensi("Absensi berhasil disimpan.", "sukses");
+    await tampilkanRiwayatAbsensi();
+    await muatSiswaAbsensi();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanAbsensi("Gagal menyimpan absensi: " + error.message, "error");
+  }
+});
+
+document.getElementById("btnResetAbsensi").addEventListener("click", async () => {
+  document.getElementById("tanggalAbsensi").value = hariIni();
+  document.getElementById("kelasAbsensi").value = "";
+  document.getElementById("tabelAbsensi").innerHTML = '<tr><td colspan="5" style="text-align:center;">Pilih tanggal dan kelas.</td></tr>';
+});
+
+window.editAbsensi = async function(id) {
+  const a = dataAbsensi.find(item => item.id === id);
+  if (!a) return;
+  document.getElementById("tanggalAbsensi").value = a.tanggal || hariIni();
+  document.getElementById("kelasAbsensi").value = a.kelas || "";
+  await muatSiswaAbsensi();
+  window.scrollTo({top: 0, behavior: "smooth"});
+};
+
+window.hapusAbsensi = async function(id) {
+  const a = dataAbsensi.find(item => item.id === id);
+  if (!a) return;
+  if (!confirm(`Hapus absensi ${a.siswaNama || "siswa"} pada ${a.tanggal || "tanggal ini"}?`)) return;
+  try {
+    await deleteDoc(doc(db, "absensi", id));
+    tampilkanPesanAbsensi("Data absensi berhasil dihapus.", "sukses");
+    await tampilkanRiwayatAbsensi();
+    await muatSiswaAbsensi();
+  } catch (error) {
+    console.error(error);
+    tampilkanPesanAbsensi("Gagal menghapus absensi: " + error.message, "error");
+  }
+};
+
+function tampilkanPesanAbsensi(teks, tipe) {
+  const pesan = document.getElementById("pesanAbsensi");
+  pesan.textContent = teks;
+  pesan.className = "pesan " + tipe;
+  pesan.style.display = "block";
+  setTimeout(() => { pesan.style.display = "none"; }, 4000);
+}
 
 /* =====================================================
    BAGIAN MATA PELAJARAN
