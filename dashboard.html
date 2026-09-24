@@ -167,7 +167,8 @@
     #formMapel,
     #formJadwal,
     #formNilai,
-    #formAbsensi {
+    #formAbsensi,
+    #formPengumuman {
       display: none;
       margin-top: 20px;
       padding: 20px;
@@ -180,7 +181,8 @@
     #panelMapel,
     #panelJadwal,
     #panelNilai,
-    #panelAbsensi {
+    #panelAbsensi,
+    #panelPengumuman {
       display: none;
     }
 
@@ -262,7 +264,7 @@
       <p>Kelola absensi siswa.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="menuPengumuman">
       <h3>📢 Pengumuman</h3>
       <p>Kelola pengumuman.</p>
     </div>
@@ -1033,6 +1035,34 @@
       </div>
     </div>
   </div>
+
+  <!-- =========================
+       PANEL PENGUMUMAN
+  ========================== -->
+
+  <div class="panel" id="panelPengumuman">
+    <div class="topbar">
+      <h2>📢 Pengumuman</h2>
+      <button class="btn-primary" id="btnTambahPengumuman">+ Tambah Pengumuman</button>
+    </div>
+    <div id="pesanPengumuman" class="pesan"></div>
+    <div id="formPengumuman">
+      <h3 id="judulFormPengumuman">Tambah Pengumuman</h3>
+      <input type="hidden" id="idPengumuman">
+      <div class="form-grid">
+        <div class="field"><label>Judul</label><input type="text" id="judulPengumuman" placeholder="Judul pengumuman"></div>
+        <div class="field"><label>Tanggal</label><input type="date" id="tanggalPengumuman"></div>
+        <div class="field"><label>Status</label><select id="statusPengumuman"><option value="Aktif">Aktif</option><option value="Nonaktif">Nonaktif</option></select></div>
+        <div class="field" style="grid-column:1/-1"><label>Isi Pengumuman</label><textarea id="isiPengumuman" rows="5" placeholder="Tulis isi pengumuman..."></textarea></div>
+      </div>
+      <div style="margin-top:20px"><button class="btn-primary" id="btnSimpanPengumuman">Simpan</button> <button class="btn-secondary" id="btnBatalPengumuman">Batal</button></div>
+    </div>
+    <div class="table-wrapper">
+      <table><thead><tr><th>No</th><th>Tanggal</th><th>Judul</th><th>Isi</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody id="tabelPengumuman"><tr><td colspan="6" style="text-align:center">Memuat data...</td></tr></tbody></table>
+    </div>
+  </div>
+
 
 
 </div>
@@ -3649,6 +3679,33 @@ function tampilkanPesanNilai(teks, tipe) {
   pesan.style.display = "block";
   setTimeout(() => { pesan.style.display = "none"; }, 4000);
 }
+
+
+/* =========================
+   MENU PENGUMUMAN
+========================= */
+document.getElementById("menuPengumuman").addEventListener("click", async () => {
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman"].forEach(id => document.getElementById(id).style.display="none");
+  document.getElementById("panelPengumuman").style.display="block";
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman"].forEach(id => document.getElementById(id).classList.remove("aktif"));
+  document.getElementById("menuPengumuman").classList.add("aktif");
+  await tampilkanPengumuman();
+});
+
+/* =========================
+   BAGIAN PENGUMUMAN
+========================= */
+let dataPengumuman=[];
+function tanggalHariIni(){ const d=new Date(); const off=d.getTimezoneOffset(); return new Date(d.getTime()-off*60000).toISOString().slice(0,10); }
+function pesanPengumuman(teks,tipe){const e=document.getElementById("pesanPengumuman");e.textContent=teks;e.className="pesan "+tipe;e.style.display="block";setTimeout(()=>e.style.display="none",4000);}
+function kosongkanPengumuman(){document.getElementById("idPengumuman").value="";document.getElementById("judulPengumuman").value="";document.getElementById("isiPengumuman").value="";document.getElementById("tanggalPengumuman").value=tanggalHariIni();document.getElementById("statusPengumuman").value="Aktif";}
+document.getElementById("btnTambahPengumuman").addEventListener("click",()=>{kosongkanPengumuman();document.getElementById("judulFormPengumuman").textContent="Tambah Pengumuman";document.getElementById("formPengumuman").style.display="block";});
+document.getElementById("btnBatalPengumuman").addEventListener("click",()=>{document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();});
+document.getElementById("btnSimpanPengumuman").addEventListener("click",async()=>{const id=document.getElementById("idPengumuman").value,judul=document.getElementById("judulPengumuman").value.trim(),isi=document.getElementById("isiPengumuman").value.trim(),tanggal=document.getElementById("tanggalPengumuman").value,status=document.getElementById("statusPengumuman").value;if(!judul||!isi||!tanggal){pesanPengumuman("Judul, isi, dan tanggal wajib diisi.","error");return;}try{const data={judul,isi,tanggal,status};if(id){await updateDoc(doc(db,"pengumuman",id),data);pesanPengumuman("Pengumuman berhasil diperbarui.","sukses");}else{await addDoc(collection(db,"pengumuman"),data);pesanPengumuman("Pengumuman berhasil ditambahkan.","sukses");}document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menyimpan pengumuman: "+error.message,"error");}});
+async function tampilkanPengumuman(){const t=document.getElementById("tabelPengumuman");t.innerHTML='<tr><td colspan="6" style="text-align:center">Memuat data...</td></tr>';try{const snap=await getDocs(collection(db,"pengumuman"));dataPengumuman=[];snap.forEach(d=>dataPengumuman.push({id:d.id,...d.data()}));dataPengumuman.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));if(!dataPengumuman.length){t.innerHTML='<tr><td colspan="6" style="text-align:center">Belum ada pengumuman.</td></tr>';return;}t.innerHTML="";dataPengumuman.forEach((p,i)=>{const tr=document.createElement("tr");const isi=String(p.isi||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");tr.innerHTML=`<td>${i+1}</td><td>${p.tanggal||"-"}</td><td>${p.judul||"-"}</td><td style="white-space:pre-wrap;max-width:420px">${isi}</td><td>${p.status||"Aktif"}</td><td><div class="aksi"><button class="btn-warning" onclick="editPengumuman('${p.id}')">Edit</button><button class="btn-danger" onclick="hapusPengumuman('${p.id}')">Hapus</button></div></td>`;t.appendChild(tr);});}catch(error){console.error(error);t.innerHTML=`<tr><td colspan="6" style="color:red;text-align:center">Gagal mengambil data: ${error.message}</td></tr>`;}}
+window.editPengumuman=function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;document.getElementById("idPengumuman").value=p.id;document.getElementById("judulPengumuman").value=p.judul||"";document.getElementById("isiPengumuman").value=p.isi||"";document.getElementById("tanggalPengumuman").value=p.tanggal||tanggalHariIni();document.getElementById("statusPengumuman").value=p.status||"Aktif";document.getElementById("judulFormPengumuman").textContent="Edit Pengumuman";document.getElementById("formPengumuman").style.display="block";window.scrollTo({top:0,behavior:"smooth"});};
+window.hapusPengumuman=async function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;if(!confirm(`Hapus pengumuman "${p.judul||""}"?`))return;try{await deleteDoc(doc(db,"pengumuman",id));pesanPengumuman("Pengumuman berhasil dihapus.","sukses");await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menghapus pengumuman: "+error.message,"error");}};
+document.getElementById("tanggalPengumuman").value=tanggalHariIni();
 
 </script>
 
