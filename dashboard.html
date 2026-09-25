@@ -1395,9 +1395,15 @@ async function muatProfilPengguna(user) {
       document.getElementById("roleUser").textContent = "Role tidak valid. Gunakan admin, guru, atau siswa.";
       return false;
     }
+    // Normalisasi ID siswa agar tetap terbaca bila nama field berbeda/berisi spasi.
+    const siswaIdRaw = profilUser.siswaId ?? profilUser.siswaID ?? profilUser.studentId ?? profilUser.idSiswa ?? "";
+    profilUser.siswaId = typeof siswaIdRaw === "string" ? siswaIdRaw.trim() : siswaIdRaw;
+
     if (roleUser === "siswa" && !profilUser.siswaId) {
-      document.getElementById("roleUser").textContent = "Role: SISWA • Akun belum terhubung ke data siswa.";
+      document.getElementById("emailAdmin").textContent = "Login sebagai: " + (profilUser.nama || user.email || "Siswa") + " (" + (user.email || "") + ")";
+      document.getElementById("roleUser").textContent = "Role: SISWA • siswaId belum terbaca. UID akun: " + user.uid;
       document.getElementById("judulDashboard").textContent = "Akun Siswa Belum Terhubung";
+      console.error("Profil siswa tidak memiliki siswaId. Pastikan users/" + user.uid + " memiliki field siswaId yang berisi ID dokumen pada koleksi siswa.");
       return false;
     }
     const namaTampil = profilUser.nama || user.email || "Pengguna";
