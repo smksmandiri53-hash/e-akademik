@@ -1293,6 +1293,8 @@ import {
   setDoc,
   collection,
   getDocs,
+  query,
+  where,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -4032,13 +4034,36 @@ async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
   tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>';
   try {
-    const snapshot = await getDocs(collection(db, "nilai"));
+    let snapshot;
+
+    // Sesuaikan query dengan Firestore Rules agar Guru hanya
+    // membaca nilai yang dia ajukan sendiri dan Siswa hanya
+    // membaca nilai miliknya yang sudah disetujui.
+    if (roleUser === "admin") {
+      snapshot = await getDocs(collection(db, "nilai"));
+    } else if (roleUser === "guru") {
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("submittedByUid", "==", currentUser?.uid || "")
+        )
+      );
+    } else if (roleUser === "siswa") {
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("siswaId", "==", profilUser?.siswaId || ""),
+          where("status", "==", "disetujui")
+        )
+      );
+    } else {
+      snapshot = { forEach: () => {} };
+    }
+
     dataNilai = [];
     snapshot.forEach(d => {
       const item = { id: d.id, ...d.data() };
-      if (roleUser === "admin" || (roleUser === "guru" && item.submittedByUid === currentUser?.uid) || (roleUser === "siswa" && item.siswaId === profilUser?.siswaId && item.status === "disetujui")) {
-        dataNilai.push(item);
-      }
+      dataNilai.push(item);
     });
     dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
     if (!dataNilai.length) {
