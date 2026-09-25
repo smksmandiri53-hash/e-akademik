@@ -54,8 +54,6 @@
         <input type="text" id="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." autocomplete="name" required>
         <label for="nipGuru">NIP</label>
         <input type="text" id="nipGuru" placeholder="Masukkan NIP" autocomplete="off" required>
-        <label for="mapelGuru">Mata Pelajaran</label>
-        <input type="text" id="mapelGuru" placeholder="Contoh: Matematika" required>
         <label for="kelasWaliGuru">Kelas Wali <span style="font-weight:normal;color:#777">(opsional)</span></label>
         <input type="text" id="kelasWaliGuru" placeholder="Contoh: XI TKJ 1" autocomplete="off">
         <label for="emailGuru">Email</label>
@@ -128,7 +126,6 @@
       event.preventDefault();
       const nama=document.getElementById("namaGuru").value.trim();
       const nip=document.getElementById("nipGuru").value.trim();
-      const mapel=document.getElementById("mapelGuru").value.trim();
       const kelasWali=document.getElementById("kelasWaliGuru").value.trim();
       const email=document.getElementById("emailGuru").value.trim();
       const password=document.getElementById("passwordGuru").value;
@@ -142,7 +139,7 @@
         const userCredential=await createUserWithEmailAndPassword(auth,email,password);
         const user=userCredential.user;
         await setDoc(doc(db,"users",user.uid),{
-          nama,email,role:"guru",nip,mapel,kelasWali,dibuatPada:serverTimestamp()
+          nama,email,role:"guru",nip,kelasWali,dibuatPada:serverTimestamp()
         });
         await signOut(auth);
         document.getElementById("daftarForm").reset();
