@@ -4,224 +4,163 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Akademik SMKS Mandiri</title>
-
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #0f766e, #164e63);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .login-box {
-      width: 100%;
-      max-width: 400px;
-      background: white;
-      padding: 30px;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.2);
-    }
-
-    .logo {
-      text-align: center;
-      font-size: 50px;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      text-align: center;
-      color: #164e63;
-      margin-bottom: 5px;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 25px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-weight: bold;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px;
-      margin-bottom: 18px;
-      border: 1px solid #ccc;
-      border-radius: 9px;
-      font-size: 15px;
-    }
-
-    button {
-      width: 100%;
-      padding: 13px;
-      border: none;
-      border-radius: 9px;
-      background: #0f766e;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: .9;
-    }
-
-    #pesan {
-      margin-top: 15px;
-      text-align: center;
-      color: #d00;
-      font-size: 14px;
-    }
-
-    .footer {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+    body{min-height:100vh;background:linear-gradient(135deg,#0f766e,#164e63);display:flex;justify-content:center;align-items:center;padding:20px}
+    .login-box{width:100%;max-width:430px;background:white;padding:30px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+    .logo{text-align:center;font-size:50px;margin-bottom:10px}
+    h1{text-align:center;color:#164e63;margin-bottom:5px}
+    .subtitle{text-align:center;color:#666;margin-bottom:22px}
+    .mode-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+    .mode-btn{padding:11px;border:1px solid #0f766e;border-radius:9px;background:white;color:#0f766e;font-size:14px;font-weight:bold;cursor:pointer}
+    .mode-btn.aktif{background:#0f766e;color:white}
+    .form-panel{display:none}.form-panel.aktif{display:block}
+    .info-box{background:#f0fdfa;border-left:4px solid #0f766e;padding:11px 12px;margin-bottom:18px;border-radius:6px;color:#245;font-size:13px;line-height:1.5}
+    label{display:block;margin-bottom:7px;font-weight:bold;color:#333}
+    input{width:100%;padding:13px;margin-bottom:15px;border:1px solid #ccc;border-radius:9px;font-size:15px}
+    button[type=submit]{width:100%;padding:13px;border:none;border-radius:9px;background:#0f766e;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+    button[type=submit]:hover,.mode-btn:hover{opacity:.9}
+    .secondary-text{text-align:center;margin-top:12px;color:#777;font-size:12px;line-height:1.5}
+    #pesan{margin-top:15px;text-align:center;font-size:14px;line-height:1.5;min-height:20px}
+    .footer{margin-top:20px;text-align:center;font-size:12px;color:#888}
   </style>
 </head>
-
 <body>
-
   <div class="login-box">
-
     <div class="logo">🎓</div>
-
     <h1>E-AKADEMIK</h1>
+    <p class="subtitle">SMKS Mandiri Bandar Agung</p>
 
-    <p class="subtitle">
-      SMKS Mandiri Bandar Agung
-    </p>
-
-    <form id="loginForm">
-
-      <label for="email">Email</label>
-      <input
-        type="email"
-        id="email"
-        placeholder="Masukkan email"
-        required
-      >
-
-      <label for="password">Password</label>
-      <input
-        type="password"
-        id="password"
-        placeholder="Masukkan password"
-        required
-      >
-
-      <button type="submit">
-        LOGIN
-      </button>
-
-    </form>
-
-    <div id="pesan"></div>
-
-    <div class="footer">
-      © 2026 E-Akademik SMKS Mandiri
+    <div class="mode-buttons">
+      <button type="button" class="mode-btn aktif" id="btnModeLogin">🔐 Masuk Akun</button>
+      <button type="button" class="mode-btn" id="btnModeDaftar">📝 Buat Akun Guru</button>
     </div>
 
+    <div id="panelLogin" class="form-panel aktif">
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Masukkan email" autocomplete="email" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Masukkan password" autocomplete="current-password" required>
+        <button type="submit">LOGIN</button>
+      </form>
+      <p class="secondary-text">Gunakan email dan password akun yang sudah terdaftar.</p>
+    </div>
+
+    <div id="panelDaftar" class="form-panel">
+      <div class="info-box">Akun yang dibuat melalui halaman ini otomatis menjadi <b>akun Guru</b>. Role Admin tidak dapat dibuat dari halaman ini.</div>
+      <form id="daftarForm">
+        <label for="namaGuru">Nama Lengkap</label>
+        <input type="text" id="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." autocomplete="name" required>
+        <label for="nipGuru">NIP</label>
+        <input type="text" id="nipGuru" placeholder="Masukkan NIP" autocomplete="off" required>
+        <label for="mapelGuru">Mata Pelajaran</label>
+        <input type="text" id="mapelGuru" placeholder="Contoh: Matematika" required>
+        <label for="kelasWaliGuru">Kelas Wali <span style="font-weight:normal;color:#777">(opsional)</span></label>
+        <input type="text" id="kelasWaliGuru" placeholder="Contoh: XI TKJ 1" autocomplete="off">
+        <label for="emailGuru">Email</label>
+        <input type="email" id="emailGuru" placeholder="Masukkan email sendiri" autocomplete="email" required>
+        <label for="passwordGuru">Password</label>
+        <input type="password" id="passwordGuru" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+        <label for="konfirmasiPasswordGuru">Konfirmasi Password</label>
+        <input type="password" id="konfirmasiPasswordGuru" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
+        <button type="submit">BUAT AKUN GURU</button>
+      </form>
+      <p class="secondary-text">Setelah akun dibuat, silakan masuk menggunakan email dan password tersebut.</p>
+    </div>
+
+    <div id="pesan"></div>
+    <div class="footer">© 2026 E-Akademik SMKS Mandiri</div>
   </div>
 
   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-
-    import {
-      getAuth,
-      signInWithEmailAndPassword
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-
-
-    // KONFIGURASI FIREBASE
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
-      authDomain: "e-akademik-smks-mandiri-128fd.firebaseapp.com",
-      projectId: "e-akademik-smks-mandiri-128fd",
-      storageBucket: "e-akademik-smks-mandiri-128fd.firebasestorage.app",
-      messagingSenderId: "551692981969",
-      appId: "1:551692981969:web:97513dca9fe111f96a57f0"
+    const firebaseConfig={
+      apiKey:"AIzaSyBQb-W5Jaf2orW39-OYDOuh39xd8HhUkKQ",
+      authDomain:"e-akademik-smks-mandiri-128fd.firebaseapp.com",
+      projectId:"e-akademik-smks-mandiri-128fd",
+      storageBucket:"e-akademik-smks-mandiri-128fd.firebasestorage.app",
+      messagingSenderId:"551692981969",
+      appId:"1:551692981969:web:97513dca9fe111f96a57f0"
     };
 
+    const app=initializeApp(firebaseConfig);
+    const auth=getAuth(app);
+    const db=getFirestore(app);
+    const pesan=document.getElementById("pesan");
 
-    // HUBUNGKAN KE FIREBASE
-    const app = initializeApp(firebaseConfig);
+    function tampilkanPesan(teks,tipe="error"){
+      pesan.style.color=tipe==="sukses"?"green":"red";
+      pesan.textContent=teks;
+    }
 
-    const auth = getAuth(app);
+    function pilihMode(mode){
+      const loginAktif=mode==="login";
+      document.getElementById("panelLogin").classList.toggle("aktif",loginAktif);
+      document.getElementById("panelDaftar").classList.toggle("aktif",!loginAktif);
+      document.getElementById("btnModeLogin").classList.toggle("aktif",loginAktif);
+      document.getElementById("btnModeDaftar").classList.toggle("aktif",!loginAktif);
+      pesan.textContent="";
+    }
 
+    document.getElementById("btnModeLogin").addEventListener("click",()=>pilihMode("login"));
+    document.getElementById("btnModeDaftar").addEventListener("click",()=>pilihMode("daftar"));
 
-    // PROSES LOGIN
-    document
-      .getElementById("loginForm")
-      .addEventListener("submit", async function(event) {
+    document.getElementById("loginForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const email=document.getElementById("email").value.trim();
+      const password=document.getElementById("password").value;
+      tampilkanPesan("Sedang login...","sukses");
+      try{
+        await signInWithEmailAndPassword(auth,email,password);
+        tampilkanPesan("Login berhasil! Mengarahkan ke dashboard...","sukses");
+        setTimeout(()=>{window.location.href="dashboard.html"},700);
+      }catch(error){
+        console.error(error);
+        tampilkanPesan("Email atau password salah.");
+      }
+    });
 
-        event.preventDefault();
+    document.getElementById("daftarForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const nama=document.getElementById("namaGuru").value.trim();
+      const nip=document.getElementById("nipGuru").value.trim();
+      const mapel=document.getElementById("mapelGuru").value.trim();
+      const kelasWali=document.getElementById("kelasWaliGuru").value.trim();
+      const email=document.getElementById("emailGuru").value.trim();
+      const password=document.getElementById("passwordGuru").value;
+      const konfirmasi=document.getElementById("konfirmasiPasswordGuru").value;
 
-        const email =
-          document.getElementById("email").value;
+      if(password.length<6){tampilkanPesan("Password minimal 6 karakter.");return;}
+      if(password!==konfirmasi){tampilkanPesan("Konfirmasi password tidak sama.");return;}
 
-        const password =
-          document.getElementById("password").value;
-
-        const pesan =
-          document.getElementById("pesan");
-
-        pesan.textContent = "Sedang login...";
-
-        try {
-
-          const userCredential =
-            await signInWithEmailAndPassword(
-              auth,
-              email,
-              password
-            );
-
-          pesan.style.color = "green";
-
-          pesan.textContent =
-            "Login berhasil!";
-
-          setTimeout(() => {
-
-            window.location.href =
-              "dashboard.html";
-
-          }, 1000);
-
-        } catch (error) {
-
-          pesan.style.color = "red";
-
-          pesan.textContent =
-            "Email atau password salah.";
-
-          console.error(error);
-
-        }
-
-      });
-
+      tampilkanPesan("Sedang membuat akun...","sukses");
+      try{
+        const userCredential=await createUserWithEmailAndPassword(auth,email,password);
+        const user=userCredential.user;
+        await setDoc(doc(db,"users",user.uid),{
+          nama,email,role:"guru",nip,mapel,kelasWali,dibuatPada:serverTimestamp()
+        });
+        await signOut(auth);
+        document.getElementById("daftarForm").reset();
+        pilihMode("login");
+        document.getElementById("email").value=email;
+        tampilkanPesan("Akun Guru berhasil dibuat. Silakan masuk menggunakan email dan password Anda.","sukses");
+      }catch(error){
+        console.error(error);
+        let pesanError="Gagal membuat akun.";
+        if(error.code==="auth/email-already-in-use") pesanError="Email tersebut sudah digunakan. Gunakan email lain atau masuk ke akun yang sudah ada.";
+        else if(error.code==="auth/invalid-email") pesanError="Format email tidak valid.";
+        else if(error.code==="auth/weak-password") pesanError="Password terlalu lemah. Gunakan minimal 6 karakter.";
+        else if(error.code==="auth/operation-not-allowed") pesanError="Login Email/Password belum diaktifkan di Firebase Authentication.";
+        else if(error.code==="permission-denied" || error.code==="firestore/permission-denied") pesanError="Akun berhasil dibuat di Firebase Authentication, tetapi profil Guru tidak dapat disimpan. Security Rules Firestore perlu mengizinkan pembuatan profil Guru.";
+        else if(error.code==="auth/network-request-failed") pesanError="Koneksi internet bermasalah. Silakan coba lagi.";
+        tampilkanPesan(pesanError);
+      }
+    });
   </script>
-
 </body>
 </html>
