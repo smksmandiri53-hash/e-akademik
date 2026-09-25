@@ -283,7 +283,7 @@
 
     <div class="card" id="menuAbsensi">
       <h3>📋 Absensi</h3>
-      <p>Kelola absensi siswa.</p>
+      <p>Kelola absensi siswa. Guru dapat menyimpan langsung.</p>
     </div>
 
     <div class="card" id="menuPengumuman">
@@ -1837,9 +1837,26 @@ document.getElementById("btnSimpanAbsensi").addEventListener("click", async () =
       const siswa = siswaKelas.find(s => s.id === select.dataset.siswaId);
       if (!siswa) continue;
       const existing = dataAbsensi.find(a => a.tanggal === tanggal && a.kelas === kelas && a.siswaId === siswa.id);
-      const data = { tanggal, kelas, siswaId: siswa.id, siswaNama: siswa.nama || "-", nis: siswa.nis || "-", status: select.value };
-      if (existing) await updateDoc(doc(db, "absensi", existing.id), data);
-      else await addDoc(collection(db, "absensi"), data);
+      const data = {
+        tanggal,
+        kelas,
+        siswaId: siswa.id,
+        siswaNama: siswa.nama || "-",
+        nis: siswa.nis || "-",
+        status: select.value,
+        diinputOlehUid: currentUser?.uid || "",
+        diinputOlehNama: profilUser?.nama || currentUser?.email || "-",
+        diinputOlehRole: roleUser || "",
+        diperbaruiPada: serverTimestamp()
+      };
+      if (existing) {
+        await updateDoc(doc(db, "absensi", existing.id), data);
+      } else {
+        await addDoc(collection(db, "absensi"), {
+          ...data,
+          dibuatPada: serverTimestamp()
+        });
+      }
     }
     tampilkanPesanAbsensi("Absensi berhasil disimpan.", "sukses");
     await tampilkanRiwayatAbsensi();
