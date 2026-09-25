@@ -58,6 +58,10 @@
     .card:hover {
       transform: translateY(-2px);
     }
+    .student-info { background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .student-info-row { display:grid; grid-template-columns:150px 1fr; gap:10px; padding:9px 0; border-bottom:1px solid #eee; }
+    .student-info-row:last-child { border-bottom:0; }
+    @media (max-width:600px){ .student-info-row{grid-template-columns:1fr;gap:3px;} }
 
     .card.aktif {
       border: 2px solid #0d6efd;
@@ -297,6 +301,17 @@
       <p>Ubah username/email dan password.</p>
     </div>
 
+    <div class="card" id="menuDataSaya" style="display:none;"><h3>👤 Data Saya</h3><p>Lihat data pribadi siswa.</p></div>
+    <div class="card" id="menuNilaiSaya" style="display:none;"><h3>📝 Nilai Saya</h3><p>Lihat nilai yang sudah disahkan.</p></div>
+    <div class="card" id="menuAbsensiSaya" style="display:none;"><h3>📋 Absensi Saya</h3><p>Lihat riwayat kehadiran.</p></div>
+    <div class="card" id="menuRaporSaya" style="display:none;"><h3>📄 Rapor Saya</h3><p>Lihat dan cetak e-rapor.</p></div>
+    <div class="card" id="menuPengumumanSaya" style="display:none;"><h3>📢 Pengumuman</h3><p>Lihat pengumuman sekolah.</p></div>
+
+  </div>
+
+  <div class="panel" id="panelDataSaya" style="display:none;">
+    <div class="topbar"><h2>👤 Data Saya</h2></div>
+    <div class="student-info" id="dataPribadiSiswa">Memuat data siswa...</div>
   </div>
 
 
@@ -1365,28 +1380,32 @@ async function muatProfilPengguna(user) {
 
     if (snapProfil.exists()) {
       profilUser = snapProfil.data();
-      roleUser = profilUser.role === "admin" ? "admin" : "guru";
+      const role = String(profilUser.role || "").toLowerCase();
+      roleUser = ["admin", "guru", "siswa"].includes(role) ? role : "";
     } else {
-      // Role wajib berasal dari profil Firestore.
       profilUser = null;
       roleUser = "";
       document.getElementById("emailAdmin").textContent = "Login: " + (user.email || "-");
-      document.getElementById("roleUser").textContent = "Role belum terdaftar. Buat users/" + user.uid + " dengan role admin atau guru.";
+      document.getElementById("roleUser").textContent = "Role belum terdaftar. Buat users/" + user.uid + " dengan role admin, guru, atau siswa.";
       document.getElementById("judulDashboard").textContent = "Profil Belum Terdaftar";
       console.error("Profil users/" + user.uid + " tidak ditemukan.");
       return false;
     }
-
+    if (!roleUser) {
+      document.getElementById("roleUser").textContent = "Role tidak valid. Gunakan admin, guru, atau siswa.";
+      return false;
+    }
+    if (roleUser === "siswa" && !profilUser.siswaId) {
+      document.getElementById("roleUser").textContent = "Role: SISWA • Akun belum terhubung ke data siswa.";
+      document.getElementById("judulDashboard").textContent = "Akun Siswa Belum Terhubung";
+      return false;
+    }
     const namaTampil = profilUser.nama || user.email || "Pengguna";
-    const roleTampil = roleUser === "admin" ? "ADMIN" : "GURU";
-
-    document.getElementById("emailAdmin").textContent =
-      "Login sebagai: " + namaTampil + " (" + (user.email || "") + ")";
-    document.getElementById("roleUser").textContent =
-      "Role: " + roleTampil + (profilUser.kelasWali ? " • Wali Kelas: " + profilUser.kelasWali : "");
-    document.getElementById("judulDashboard").textContent =
-      roleUser === "admin" ? "Dashboard Admin" : "Dashboard Guru";
-
+    const roleTampil = roleUser === "admin" ? "ADMIN" : roleUser === "guru" ? "GURU" : "SISWA";
+    document.getElementById("emailAdmin").textContent = "Login sebagai: " + namaTampil + " (" + (user.email || "") + ")";
+    document.getElementById("roleUser").textContent = "Role: " + roleTampil + (roleUser === "guru" && profilUser.kelasWali ? " • Wali Kelas: " + profilUser.kelasWali : "");
+    document.getElementById("judulDashboard").textContent = roleUser === "admin" ? "Dashboard Admin" : roleUser === "guru" ? "Dashboard Guru" : "Dashboard Siswa";
+    aturTampilanBerdasarkanRole();
     return true;
   } catch (error) {
     console.error("Gagal membaca profil pengguna:", error);
@@ -1402,14 +1421,36 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     const profilBerhasil = await muatProfilPengguna(user);
     if (profilBerhasil) {
-      tampilkanSiswa();
-      tampilkanPersetujuanNilai();
+      if (roleUser === "siswa") { await tampilkanDataSaya(); }
+      else { await tampilkanSiswa(); await tampilkanPersetujuanNilai(); }
     }
   } else {
     window.location.href = "index.html";
   }
 });
 
+
+function aturTampilanBerdasarkanRole() {
+  const adminGuru=["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"];
+  const siswa=["menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"];
+  if(roleUser === "siswa"){
+    adminGuru.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+    siswa.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="block";});
+  } else {
+    adminGuru.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="";});
+    siswa.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  }
+}
+function sembunyikanSemuaPanel(){
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
+}
+async function tampilkanDataSaya(){
+  const box=document.getElementById("dataPribadiSiswa");if(!box)return;box.innerHTML="Memuat data siswa...";
+  try{const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));if(!snap.exists()){box.innerHTML='<div style="color:#dc3545;">Data siswa tidak ditemukan. Hubungi Admin.</div>';return;}const s={id:snap.id,...snap.data()};
+    box.innerHTML=`<h3 style="margin-top:0;">Identitas Siswa</h3><div class="student-info-row"><strong>Nama</strong><span>${s.nama||"-"}</span></div><div class="student-info-row"><strong>NIS</strong><span>${s.nis||"-"}</span></div><div class="student-info-row"><strong>Tingkat</strong><span>${s.tingkat||"-"}</span></div><div class="student-info-row"><strong>Jurusan</strong><span>${s.jurusan||"-"}</span></div><div class="student-info-row"><strong>Kelas</strong><span>${s.kelas||"-"}</span></div><div class="student-info-row"><strong>Status</strong><span>${s.status||"Aktif"}</span></div>`;
+  }catch(error){console.error(error);box.innerHTML='<div style="color:#dc3545;">Gagal memuat data siswa: '+error.message+'</div>';}}
+function bukaPortalSiswa(panelId,menuId){if(roleUser!=="siswa")return;sembunyikanSemuaPanel();document.getElementById(panelId).style.display="block";document.getElementById(menuId).classList.add("aktif");}
 
 /* =========================
    LOGOUT
@@ -1426,6 +1467,12 @@ document
 
   });
 
+
+document.getElementById("menuDataSaya").addEventListener("click",async()=>{if(roleUser!=="siswa")return;bukaPortalSiswa("panelDataSaya","menuDataSaya");await tampilkanDataSaya();});
+document.getElementById("menuNilaiSaya").addEventListener("click",async()=>{if(roleUser!=="siswa")return;sembunyikanSemuaPanel();document.getElementById("panelNilai").style.display="block";document.getElementById("menuNilaiSaya").classList.add("aktif");document.getElementById("formNilai").style.display="none";document.getElementById("btnTambahNilai").style.display="none";await tampilkanNilai();});
+document.getElementById("menuAbsensiSaya").addEventListener("click",async()=>{if(roleUser!=="siswa")return;sembunyikanSemuaPanel();document.getElementById("panelAbsensi").style.display="block";document.getElementById("menuAbsensiSaya").classList.add("aktif");document.getElementById("formAbsensi").style.display="none";await tampilkanRiwayatAbsensi();});
+document.getElementById("menuRaporSaya").addEventListener("click",async()=>{if(roleUser!=="siswa")return;sembunyikanSemuaPanel();document.getElementById("panelERapor").style.display="block";document.getElementById("menuRaporSaya").classList.add("aktif");await siapkanERapor();});
+document.getElementById("menuPengumumanSaya").addEventListener("click",async()=>{if(roleUser!=="siswa")return;sembunyikanSemuaPanel();document.getElementById("panelPengumuman").style.display="block";document.getElementById("menuPengumumanSaya").classList.add("aktif");document.getElementById("btnTambahPengumuman").style.display="none";document.getElementById("formPengumuman").style.display="none";await tampilkanPengumuman();});
 
 /* =========================
    MENU SISWA
@@ -1641,7 +1688,7 @@ document.getElementById("menuAbsensi").addEventListener("click", async () => {
   await tampilkanKelas();
   isiPilihanKelasAbsensi();
   await tampilkanRiwayatAbsensi();
-  document.getElementById("formAbsensi").style.display = "block";
+  document.getElementById("formAbsensi").style.display = roleUser === "siswa" ? "none" : "block";
 });
 
 /* =====================================================
@@ -1733,6 +1780,7 @@ async function tampilkanRiwayatAbsensi() {
   tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>';
   await ambilDataAbsensi();
 
+  if (roleUser === "siswa") dataAbsensi = dataAbsensi.filter(a => a.siswaId === profilUser?.siswaId);
   dataAbsensi.sort((a,b) => String(b.tanggal || "").localeCompare(String(a.tanggal || "")) || String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
   if (!dataAbsensi.length) {
     tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada riwayat absensi.</td></tr>';
@@ -1750,8 +1798,8 @@ async function tampilkanRiwayatAbsensi() {
       <td>${a.kelas || "-"}</td>
       <td>${a.status || "-"}</td>
       <td><div class="aksi">
-        <button class="btn-warning" onclick="editAbsensi('${a.id}')">Edit</button>
-        <button class="btn-danger" onclick="hapusAbsensi('${a.id}')">Hapus</button>
+        ${roleUser === "siswa" ? '<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>' : `<button class="btn-warning" onclick="editAbsensi('${a.id}')">Edit</button>
+        <button class="btn-danger" onclick="hapusAbsensi('${a.id}')">Hapus</button>`}
       </div></td>`;
     tabel.appendChild(tr);
   });
@@ -1762,6 +1810,7 @@ document.getElementById("tanggalAbsensi").addEventListener("change", muatSiswaAb
 document.getElementById("kelasAbsensi").addEventListener("change", muatSiswaAbsensi);
 
 document.getElementById("btnSimpanAbsensi").addEventListener("click", async () => {
+  if (roleUser === "siswa") { tampilkanPesanAbsensi("Akun siswa hanya dapat melihat absensi sendiri.", "error"); return; }
   const tanggal = document.getElementById("tanggalAbsensi").value;
   const kelas = document.getElementById("kelasAbsensi").value;
   if (!tanggal || !kelas) {
@@ -3808,6 +3857,7 @@ document.getElementById("btnBatalNilai").addEventListener("click", () => {
 });
 
 document.getElementById("btnSimpanNilai").addEventListener("click", async () => {
+  if (roleUser === "siswa") { tampilkanPesanNilai("Akun siswa hanya dapat melihat data dan tidak dapat menginput atau mengubah nilai.", "error"); return; }
   const id = document.getElementById("idNilai").value;
   const kelas = document.getElementById("kelasNilai").value;
   const siswaId = document.getElementById("siswaNilai").value;
@@ -3962,7 +4012,7 @@ async function tampilkanNilai() {
     dataNilai = [];
     snapshot.forEach(d => {
       const item = { id: d.id, ...d.data() };
-      if (roleUser === "admin" || item.submittedByUid === currentUser?.uid) {
+      if (roleUser === "admin" || (roleUser === "guru" && item.submittedByUid === currentUser?.uid) || (roleUser === "siswa" && item.siswaId === profilUser?.siswaId && item.status === "disetujui")) {
         dataNilai.push(item);
       }
     });
@@ -3975,9 +4025,7 @@ async function tampilkanNilai() {
     dataNilai.forEach((n, index) => {
       const tr = document.createElement("tr");
       const statusLabel = n.status === "disetujui" ? "Disetujui" : n.status === "ditolak" ? "Ditolak" : "Menunggu Persetujuan";
-      const aksi = roleUser === "admin" || n.status !== "disetujui"
-        ? `<button class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>${roleUser === "admin" ? `<button class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>` : ""}`
-        : `<span style="color:#198754;font-weight:bold;">Resmi</span>`;
+      const aksi = roleUser === "siswa" ? `<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>` : (roleUser === "admin" || n.status !== "disetujui" ? `<button class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>${roleUser === "admin" ? `<button class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>` : ""}` : `<span style="color:#198754;font-weight:bold;">Resmi</span>`);
       tr.innerHTML = `<td>${index+1}</td><td>${n.siswaNama || "-"}</td><td>${n.kelas || "-"}</td><td>${n.mapel || "-"}</td><td>${n.guru || "-"}</td><td>${n.semester || "-"}</td><td>${n.tugas ?? "-"}</td><td>${n.uts ?? "-"}</td><td>${n.uas ?? "-"}</td><td><strong>${n.nilaiAkhir ?? "-"}</strong></td><td>${statusLabel}</td><td><div class="aksi">${aksi}</div></td>`;
       tabel.appendChild(tr);
     });
@@ -4061,8 +4109,8 @@ function pesanPengumuman(teks,tipe){const e=document.getElementById("pesanPengum
 function kosongkanPengumuman(){document.getElementById("idPengumuman").value="";document.getElementById("judulPengumuman").value="";document.getElementById("isiPengumuman").value="";document.getElementById("tanggalPengumuman").value=tanggalHariIni();document.getElementById("statusPengumuman").value="Aktif";}
 document.getElementById("btnTambahPengumuman").addEventListener("click",()=>{kosongkanPengumuman();document.getElementById("judulFormPengumuman").textContent="Tambah Pengumuman";document.getElementById("formPengumuman").style.display="block";});
 document.getElementById("btnBatalPengumuman").addEventListener("click",()=>{document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();});
-document.getElementById("btnSimpanPengumuman").addEventListener("click",async()=>{const id=document.getElementById("idPengumuman").value,judul=document.getElementById("judulPengumuman").value.trim(),isi=document.getElementById("isiPengumuman").value.trim(),tanggal=document.getElementById("tanggalPengumuman").value,status=document.getElementById("statusPengumuman").value;if(!judul||!isi||!tanggal){pesanPengumuman("Judul, isi, dan tanggal wajib diisi.","error");return;}try{const data={judul,isi,tanggal,status};if(id){await updateDoc(doc(db,"pengumuman",id),data);pesanPengumuman("Pengumuman berhasil diperbarui.","sukses");}else{await addDoc(collection(db,"pengumuman"),data);pesanPengumuman("Pengumuman berhasil ditambahkan.","sukses");}document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menyimpan pengumuman: "+error.message,"error");}});
-async function tampilkanPengumuman(){const t=document.getElementById("tabelPengumuman");t.innerHTML='<tr><td colspan="6" style="text-align:center">Memuat data...</td></tr>';try{const snap=await getDocs(collection(db,"pengumuman"));dataPengumuman=[];snap.forEach(d=>dataPengumuman.push({id:d.id,...d.data()}));dataPengumuman.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));if(!dataPengumuman.length){t.innerHTML='<tr><td colspan="6" style="text-align:center">Belum ada pengumuman.</td></tr>';return;}t.innerHTML="";dataPengumuman.forEach((p,i)=>{const tr=document.createElement("tr");const isi=String(p.isi||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");tr.innerHTML=`<td>${i+1}</td><td>${p.tanggal||"-"}</td><td>${p.judul||"-"}</td><td style="white-space:pre-wrap;max-width:420px">${isi}</td><td>${p.status||"Aktif"}</td><td><div class="aksi"><button class="btn-warning" onclick="editPengumuman('${p.id}')">Edit</button><button class="btn-danger" onclick="hapusPengumuman('${p.id}')">Hapus</button></div></td>`;t.appendChild(tr);});}catch(error){console.error(error);t.innerHTML=`<tr><td colspan="6" style="color:red;text-align:center">Gagal mengambil data: ${error.message}</td></tr>`;}}
+document.getElementById("btnSimpanPengumuman").addEventListener("click",async()=>{if(roleUser === "siswa"){pesanPengumuman("Akun siswa hanya dapat melihat pengumuman.","error");return;}const id=document.getElementById("idPengumuman").value,judul=document.getElementById("judulPengumuman").value.trim(),isi=document.getElementById("isiPengumuman").value.trim(),tanggal=document.getElementById("tanggalPengumuman").value,status=document.getElementById("statusPengumuman").value;if(!judul||!isi||!tanggal){pesanPengumuman("Judul, isi, dan tanggal wajib diisi.","error");return;}try{const data={judul,isi,tanggal,status};if(id){await updateDoc(doc(db,"pengumuman",id),data);pesanPengumuman("Pengumuman berhasil diperbarui.","sukses");}else{await addDoc(collection(db,"pengumuman"),data);pesanPengumuman("Pengumuman berhasil ditambahkan.","sukses");}document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menyimpan pengumuman: "+error.message,"error");}});
+async function tampilkanPengumuman(){const t=document.getElementById("tabelPengumuman");t.innerHTML='<tr><td colspan="6" style="text-align:center">Memuat data...</td></tr>';try{const snap=await getDocs(collection(db,"pengumuman"));dataPengumuman=[];snap.forEach(d=>dataPengumuman.push({id:d.id,...d.data()}));if(roleUser === "siswa") dataPengumuman=dataPengumuman.filter(p=>(p.status||"Aktif")==="Aktif");dataPengumuman.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));if(!dataPengumuman.length){t.innerHTML='<tr><td colspan="6" style="text-align:center">Belum ada pengumuman.</td></tr>';return;}t.innerHTML="";dataPengumuman.forEach((p,i)=>{const tr=document.createElement("tr");const isi=String(p.isi||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");tr.innerHTML=`<td>${i+1}</td><td>${p.tanggal||"-"}</td><td>${p.judul||"-"}</td><td style="white-space:pre-wrap;max-width:420px">${isi}</td><td>${p.status||"Aktif"}</td><td>${roleUser === "siswa" ? "<span style='color:#198754;font-weight:bold;'>Hanya Lihat</span>" : `<div class="aksi"><button class="btn-warning" onclick="editPengumuman('${p.id}')">Edit</button><button class="btn-danger" onclick="hapusPengumuman('${p.id}')">Hapus</button></div>`}</td>`;t.appendChild(tr);});}catch(error){console.error(error);t.innerHTML=`<tr><td colspan="6" style="color:red;text-align:center">Gagal mengambil data: ${error.message}</td></tr>`;}}
 window.editPengumuman=function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;document.getElementById("idPengumuman").value=p.id;document.getElementById("judulPengumuman").value=p.judul||"";document.getElementById("isiPengumuman").value=p.isi||"";document.getElementById("tanggalPengumuman").value=p.tanggal||tanggalHariIni();document.getElementById("statusPengumuman").value=p.status||"Aktif";document.getElementById("judulFormPengumuman").textContent="Edit Pengumuman";document.getElementById("formPengumuman").style.display="block";window.scrollTo({top:0,behavior:"smooth"});};
 window.hapusPengumuman=async function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;if(!confirm(`Hapus pengumuman "${p.judul||""}"?`))return;try{await deleteDoc(doc(db,"pengumuman",id));pesanPengumuman("Pengumuman berhasil dihapus.","sukses");await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menghapus pengumuman: "+error.message,"error");}};
 document.getElementById("tanggalPengumuman").value=tanggalHariIni();
@@ -4086,9 +4134,8 @@ function hideAllPanelsERapor(){
 }
 
 async function siapkanERapor(){
-  await tampilkanSiswa();
-  await tampilkanKelas();
-  const ks=document.getElementById("kelasERapor"), ss=document.getElementById("siswaERapor");
+  if(roleUser === "siswa"){const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));if(!snap.exists()){pesanERapor("Data siswa tidak ditemukan. Hubungi Admin.","error");return;}const s={id:snap.id,...snap.data()};const ks=document.getElementById("kelasERapor"),ss=document.getElementById("siswaERapor");ks.innerHTML=`<option value="${String(s.kelas||"").replace(/"/g,"&quot;")}">${s.kelas||"-"}</option>`;ks.value=s.kelas||"";ss.innerHTML=`<option value="${s.id}">${s.nama||"-"} — ${s.nis||"-"}</option>`;ss.value=s.id;ks.disabled=true;ss.disabled=true;return;}
+  const ks=document.getElementById("kelasERapor"), ss=document.getElementById("siswaERapor");ks.disabled=false;ss.disabled=false;await tampilkanSiswa();await tampilkanKelas();
   const sebelumnya=ks.value;
   ks.innerHTML='<option value="">-- Pilih Kelas --</option>';
   dataKelas.filter(k=>(k.status||"Aktif")==="Aktif").sort((a,b)=>String(a.nama||a.namaKelas||a.kelas||"").localeCompare(String(b.nama||b.namaKelas||b.kelas||""),"id")).forEach(k=>{const n=k.nama||k.namaKelas||k.kelas||"";if(n){const o=document.createElement("option");o.value=n;o.textContent=n;ks.appendChild(o);}});
@@ -4111,6 +4158,7 @@ document.getElementById("kelasERapor").addEventListener("change",isiSiswaERapor)
 
 document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   const kelas=document.getElementById("kelasERapor").value, siswaId=document.getElementById("siswaERapor").value, semester=document.getElementById("semesterERapor").value;
+  if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");return;}
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
     const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
