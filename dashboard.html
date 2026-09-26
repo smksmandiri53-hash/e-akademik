@@ -283,7 +283,7 @@
 
     <div class="card" id="menuAbsensi">
       <h3>📋 Absensi</h3>
-      <p>Kelola absensi siswa.</p>
+      <p>Kelola absensi siswa. Guru dapat menyimpan langsung.</p>
     </div>
 
     <div class="card" id="menuPengumuman">
@@ -1293,6 +1293,8 @@ import {
   setDoc,
   collection,
   getDocs,
+  query,
+  where,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -1837,9 +1839,26 @@ document.getElementById("btnSimpanAbsensi").addEventListener("click", async () =
       const siswa = siswaKelas.find(s => s.id === select.dataset.siswaId);
       if (!siswa) continue;
       const existing = dataAbsensi.find(a => a.tanggal === tanggal && a.kelas === kelas && a.siswaId === siswa.id);
-      const data = { tanggal, kelas, siswaId: siswa.id, siswaNama: siswa.nama || "-", nis: siswa.nis || "-", status: select.value };
-      if (existing) await updateDoc(doc(db, "absensi", existing.id), data);
-      else await addDoc(collection(db, "absensi"), data);
+      const data = {
+        tanggal,
+        kelas,
+        siswaId: siswa.id,
+        siswaNama: siswa.nama || "-",
+        nis: siswa.nis || "-",
+        status: select.value,
+        diinputOlehUid: currentUser?.uid || "",
+        diinputOlehNama: profilUser?.nama || currentUser?.email || "-",
+        diinputOlehRole: roleUser || "",
+        diperbaruiPada: serverTimestamp()
+      };
+      if (existing) {
+        await updateDoc(doc(db, "absensi", existing.id), data);
+      } else {
+        await addDoc(collection(db, "absensi"), {
+          ...data,
+          dibuatPada: serverTimestamp()
+        });
+      }
     }
     tampilkanPesanAbsensi("Absensi berhasil disimpan.", "sukses");
     await tampilkanRiwayatAbsensi();
@@ -4015,13 +4034,36 @@ async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
   tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>';
   try {
-    const snapshot = await getDocs(collection(db, "nilai"));
+    let snapshot;
+
+    // Sesuaikan query dengan Firestore Rules agar Guru hanya
+    // membaca nilai yang dia ajukan sendiri dan Siswa hanya
+    // membaca nilai miliknya yang sudah disetujui.
+    if (roleUser === "admin") {
+      snapshot = await getDocs(collection(db, "nilai"));
+    } else if (roleUser === "guru") {
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("submittedByUid", "==", currentUser?.uid || "")
+        )
+      );
+    } else if (roleUser === "siswa") {
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("siswaId", "==", profilUser?.siswaId || ""),
+          where("status", "==", "disetujui")
+        )
+      );
+    } else {
+      snapshot = { forEach: () => {} };
+    }
+
     dataNilai = [];
     snapshot.forEach(d => {
       const item = { id: d.id, ...d.data() };
-      if (roleUser === "admin" || (roleUser === "guru" && item.submittedByUid === currentUser?.uid) || (roleUser === "siswa" && item.siswaId === profilUser?.siswaId && item.status === "disetujui")) {
-        dataNilai.push(item);
-      }
+      dataNilai.push(item);
     });
     dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
     if (!dataNilai.length) {
@@ -4140,20 +4182,15 @@ function hideAllPanelsERapor(){
   ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
-function normalisasiKelasERapor(value){
-  return String(value || "").trim().replace(/\s+/g," ").toLowerCase();
-}
-
-function namaKelasSiswaERapor(s){
-  return s.kelas || s.namaKelas || s.kelasNama || "";
-}
-
 async function siapkanERapor(){
   const ks=document.getElementById("kelasERapor");
   const ss=document.getElementById("siswaERapor");
   if(!ks || !ss) return;
 
-  try{
+  try {
+    /* =========================
+       SISWA
+    ========================== */
     if(roleUser === "siswa"){
       const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));
       if(!snap.exists()){
@@ -4161,65 +4198,110 @@ async function siapkanERapor(){
         return;
       }
       const s={id:snap.id,...snap.data()};
-      const kelasSiswa=namaKelasSiswaERapor(s);
-      ks.innerHTML="";
-      const ok=document.createElement("option");
-      ok.value=kelasSiswa; ok.textContent=kelasSiswa || "-"; ks.appendChild(ok);
-      ks.value=kelasSiswa; ks.disabled=true;
-      ss.innerHTML="";
-      const os=document.createElement("option");
-      os.value=s.id; os.textContent=(s.nama||"-")+" — "+(s.nis||"-"); ss.appendChild(os);
-      ss.value=s.id; ss.disabled=true;
+      const kelasSiswa=s.kelas || s.namaKelas || s.kelasNama || "";
+      ks.innerHTML=`<option value="${String(kelasSiswa).replace(/"/g,"&quot;")}">${kelasSiswa||"-"}</option>`;
+      ks.value=kelasSiswa;
+      ss.innerHTML=`<option value="${s.id}">${s.nama||"-"} — ${s.nis||"-"}</option>`;
+      ss.value=s.id;
+      ks.disabled=true;
+      ss.disabled=true;
       return;
     }
 
-    ks.disabled=false; ss.disabled=false;
+    /* =========================
+       ADMIN / GURU
+    ========================== */
+    ks.disabled=false;
+    ss.disabled=false;
 
-    const snapshotSiswa=await getDocs(collection(db,"siswa"));
-    dataSiswa=[];
-    snapshotSiswa.forEach(d=>dataSiswa.push({id:d.id,...d.data()}));
-
+    // Refresh data siswa dan kelas langsung dari Firestore.
+    await tampilkanSiswa();
     await tampilkanKelas();
+
+    const kelasWali=normalisasiKelas(profilUser?.kelasWali || "");
     const sebelumnya=ks.value;
+
     ks.innerHTML='<option value="">-- Pilih Kelas --</option>';
+
     dataKelas
-      .filter(k=>String(k.status||"Aktif").trim().toLowerCase()==="aktif")
+      .filter(k=>(String(k.status||"Aktif").trim().toLowerCase()==="aktif"))
+      .filter(k=>{
+        // Admin dapat memilih semua kelas.
+        if(roleUser === "admin") return true;
+
+        // Guru yang mempunyai kelasWali diarahkan ke kelas walinya.
+        if(roleUser === "guru" && kelasWali){
+          const nama=normalisasiKelas(k.nama||k.namaKelas||k.kelas||"");
+          return nama===kelasWali;
+        }
+
+        // Guru biasa tetap dapat membuka E-Rapor,
+        // tetapi data nilainya dibatasi pada nilai yang dia input sendiri.
+        return true;
+      })
       .sort((a,b)=>String(a.nama||a.namaKelas||a.kelas||"").localeCompare(String(b.nama||b.namaKelas||b.kelas||""),"id"))
       .forEach(k=>{
         const n=k.nama||k.namaKelas||k.kelas||"";
-        if(!n)return;
+        if(!n) return;
         const o=document.createElement("option");
-        o.value=n; o.textContent=n; ks.appendChild(o);
+        o.value=n;
+        o.textContent=n;
+        ks.appendChild(o);
       });
-    if([...ks.options].some(o=>o.value===sebelumnya))ks.value=sebelumnya;
+
+    // Jika Guru adalah Wali Kelas, otomatis pilih kelas walinya.
+    if(roleUser === "guru" && kelasWali){
+      const opsi=[...ks.options].find(o=>normalisasiKelas(o.value)===kelasWali);
+      if(opsi) ks.value=opsi.value;
+    } else if([...ks.options].some(o=>o.value===sebelumnya)) {
+      ks.value=sebelumnya;
+    }
+
     isiSiswaERapor();
-  }catch(error){
+
+  } catch(error) {
     console.error("Gagal menyiapkan E-Rapor:",error);
-    pesanERapor("Gagal memuat data E-Rapor: "+error.message,"error");
+    pesanERapor("Gagal memuat E-Rapor: "+error.message,"error");
   }
 }
 
+function normalisasiKelas(value){
+  return String(value||"")
+    .trim()
+    .replace(/\s+/g," ")
+    .toLowerCase();
+}
+
+function namaKelasSiswaERapor(s){
+  const langsung=s.kelas || s.namaKelas || s.kelasNama || "";
+  if(langsung) return langsung;
+  const tingkat=String(s.tingkat||"").trim();
+  const jurusan=String(s.jurusan||"").trim();
+  return [tingkat,jurusan].filter(Boolean).join(" ");
+}
+
 function isiSiswaERapor(){
-  const ks=document.getElementById("kelasERapor");
+  const kelasSelect=document.getElementById("kelasERapor");
   const ss=document.getElementById("siswaERapor");
-  if(!ks || !ss)return;
-  const kelas=normalisasiKelasERapor(ks.value);
+  if(!kelasSelect || !ss) return;
+
+  const kelas=normalisasiKelas(kelasSelect.value);
   const sebelumnya=ss.value;
+
   ss.innerHTML='<option value="">-- Pilih Siswa --</option>';
 
   const siswaAktif=dataSiswa
     .filter(s=>{
-      const status=String(s.status||"Aktif").trim().toLowerCase();
-      if(status!=="aktif")return false;
-      if(!kelas)return true;
-      return normalisasiKelasERapor(namaKelasSiswaERapor(s))===kelas;
+      if(String(s.status||"Aktif").trim().toLowerCase()!=="aktif") return false;
+      if(!kelas) return true;
+      return normalisasiKelas(namaKelasSiswaERapor(s))===kelas;
     })
     .sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"));
 
   if(!siswaAktif.length){
     const o=document.createElement("option");
     o.value="";
-    o.textContent=kelas?"Belum ada siswa aktif di kelas ini":"Belum ada siswa aktif";
+    o.textContent="Belum ada siswa aktif di kelas ini";
     ss.appendChild(o);
     return;
   }
@@ -4230,31 +4312,111 @@ function isiSiswaERapor(){
     o.textContent=(s.nama||"-")+" — "+(s.nis||"-");
     ss.appendChild(o);
   });
-  if([...ss.options].some(o=>o.value===sebelumnya))ss.value=sebelumnya;
+
+  if([...ss.options].some(o=>o.value===sebelumnya)) ss.value=sebelumnya;
 }
 
 document.getElementById("menuERapor").addEventListener("click",async()=>{
-  hideAllPanelsERapor(); document.getElementById("panelERapor").style.display="block"; document.getElementById("menuERapor").classList.add("aktif"); await siapkanERapor();
+  hideAllPanelsERapor();
+  document.getElementById("panelERapor").style.display="block";
+  document.getElementById("menuERapor").classList.add("aktif");
+  await siapkanERapor();
 });
 
-document.getElementById("kelasERapor").addEventListener("change",isiSiswaERapor);
+document.getElementById("kelasERapor").addEventListener("change",()=>{
+  isiSiswaERapor();
+  document.getElementById("previewERapor").innerHTML='<div style="text-align:center;padding:30px;">Pilih siswa dan semester untuk menampilkan rapor.</div>';
+});
 
 document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
-  const kelas=document.getElementById("kelasERapor").value, siswaId=document.getElementById("siswaERapor").value, semester=document.getElementById("semesterERapor").value;
-  if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");return;}
-  if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
+  const kelas=document.getElementById("kelasERapor").value;
+  const siswaId=document.getElementById("siswaERapor").value;
+  const semester=document.getElementById("semesterERapor").value;
+
+  if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){
+    pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");
+    return;
+  }
+
+  if(!kelas||!siswaId||!semester){
+    pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");
+    return;
+  }
+
   try{
-    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
+    let snap;
+
+    /*
+      Firestore Rules bukan filter.
+      Karena itu query harus disesuaikan dengan hak akses.
+
+      ADMIN  : semua nilai.
+      GURU   : jika Wali Kelas -> semua nilai pada kelas walinya.
+               jika bukan Wali -> nilai yang dia input sendiri.
+      SISWA  : nilai miliknya yang sudah disetujui.
+    */
+    if(roleUser === "admin"){
+      snap=await getDocs(collection(db,"nilai"));
+    }else if(roleUser === "guru"){
+      const kelasWali=normalisasiKelas(profilUser?.kelasWali || "");
+
+      if(kelasWali && normalisasiKelas(kelas)===kelasWali){
+        snap=await getDocs(
+          query(
+            collection(db,"nilai"),
+            where("kelas","==",kelas)
+          )
+        );
+      }else{
+        snap=await getDocs(
+          query(
+            collection(db,"nilai"),
+            where("submittedByUid","==",currentUser?.uid || "")
+          )
+        );
+      }
+    }else if(roleUser === "siswa"){
+      snap=await getDocs(
+        query(
+          collection(db,"nilai"),
+          where("siswaId","==",profilUser?.siswaId || ""),
+          where("status","==","disetujui")
+        )
+      );
+    }else{
+      throw new Error("Role pengguna tidak valid.");
+    }
+
+    dataERaporNilai=[];
+    snap.forEach(d=>{
+      const n=d.data();
+
+      // E-Rapor hanya menggunakan nilai yang sudah disetujui.
+      if(n.status!=="disetujui") return;
+
+      if(
+        n.siswaId===siswaId &&
+        normalisasiKelas(n.kelas)===normalisasiKelas(kelas) &&
+        String(n.semester||"")===String(semester)
+      ){
+        dataERaporNilai.push({id:d.id,...n});
+      }
+    });
+
     const siswa=dataSiswa.find(s=>s.id===siswaId);
-    const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
+    const nilaiMap={};
+    dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-"]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
-    let total=0; rows.forEach(n=>total+=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4)));
+    let total=0;
+    rows.forEach(n=>total+=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4)));
     const avg=rows.length?total/rows.length:0;
     const esc=v=>String(v??"-").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
     document.getElementById("previewERapor").innerHTML=`
       <div id="lembarRapor" style="background:white;padding:35px;border:1px solid #ddd;max-width:900px;margin:auto;">
         <div style="text-align:center;border-bottom:3px double #222;padding-bottom:15px;margin-bottom:20px;">
-          <h2 style="margin:0;">E-RAPOR SISWA</h2><h3 style="margin:6px 0;">SMKS MANDIRI BANDAR AGUNG</h3>
+          <h2 style="margin:0;">E-RAPOR SISWA</h2>
+          <h3 style="margin:6px 0;">SMKS MANDIRI BANDAR AGUNG</h3>
           <p style="margin:0;">Laporan Hasil Belajar Siswa</p>
         </div>
         <table style="width:100%;margin-bottom:20px;border-collapse:collapse;">
@@ -4263,19 +4425,26 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
         </table>
         <table style="width:100%;border-collapse:collapse;">
           <thead><tr><th style="border:1px solid #222;padding:8px;">No</th><th style="border:1px solid #222;padding:8px;text-align:left;">Mata Pelajaran</th><th style="border:1px solid #222;padding:8px;">Tugas</th><th style="border:1px solid #222;padding:8px;">UTS</th><th style="border:1px solid #222;padding:8px;">UAS</th><th style="border:1px solid #222;padding:8px;">Nilai Akhir</th></tr></thead>
-          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>'}</tbody>
+          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai yang sudah disahkan untuk semester ini.</td></tr>'}</tbody>
           <tfoot><tr><td colspan="5" style="border:1px solid #222;padding:8px;text-align:right;"><b>Rata-rata</b></td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${avg.toFixed(2)}</b></td></tr></tfoot>
         </table>
         <div style="display:flex;justify-content:space-between;margin-top:55px;text-align:center;gap:30px;"><div style="flex:1;">Mengetahui,<br>Wali Kelas<br><br><br>________________________</div><div style="flex:1;">Orang Tua/Wali<br><br><br><br>________________________</div><div style="flex:1;">Kepala Sekolah<br><br><br><br>________________________</div></div>
       </div>`;
-  }catch(e){console.error(e);pesanERapor("Gagal mengambil nilai: "+e.message,"error");}
+  }catch(e){
+    console.error(e);
+    pesanERapor("Gagal mengambil nilai: "+e.message,"error");
+  }
 });
 
 document.getElementById("btnCetakRapor").addEventListener("click",()=>{
-  const el=document.getElementById("lembarRapor"); if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
-  const w=window.open("","_blank"); w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;}@page{size:A4;margin:15mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}}</style></head><body>${el.outerHTML}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
+  const el=document.getElementById("lembarRapor");
+  if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;}@page{size:A4;margin:15mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}}</style></head><body>${el.outerHTML}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),400);
 });
-
 
 
 /* =========================
