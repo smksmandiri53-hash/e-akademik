@@ -123,7 +123,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     const firebaseConfig={
@@ -175,7 +175,21 @@
       const password=document.getElementById("password").value;
       tampilkanPesan("Sedang login...","sukses");
       try{
-        await signInWithEmailAndPassword(auth,email,password);
+        const userCredential=await signInWithEmailAndPassword(auth,email,password);
+        const user=userCredential.user;
+
+        if(!user.emailVerified){
+          try{
+            await sendEmailVerification(user);
+            tampilkanPesan("Email Anda belum diverifikasi. Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox/Spam, klik link verifikasi, lalu login kembali.");
+          }catch(verificationError){
+            console.error(verificationError);
+            tampilkanPesan("Email Anda belum diverifikasi. Silakan cek email verifikasi yang sudah dikirim sebelumnya, lalu login kembali.");
+          }
+          await signOut(auth);
+          return;
+        }
+
         tampilkanPesan("Login berhasil! Mengarahkan ke dashboard...","sukses");
         setTimeout(()=>{window.location.href="dashboard.html"},700);
       }catch(error){
@@ -203,11 +217,13 @@
         await setDoc(doc(db,"users",user.uid),{
           nama,email,role:"guru",nip,kelasWali,dibuatPada:serverTimestamp()
         });
+
+        await sendEmailVerification(user);
         await signOut(auth);
         document.getElementById("daftarForm").reset();
         pilihMode("login");
         document.getElementById("email").value=email;
-        tampilkanPesan("Akun Guru berhasil dibuat. Silakan masuk menggunakan email dan password Anda.","sukses");
+        tampilkanPesan("Akun Guru berhasil dibuat. Email verifikasi sudah dikirim ke " + email + ". Silakan buka email tersebut, klik link verifikasi, lalu login.","sukses");
       }catch(error){
         console.error(error);
         let pesanError="Gagal membuat akun.";
@@ -265,11 +281,12 @@
           dibuatPada:serverTimestamp()
         });
 
+        await sendEmailVerification(user);
         await signOut(auth);
         document.getElementById("daftarSiswaForm").reset();
         pilihMode("login");
         document.getElementById("email").value=email;
-        tampilkanPesan("Akun Siswa berhasil dibuat. Silakan masuk menggunakan email dan password Anda.","sukses");
+        tampilkanPesan("Akun Siswa berhasil dibuat. Email verifikasi sudah dikirim ke " + email + ". Silakan buka email tersebut, klik link verifikasi, lalu login.","sukses");
       }catch(error){
         console.error(error);
         let pesanError="Gagal membuat akun siswa.";
