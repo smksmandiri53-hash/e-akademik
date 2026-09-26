@@ -33,7 +33,7 @@
 
     <div class="mode-buttons">
       <button type="button" class="mode-btn aktif" id="btnModeLogin">🔐 Masuk Akun</button>
-      <button type="button" class="mode-btn" id="btnModeDaftar">📝 Buat Akun Guru</button>
+      <button type="button" class="mode-btn" id="btnModeDaftar">📝 Buat Akun</button>
     </div>
 
     <div id="panelLogin" class="form-panel aktif">
@@ -48,22 +48,72 @@
     </div>
 
     <div id="panelDaftar" class="form-panel">
-      <div class="info-box">Akun yang dibuat melalui halaman ini otomatis menjadi <b>akun Guru</b>. Role Admin tidak dapat dibuat dari halaman ini.</div>
-      <form id="daftarForm">
-        <label for="namaGuru">Nama Lengkap</label>
-        <input type="text" id="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." autocomplete="name" required>
-        <label for="nipGuru">NIP</label>
-        <input type="text" id="nipGuru" placeholder="Masukkan NIP" autocomplete="off" required>
-        <label for="kelasWaliGuru">Kelas Wali <span style="font-weight:normal;color:#777">(opsional)</span></label>
-        <input type="text" id="kelasWaliGuru" placeholder="Contoh: XI TKJ 1" autocomplete="off">
-        <label for="emailGuru">Email</label>
-        <input type="email" id="emailGuru" placeholder="Masukkan email sendiri" autocomplete="email" required>
-        <label for="passwordGuru">Password</label>
-        <input type="password" id="passwordGuru" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
-        <label for="konfirmasiPasswordGuru">Konfirmasi Password</label>
-        <input type="password" id="konfirmasiPasswordGuru" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
-        <button type="submit">BUAT AKUN GURU</button>
-      </form>
+      <div class="info-box">Silakan pilih jenis akun. <b>Akun Guru</b> untuk guru dan <b>Akun Siswa</b> untuk siswa. Akun siswa hanya dapat melihat data akademiknya dan tidak dapat menginput data.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+        <button type="button" class="mode-btn aktif" id="btnJenisGuru">👨‍🏫 Guru</button>
+        <button type="button" class="mode-btn" id="btnJenisSiswa">🎓 Siswa</button>
+      </div>
+
+      <div id="formGuruWrap">
+        <form id="daftarForm">
+          <label for="namaGuru">Nama Lengkap</label>
+          <input type="text" id="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." autocomplete="name" required>
+          <label for="nipGuru">NIP</label>
+          <input type="text" id="nipGuru" placeholder="Masukkan NIP" autocomplete="off" required>
+          <label for="kelasWaliGuru">Kelas Wali <span style="font-weight:normal;color:#777">(opsional)</span></label>
+          <input type="text" id="kelasWaliGuru" placeholder="Contoh: XI TKJ 1" autocomplete="off">
+          <label for="emailGuru">Email</label>
+          <input type="email" id="emailGuru" placeholder="Masukkan email sendiri" autocomplete="email" required>
+          <label for="passwordGuru">Password</label>
+          <input type="password" id="passwordGuru" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+          <label for="konfirmasiPasswordGuru">Konfirmasi Password</label>
+          <input type="password" id="konfirmasiPasswordGuru" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
+          <button type="submit">BUAT AKUN GURU</button>
+        </form>
+      </div>
+
+      <div id="formSiswaWrap" style="display:none">
+        <form id="daftarSiswaForm">
+          <label for="namaSiswa">Nama Lengkap</label>
+          <input type="text" id="namaSiswa" placeholder="Nama lengkap siswa" autocomplete="name" required>
+
+          <label for="nisSiswa">NIS</label>
+          <input type="text" id="nisSiswa" placeholder="Nomor Induk Siswa" autocomplete="off" required>
+
+          <label for="kelasSiswa">Kelas</label>
+          <input type="text" id="kelasSiswa" placeholder="Contoh: X TKJ 1" autocomplete="off" required>
+
+          <label for="jenisKelaminSiswa">Jenis Kelamin</label>
+          <select id="jenisKelaminSiswa" required style="width:100%;padding:13px;margin-bottom:15px;border:1px solid #ccc;border-radius:9px;font-size:15px">
+            <option value="">Pilih jenis kelamin</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+          </select>
+
+          <label for="tempatLahirSiswa">Tempat Lahir</label>
+          <input type="text" id="tempatLahirSiswa" placeholder="Tempat lahir" autocomplete="off" required>
+
+          <label for="tanggalLahirSiswa">Tanggal Lahir</label>
+          <input type="date" id="tanggalLahirSiswa" required>
+
+          <label for="alamatSiswa">Alamat</label>
+          <textarea id="alamatSiswa" placeholder="Alamat lengkap" required style="width:100%;min-height:85px;padding:13px;margin-bottom:15px;border:1px solid #ccc;border-radius:9px;font-size:15px;resize:vertical"></textarea>
+
+          <label for="emailSiswa">Email</label>
+          <input type="email" id="emailSiswa" placeholder="Masukkan email sendiri" autocomplete="email" required>
+
+          <label for="passwordSiswa">Password</label>
+          <input type="password" id="passwordSiswa" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+
+          <label for="konfirmasiPasswordSiswa">Konfirmasi Password</label>
+          <input type="password" id="konfirmasiPasswordSiswa" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
+
+          <button type="submit">BUAT AKUN SISWA</button>
+        </form>
+        <p class="secondary-text">Akun siswa bersifat <b>read-only</b>: hanya dapat melihat data akademik sendiri.</p>
+      </div>
+
       <p class="secondary-text">Setelah akun dibuat, silakan masuk menggunakan email dan password tersebut.</p>
     </div>
 
@@ -106,6 +156,18 @@
 
     document.getElementById("btnModeLogin").addEventListener("click",()=>pilihMode("login"));
     document.getElementById("btnModeDaftar").addEventListener("click",()=>pilihMode("daftar"));
+
+    function pilihJenisAkun(jenis){
+      const guru=jenis==="guru";
+      document.getElementById("formGuruWrap").style.display=guru?"block":"none";
+      document.getElementById("formSiswaWrap").style.display=guru?"none":"block";
+      document.getElementById("btnJenisGuru").classList.toggle("aktif",guru);
+      document.getElementById("btnJenisSiswa").classList.toggle("aktif",!guru);
+      pesan.textContent="";
+    }
+
+    document.getElementById("btnJenisGuru").addEventListener("click",()=>pilihJenisAkun("guru"));
+    document.getElementById("btnJenisSiswa").addEventListener("click",()=>pilihJenisAkun("siswa"));
 
     document.getElementById("loginForm").addEventListener("submit",async event=>{
       event.preventDefault();
@@ -154,6 +216,68 @@
         else if(error.code==="auth/weak-password") pesanError="Password terlalu lemah. Gunakan minimal 6 karakter.";
         else if(error.code==="auth/operation-not-allowed") pesanError="Login Email/Password belum diaktifkan di Firebase Authentication.";
         else if(error.code==="permission-denied" || error.code==="firestore/permission-denied") pesanError="Akun berhasil dibuat di Firebase Authentication, tetapi profil Guru tidak dapat disimpan. Security Rules Firestore perlu mengizinkan pembuatan profil Guru.";
+        else if(error.code==="auth/network-request-failed") pesanError="Koneksi internet bermasalah. Silakan coba lagi.";
+        tampilkanPesan(pesanError);
+      }
+    });
+
+    document.getElementById("daftarSiswaForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+
+      const nama=document.getElementById("namaSiswa").value.trim();
+      const nis=document.getElementById("nisSiswa").value.trim();
+      const kelas=document.getElementById("kelasSiswa").value.trim();
+      const jenisKelamin=document.getElementById("jenisKelaminSiswa").value;
+      const tempatLahir=document.getElementById("tempatLahirSiswa").value.trim();
+      const tanggalLahir=document.getElementById("tanggalLahirSiswa").value;
+      const alamat=document.getElementById("alamatSiswa").value.trim();
+      const email=document.getElementById("emailSiswa").value.trim();
+      const password=document.getElementById("passwordSiswa").value;
+      const konfirmasi=document.getElementById("konfirmasiPasswordSiswa").value;
+
+      if(password.length<6){tampilkanPesan("Password minimal 6 karakter.");return;}
+      if(password!==konfirmasi){tampilkanPesan("Konfirmasi password tidak sama.");return;}
+
+      tampilkanPesan("Sedang membuat akun siswa...","sukses");
+
+      try{
+        const userCredential=await createUserWithEmailAndPassword(auth,email,password);
+        const user=userCredential.user;
+
+        await setDoc(doc(db,"users",user.uid),{
+          nama,
+          email,
+          role:"siswa",
+          siswaId:user.uid,
+          dibuatPada:serverTimestamp()
+        });
+
+        await setDoc(doc(db,"siswa",user.uid),{
+          nama,
+          nis,
+          kelas,
+          jenisKelamin,
+          tempatLahir,
+          tanggalLahir,
+          alamat,
+          email,
+          akunUid:user.uid,
+          dibuatPada:serverTimestamp()
+        });
+
+        await signOut(auth);
+        document.getElementById("daftarSiswaForm").reset();
+        pilihMode("login");
+        document.getElementById("email").value=email;
+        tampilkanPesan("Akun Siswa berhasil dibuat. Silakan masuk menggunakan email dan password Anda.","sukses");
+      }catch(error){
+        console.error(error);
+        let pesanError="Gagal membuat akun siswa.";
+        if(error.code==="auth/email-already-in-use") pesanError="Email tersebut sudah digunakan. Gunakan email lain atau masuk ke akun yang sudah ada.";
+        else if(error.code==="auth/invalid-email") pesanError="Format email tidak valid.";
+        else if(error.code==="auth/weak-password") pesanError="Password terlalu lemah. Gunakan minimal 6 karakter.";
+        else if(error.code==="auth/operation-not-allowed") pesanError="Login Email/Password belum diaktifkan di Firebase Authentication.";
+        else if(error.code==="permission-denied" || error.code==="firestore/permission-denied") pesanError="Akun berhasil dibuat di Firebase Authentication, tetapi data siswa tidak dapat disimpan. Security Rules perlu diperbarui.";
         else if(error.code==="auth/network-request-failed") pesanError="Koneksi internet bermasalah. Silakan coba lagi.";
         tampilkanPesan(pesanError);
       }
