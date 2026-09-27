@@ -628,6 +628,14 @@
       </div>
     </div>
     <div class="student-info" id="dataPribadiSiswa">Memuat data siswa...</div>
+
+    <div class="akun-box" style="margin-top:20px;">
+      <h3 style="margin-top:0;">👥 Profil Akademik</h3>
+      <p style="color:#666;font-size:13px;line-height:1.6;">Foto profil Guru dan Admin yang sudah ditambahkan akan tampil di sini.</p>
+      <div id="profilAkademikSiswa" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;">
+        <div style="color:#666;">Memuat profil...</div>
+      </div>
+    </div>
   </div>
 
 
@@ -766,6 +774,7 @@
 
           <tr>
             <th>No</th>
+            <th>Pas Foto</th>
             <th>Nama</th>
             <th>NIS</th>
             <th>Tingkat</th>
@@ -1305,6 +1314,8 @@
 
             <th>No</th>
 
+            <th>Pas Foto</th>
+
             <th>Nama Guru</th>
 
             <th>NIP</th>
@@ -1663,6 +1674,7 @@ const db =
   getFirestore(app);
 
 let fotoProfilUrl = "";
+let dataProfilFoto = [];
 
 
 /* =========================
@@ -1736,6 +1748,20 @@ async function muatProfilPengguna(user) {
       return false;
     }
     fotoProfilUrl = profilUser.fotoData || profilUser.fotoUrl || "";
+    if (fotoProfilUrl) {
+      try {
+        await setDoc(doc(db,"profilFoto",user.uid),{
+          uid:user.uid,
+          nama:profilUser.nama || user.email || "Pengguna",
+          email:user.email || profilUser.email || "",
+          role:roleUser,
+          fotoData:fotoProfilUrl,
+          diperbaruiPada:serverTimestamp()
+        },{merge:true});
+      } catch (e) {
+        console.warn("Profil foto publik belum tersinkron:",e);
+      }
+    }
     const fotoAwal = fotoProfilUrl || "logo-smks-mandiri.png";
     document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=fotoAwal);
     const fotoPreview = document.getElementById("fotoProfilPreview"); if(fotoPreview) fotoPreview.src=fotoAwal;
@@ -1876,6 +1902,7 @@ async function tampilkanDataSaya(){
     const u=userSnap.exists()?userSnap.data():profilUser||{};
     const foto=u.fotoData||u.fotoUrl||"logo-smks-mandiri.png";
     const fotoEl=document.getElementById("fotoProfilSiswa");if(fotoEl)fotoEl.src=foto;
+    await tampilkanProfilAkademikSiswa();
     box.innerHTML=`<h3 style="margin-top:0;">Identitas Siswa</h3><div class="student-info-row"><strong>Nama</strong><span>${s.nama||"-"}</span></div><div class="student-info-row"><strong>NIS</strong><span>${s.nis||"-"}</span></div><div class="student-info-row"><strong>Tingkat</strong><span>${s.tingkat||"-"}</span></div><div class="student-info-row"><strong>Jurusan</strong><span>${s.jurusan||"-"}</span></div><div class="student-info-row"><strong>Kelas</strong><span>${s.kelas||"-"}</span></div><div class="student-info-row"><strong>Status</strong><span>${s.status||"Aktif"}</span></div>`;
   }catch(error){console.error(error);box.innerHTML='<div style="color:#dc3545;">Gagal memuat data siswa: '+error.message+'</div>';}}
 
@@ -1926,12 +1953,66 @@ async function kompresPasFoto(file){
   }
 }
 
+async function muatDataProfilFoto(){
+  try{
+    const snap=await getDocs(collection(db,"profilFoto"));
+    dataProfilFoto=[];
+    snap.forEach(d=>dataProfilFoto.push({uid:d.id,...d.data()}));
+    return dataProfilFoto;
+  }catch(error){
+    console.error("Gagal memuat profil foto:",error);
+    dataProfilFoto=[];
+    return [];
+  }
+}
+
+function cariFotoProfil(data){
+  if(!data) return "";
+  const kunci=[data.akunUid,data.siswaId,data.uid,data.email,data.nama,data.id].filter(Boolean).map(String);
+  const item=dataProfilFoto.find(p=>kunci.includes(String(p.uid)) || kunci.includes(String(p.email||"")) || kunci.includes(String(p.nama||"")));
+  return item?.fotoData || "";
+}
+
+function fotoHtml(foto,nama){
+  const src=foto || "logo-smks-mandiri.png";
+  return `<img src="${src}" alt="Pas Foto ${String(nama||"Pengguna").replace(/"/g,"&quot;")}" style="width:56px;height:72px;object-fit:cover;border-radius:7px;border:2px solid #d7e7ea;background:#fff;display:block;margin:auto;">`;
+}
+
+async function tampilkanProfilAkademikSiswa(){
+  const box=document.getElementById("profilAkademikSiswa");
+  if(!box) return;
+  const profil=await muatDataProfilFoto();
+  const daftar=profil.filter(p=>p.role==="admin" || p.role==="guru");
+  if(!daftar.length){
+    box.innerHTML='<div style="color:#777;">Belum ada pas foto Guru/Admin yang tersimpan.</div>';
+    return;
+  }
+  box.innerHTML=daftar.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id")).map(p=>`
+    <div style="background:#fff;border:1px solid #dfecef;border-radius:10px;padding:12px;text-align:center;">
+      ${fotoHtml(p.fotoData,p.nama)}
+      <div style="font-weight:bold;margin-top:8px;">${p.nama||"-"}</div>
+      <div style="font-size:12px;color:#6b7f8c;margin-top:3px;">${p.role==="admin"?"ADMIN":"GURU"}</div>
+    </div>`).join("");
+}
+
 async function unggahPasFoto(file){
   const user=auth.currentUser;if(!user)throw new Error("Sesi login tidak ditemukan.");
   await validasiPasFoto(file);
   const fotoData=await kompresPasFoto(file);
+  const profilRef=doc(db,"profilFoto",user.uid);
   await setDoc(doc(db,"users",user.uid),{fotoData},{merge:true});
-  fotoProfilUrl=fotoData;profilUser={...(profilUser||{}),fotoData};
+  await setDoc(profilRef,{
+    uid:user.uid,
+    nama:profilUser?.nama || user.email || "Pengguna",
+    email:user.email || profilUser?.email || "",
+    role:roleUser,
+    fotoData,
+    diperbaruiPada:serverTimestamp()
+  },{merge:true});
+  fotoProfilUrl=fotoData;
+  profilUser={...(profilUser||{}),fotoData};
+  dataProfilFoto=dataProfilFoto.filter(x=>x.uid!==user.uid);
+  dataProfilFoto.push({uid:user.uid,nama:profilUser.nama||user.email||"Pengguna",email:user.email||profilUser.email||"",role:roleUser,fotoData});
   document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=fotoData);
   const a=document.getElementById("fotoProfilPreview");if(a)a.src=fotoData;
   const b=document.getElementById("fotoProfilSiswa");if(b)b.src=fotoData;
@@ -3263,6 +3344,8 @@ document
 
 async function tampilkanSiswa() {
 
+  await muatDataProfilFoto();
+
   const tabel =
     document.getElementById("tabelSiswa");
 
@@ -3275,7 +3358,7 @@ async function tampilkanSiswa() {
       <tr>
 
         <td
-          colspan="8"
+          colspan="9"
           style="text-align:center;">
 
           Memuat data...
@@ -3318,7 +3401,7 @@ async function tampilkanSiswa() {
         <tr>
 
           <td
-            colspan="8"
+            colspan="9"
             style="text-align:center;">
 
             Belum ada data siswa.
@@ -3349,6 +3432,10 @@ async function tampilkanSiswa() {
 
           <td>
             ${index + 1}
+          </td>
+
+          <td style="text-align:center;">
+            ${fotoHtml(cariFotoProfil(siswa),siswa.nama)}
           </td>
 
           <td>
@@ -3854,6 +3941,8 @@ document
 
 async function tampilkanGuru() {
 
+  await muatDataProfilFoto();
+
   const tabel =
     document.getElementById(
       "tabelGuru"
@@ -3868,7 +3957,7 @@ async function tampilkanGuru() {
       <tr>
 
         <td
-          colspan="7"
+          colspan="8"
           style="text-align:center;">
 
           Memuat data...
@@ -3913,7 +4002,7 @@ async function tampilkanGuru() {
         <tr>
 
           <td
-            colspan="7"
+            colspan="8"
             style="text-align:center;">
 
             Belum ada data guru.
@@ -3946,6 +4035,10 @@ async function tampilkanGuru() {
 
           <td>
             ${index + 1}
+          </td>
+
+          <td style="text-align:center;">
+            ${fotoHtml(cariFotoProfil(guru),guru.nama)}
           </td>
 
           <td>
