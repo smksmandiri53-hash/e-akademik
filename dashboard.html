@@ -319,6 +319,37 @@
       flex:1 1 auto;
       min-width:0;
     }
+    .header-account{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-left:auto;
+      flex:0 0 auto;
+    }
+    .header-account-info{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:3px;
+      min-width:250px;
+    }
+    .header-avatar{
+      width:72px;
+      height:96px;
+      object-fit:cover;
+      border-radius:10px;
+      border:2px solid rgba(255,255,255,.8);
+      background:#fff;
+      box-shadow:0 4px 12px rgba(0,0,0,.18);
+      flex:0 0 auto;
+    }
+    .header-account-info #emailAdmin,
+    .header-account-info #roleUser{
+      margin:0 !important;
+      text-align:right;
+      font-size:12px;
+      line-height:1.35;
+    }
     header h1{
       font-size:22px;
       letter-spacing:.3px;
@@ -334,6 +365,18 @@
     }
     #roleUser{
       color:#bfeaf2 !important;
+    }
+    .header-contact{
+      margin-top:8px;
+      color:rgba(255,255,255,.9);
+      font-size:12px;
+      line-height:1.55;
+    }
+    .header-contact div{
+      margin:1px 0;
+    }
+    .header-contact strong{
+      color:#fff;
     }
     .btn-danger{
       background:rgba(255,255,255,.12);
@@ -505,6 +548,17 @@
     }
 
     @media (max-width:900px){
+      .brand-header{
+        flex-wrap:wrap;
+      }
+      .header-account{
+        margin-left:0;
+        width:100%;
+        justify-content:flex-end;
+      }
+      .header-account-info{
+        min-width:0;
+      }
       .menu{
         position:static;
         width:auto;
@@ -523,8 +577,14 @@
       header{padding:13px 15px}
       .brand-header{gap:10px;flex-wrap:wrap}
       .brand-logo{width:54px;height:54px}
+      .header-account{gap:8px}
+      .header-avatar{width:58px;height:78px}
+      .header-account-info{align-items:flex-start}
+      .header-account-info #emailAdmin,
+      .header-account-info #roleUser{text-align:left}
       header h1{font-size:17px}
       header p{font-size:11px}
+      .header-contact{font-size:10px}
       .btn-danger{padding:8px 10px;font-size:12px}
       .container{padding:15px 12px 30px}
       #judulDashboard{font-size:21px}
@@ -542,10 +602,22 @@
     <img class="brand-logo" src="logo-smks-mandiri.png" alt="Logo SMK Mandiri Bandar Agung">
     <div class="brand-text">
       <h1>E-Akademik SMKS Mandiri Bandar Agung</h1>
-      <p id="emailAdmin">Memeriksa login...</p>
-      <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
+      <div class="header-contact">
+        <div><strong>Email:</strong> Smkmandiri.12@gmail.com</div>
+        <div><strong>FB:</strong> Smakba Mandiri &nbsp; / &nbsp; <strong>IG:</strong> Smk_mandiri_ba</div>
+        <div><strong>Youtube:</strong> Smk mandiri bandar agung</div>
+        <div><strong>NSS:</strong> 402120817052 &nbsp;&nbsp;&nbsp; <strong>NPSN:</strong> 69761848 &nbsp;&nbsp;&nbsp; <strong>NIS:</strong> 400520</div>
+        <div>Jl. Panjang Sribhawono KM.55 Desa Bandar Agung Kecamatan Bandar Sribhawono Kabupaten Lampung Timur</div>
+      </div>
     </div>
-    <button class="btn-danger" id="logout">Logout</button>
+    <div class="header-account">
+      <div class="header-account-info">
+        <button class="btn-danger" id="logout">Logout</button>
+        <p id="emailAdmin">Memeriksa login...</p>
+        <p id="roleUser" style="font-weight:bold;">Role: memeriksa...</p>
+      </div>
+      <img class="header-avatar" src="logo-smks-mandiri.png" alt="Pas Foto Profil">
+    </div>
   </div>
 </header>
 
