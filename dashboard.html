@@ -2116,11 +2116,32 @@ async function muatSiswaAbsensi() {
 
 async function ambilDataAbsensi() {
   try {
-    const snapshot = await getDocs(collection(db, "absensi"));
+    let snapshot;
+
+    // Siswa WAJIB memakai query berdasarkan siswaId sendiri.
+    // Ini penting karena Firestore Rules menolak query yang berpotensi
+    // mengembalikan data absensi siswa lain.
+    if (roleUser === "siswa") {
+      const siswaId = profilUser?.siswaId || currentUser?.uid || "";
+      if (!siswaId) {
+        dataAbsensi = [];
+        return;
+      }
+      snapshot = await getDocs(
+        query(
+          collection(db, "absensi"),
+          where("siswaId", "==", siswaId)
+        )
+      );
+    } else {
+      snapshot = await getDocs(collection(db, "absensi"));
+    }
+
     dataAbsensi = [];
     snapshot.forEach(d => dataAbsensi.push({ id: d.id, ...d.data() }));
   } catch (error) {
     console.error(error);
+    dataAbsensi = [];
     tampilkanPesanAbsensi("Gagal mengambil data absensi: " + error.message, "error");
   }
 }
@@ -2130,7 +2151,6 @@ async function tampilkanRiwayatAbsensi() {
   tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Memuat data...</td></tr>';
   await ambilDataAbsensi();
 
-  if (roleUser === "siswa") dataAbsensi = dataAbsensi.filter(a => a.siswaId === profilUser?.siswaId);
   dataAbsensi.sort((a,b) => String(b.tanggal || "").localeCompare(String(a.tanggal || "")) || String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
   if (!dataAbsensi.length) {
     tabel.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada riwayat absensi.</td></tr>';
@@ -3531,9 +3551,6 @@ document
     "click",
     () => {
 
-      if (roleUser !== "admin" && roleUser !== "guru") {
-        return;
-      }
 
       formGuru.style.display =
         "block";
@@ -3584,13 +3601,6 @@ document
     "click",
     async () => {
 
-      if (roleUser !== "admin" && roleUser !== "guru") {
-        tampilkanPesanGuru(
-          "Anda tidak memiliki izin mengelola data guru.",
-          "error"
-        );
-        return;
-      }
 
       const id =
         document
@@ -3908,9 +3918,6 @@ async function tampilkanGuru() {
 window.editGuru =
   function(id) {
 
-    if (roleUser !== "admin" && roleUser !== "guru") {
-      return;
-    }
 
     const guru =
       dataGuru.find(
@@ -3984,9 +3991,6 @@ window.editGuru =
 window.hapusGuru =
   async function(id) {
 
-    if (roleUser !== "admin" && roleUser !== "guru") {
-      return;
-    }
 
     const guru =
       dataGuru.find(
@@ -4594,8 +4598,61 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");return;}
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
-    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
-    const siswa=dataSiswa.find(s=>s.id===siswaId);
+    let snap;
+
+    // Ambil nilai dengan query yang sesuai Firestore Rules.
+    // Query seluruh collection nilai tidak boleh dipakai untuk Guru/Siswa
+    // karena Rules membatasi dokumen yang boleh mereka baca.
+    if (roleUser === "admin") {
+      snap = await getDocs(collection(db, "nilai"));
+    } else if (roleUser === "guru") {
+      const kelasWali = String(profilUser?.kelasWali || "").trim();
+
+      if (kelasWali && kelas === kelasWali) {
+        // Guru wali dapat membaca nilai seluruh siswa di kelas walinya.
+        snap = await getDocs(
+          query(
+            collection(db, "nilai"),
+            where("kelas", "==", kelasWali),
+            where("status", "==", "disetujui")
+          )
+        );
+      } else {
+        // Guru non-wali hanya dapat membaca nilai yang dia ajukan sendiri.
+        snap = await getDocs(
+          query(
+            collection(db, "nilai"),
+            where("submittedByUid", "==", currentUser?.uid || ""),
+            where("status", "==", "disetujui")
+          )
+        );
+      }
+    } else if (roleUser === "siswa") {
+      const siswaIdSendiri = profilUser?.siswaId || currentUser?.uid || "";
+      snap = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("siswaId", "==", siswaIdSendiri),
+          where("status", "==", "disetujui")
+        )
+      );
+    } else {
+      throw new Error("Role pengguna tidak valid.");
+    }
+
+    dataERaporNilai=[];
+    snap.forEach(d=>{
+      const n=d.data();
+      if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester && n.status==="disetujui") {
+        dataERaporNilai.push({id:d.id,...n});
+      }
+    });
+
+    let siswa=dataSiswa.find(s=>s.id===siswaId);
+    if (!siswa && roleUser === "siswa" && profilUser?.siswaId === siswaId) {
+      const siswaSnap = await getDoc(doc(db, "siswa", siswaId));
+      if (siswaSnap.exists()) siswa = { id: siswaSnap.id, ...siswaSnap.data() };
+    }
     const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
     let total=0; rows.forEach(n=>total+=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4)));
