@@ -1628,10 +1628,6 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL }
-from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
-
-
 const firebaseConfig = {
 
   apiKey:
@@ -1666,7 +1662,6 @@ const auth =
 const db =
   getFirestore(app);
 
-const storage = getStorage(app);
 let fotoProfilUrl = "";
 
 
@@ -1740,7 +1735,7 @@ async function muatProfilPengguna(user) {
       console.error("Profil siswa tidak memiliki siswaId. Pastikan users/" + user.uid + " memiliki field siswaId yang berisi ID dokumen pada koleksi siswa.");
       return false;
     }
-    fotoProfilUrl = profilUser.fotoUrl || "";
+    fotoProfilUrl = profilUser.fotoData || profilUser.fotoUrl || "";
     const fotoAwal = fotoProfilUrl || "logo-smks-mandiri.png";
     document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=fotoAwal);
     const fotoPreview = document.getElementById("fotoProfilPreview"); if(fotoPreview) fotoPreview.src=fotoAwal;
@@ -1879,7 +1874,7 @@ async function tampilkanDataSaya(){
     if(!snap.exists()){box.innerHTML='<div style="color:#dc3545;">Data siswa tidak ditemukan. Hubungi Admin.</div>';return;}
     const s={id:snap.id,...snap.data()};
     const u=userSnap.exists()?userSnap.data():profilUser||{};
-    const foto=u.fotoUrl||"logo-smks-mandiri.png";
+    const foto=u.fotoData||u.fotoUrl||"logo-smks-mandiri.png";
     const fotoEl=document.getElementById("fotoProfilSiswa");if(fotoEl)fotoEl.src=foto;
     box.innerHTML=`<h3 style="margin-top:0;">Identitas Siswa</h3><div class="student-info-row"><strong>Nama</strong><span>${s.nama||"-"}</span></div><div class="student-info-row"><strong>NIS</strong><span>${s.nis||"-"}</span></div><div class="student-info-row"><strong>Tingkat</strong><span>${s.tingkat||"-"}</span></div><div class="student-info-row"><strong>Jurusan</strong><span>${s.jurusan||"-"}</span></div><div class="student-info-row"><strong>Kelas</strong><span>${s.kelas||"-"}</span></div><div class="student-info-row"><strong>Status</strong><span>${s.status||"Aktif"}</span></div>`;
   }catch(error){console.error(error);box.innerHTML='<div style="color:#dc3545;">Gagal memuat data siswa: '+error.message+'</div>';}}
@@ -1894,18 +1889,53 @@ async function validasiPasFoto(file){
   try{const ukuran=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve({w:img.naturalWidth,h:img.naturalHeight});img.onerror=()=>reject(new Error("File foto tidak dapat dibaca."));img.src=url;});const rasio=ukuran.w/ukuran.h;if(rasio<0.62||rasio>0.88)throw new Error("Pas foto harus portrait dengan rasio sekitar 3:4.");}
   finally{URL.revokeObjectURL(url);}
 }
+async function kompresPasFoto(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((resolve,reject)=>{
+      const el=new Image();
+      el.onload=()=>resolve(el);
+      el.onerror=()=>reject(new Error("File foto tidak dapat dibaca."));
+      el.src=url;
+    });
+
+    const maxW=300;
+    const maxH=400;
+    const skala=Math.min(maxW/img.naturalWidth,maxH/img.naturalHeight,1);
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(img.naturalWidth*skala));
+    canvas.height=Math.max(1,Math.round(img.naturalHeight*skala));
+    const ctx=canvas.getContext("2d");
+    if(!ctx)throw new Error("Browser tidak mendukung pemrosesan foto.");
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality="high";
+    ctx.fillStyle="#ffffff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+
+    let kualitas=0.78;
+    let dataUrl=canvas.toDataURL("image/jpeg",kualitas);
+    while(dataUrl.length>220000 && kualitas>0.5){
+      kualitas-=0.06;
+      dataUrl=canvas.toDataURL("image/jpeg",kualitas);
+    }
+    if(dataUrl.length>260000)throw new Error("Foto masih terlalu besar setelah dikompres. Silakan pilih foto lain.");
+    return dataUrl;
+  }finally{
+    URL.revokeObjectURL(url);
+  }
+}
+
 async function unggahPasFoto(file){
   const user=auth.currentUser;if(!user)throw new Error("Sesi login tidak ditemukan.");
   await validasiPasFoto(file);
-  const ref=storageRef(storage,`profilePhotos/${user.uid}`);
-  await uploadBytes(ref,file,{contentType:file.type,customMetadata:{uid:user.uid,role:roleUser||""}});
-  const url=await getDownloadURL(ref);
-  await setDoc(doc(db,"users",user.uid),{fotoUrl:url},{merge:true});
-  fotoProfilUrl=url;profilUser={...(profilUser||{}),fotoUrl:url};
-  document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=url);
-  const a=document.getElementById("fotoProfilPreview");if(a)a.src=url;
-  const b=document.getElementById("fotoProfilSiswa");if(b)b.src=url;
-  return url;
+  const fotoData=await kompresPasFoto(file);
+  await setDoc(doc(db,"users",user.uid),{fotoData},{merge:true});
+  fotoProfilUrl=fotoData;profilUser={...(profilUser||{}),fotoData};
+  document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=fotoData);
+  const a=document.getElementById("fotoProfilPreview");if(a)a.src=fotoData;
+  const b=document.getElementById("fotoProfilSiswa");if(b)b.src=fotoData;
+  return fotoData;
 }
 document.getElementById("btnSimpanFotoProfil")?.addEventListener("click",async()=>{try{const f=document.getElementById("fotoProfilInput").files[0];await unggahPasFoto(f);document.getElementById("fotoProfilInput").value="";pesanFoto("pesanFotoProfil","Pas foto berhasil disimpan.","sukses");}catch(e){console.error(e);pesanFoto("pesanFotoProfil",e.message,"error");}});
 document.getElementById("btnSimpanFotoSiswa")?.addEventListener("click",async()=>{try{if(roleUser!=="siswa")return;const f=document.getElementById("fotoProfilSiswaInput").files[0];await unggahPasFoto(f);document.getElementById("fotoProfilSiswaInput").value="";pesanFoto("pesanFotoSiswa","Pas foto berhasil disimpan.","sukses");}catch(e){console.error(e);pesanFoto("pesanFotoSiswa",e.message,"error");}});
