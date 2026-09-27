@@ -123,7 +123,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     const firebaseConfig={
@@ -179,22 +179,6 @@
         const userCredential=await signInWithEmailAndPassword(auth,email,password);
         const user=userCredential.user;
 
-        if(!user.emailVerified){
-          try{
-            await sendEmailVerification(user);
-            tampilkanPesan("Email Anda belum diverifikasi. Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox/Spam, klik link verifikasi, lalu login kembali.");
-          }catch(verificationError){
-            console.error("VERIFIKASI GAGAL:",verificationError.code,verificationError.message,verificationError);
-            tampilkanPesan(
-              "Gagal mengirim email verifikasi.<br>Kode: " +
-              (verificationError.code || "unknown") + "<br>" +
-              (verificationError.message || "Tidak ada detail error.")
-            );
-          }
-          await signOut(auth);
-          return;
-        }
-
         tampilkanPesan("Login berhasil! Mengarahkan ke dashboard...","sukses");
         setTimeout(()=>{window.location.href="dashboard.html"},700);
       }catch(error){
@@ -226,24 +210,11 @@
           nama,email,role:"guru",nip,kelasWali,dibuatPada:serverTimestamp()
         });
 
-        try{
-          await sendEmailVerification(user);
-        }catch(verificationError){
-          console.error("VERIFIKASI GURU GAGAL:",verificationError.code,verificationError.message,verificationError);
-          await signOut(auth);
-          tampilkanPesan(
-            "Akun Guru berhasil dibuat, tetapi email verifikasi gagal dikirim.<br>" +
-            "Kode: " + (verificationError.code || "unknown") + "<br>" +
-            (verificationError.message || "Tidak ada detail error.")
-          );
-          return;
-        }
-
         await signOut(auth);
         document.getElementById("daftarForm").reset();
         pilihMode("login");
         document.getElementById("email").value=email;
-        tampilkanPesan("Akun Guru berhasil dibuat. Email verifikasi sudah dikirim ke " + email + ". Silakan buka email tersebut, klik link verifikasi, lalu login.","sukses");
+        tampilkanPesan("Akun Guru berhasil dibuat. Silakan login menggunakan email dan password tersebut.","sukses");
       }catch(error){
         console.error(error);
         if(akunGuruDibuat && auth.currentUser) await signOut(auth).catch(()=>{});
@@ -305,24 +276,11 @@
           dibuatPada:serverTimestamp()
         });
 
-        try{
-          await sendEmailVerification(user);
-        }catch(verificationError){
-          console.error("VERIFIKASI SISWA GAGAL:",verificationError.code,verificationError.message,verificationError);
-          await signOut(auth);
-          tampilkanPesan(
-            "Akun Siswa berhasil dibuat, tetapi email verifikasi gagal dikirim.<br>" +
-            "Kode: " + (verificationError.code || "unknown") + "<br>" +
-            (verificationError.message || "Tidak ada detail error.")
-          );
-          return;
-        }
-
         await signOut(auth);
         document.getElementById("daftarSiswaForm").reset();
         pilihMode("login");
         document.getElementById("email").value=email;
-        tampilkanPesan("Akun Siswa berhasil dibuat. Email verifikasi sudah dikirim ke " + email + ". Silakan buka email tersebut, klik link verifikasi, lalu login.","sukses");
+        tampilkanPesan("Akun Siswa berhasil dibuat. Silakan login menggunakan email dan password tersebut.","sukses");
       }catch(error){
         console.error(error);
         if(akunSiswaDibuat && auth.currentUser) await signOut(auth).catch(()=>{});
