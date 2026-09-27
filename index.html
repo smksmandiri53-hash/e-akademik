@@ -43,7 +43,6 @@
         <label for="password">Password</label>
         <input type="password" id="password" placeholder="Masukkan password" autocomplete="current-password" required>
         <button type="submit">LOGIN</button>
-      <p style="text-align:center;margin-top:10px;"><button type="button" id="btnKirimVerifikasi" class="mode-btn">📧 Kirim Ulang Email Verifikasi</button></p>
       </form>
       <p class="secondary-text">Gunakan email dan password akun yang sudah terdaftar.</p>
     </div>
@@ -76,7 +75,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     const firebaseConfig={
@@ -110,6 +109,35 @@
     document.getElementById("btnModeLogin").addEventListener("click",()=>pilihMode("login"));
     document.getElementById("btnModeDaftar").addEventListener("click",()=>pilihMode("daftar"));
 
+    const VERIFIKASI_COOLDOWN_MS = 15 * 60 * 1000;
+    const VERIFIKASI_COOLDOWN_KEY = "eAkademik_verifikasi_terakhir";
+
+    function bolehKirimVerifikasi(email){
+      try{
+        const data=JSON.parse(localStorage.getItem(VERIFIKASI_COOLDOWN_KEY) || "{}");
+        const waktu=Number(data[email] || 0);
+        return !waktu || (Date.now()-waktu) >= VERIFIKASI_COOLDOWN_MS;
+      }catch(_){
+        return true;
+      }
+    }
+
+    function catatKirimVerifikasi(email){
+      try{
+        const data=JSON.parse(localStorage.getItem(VERIFIKASI_COOLDOWN_KEY) || "{}");
+        data[email]=Date.now();
+        localStorage.setItem(VERIFIKASI_COOLDOWN_KEY,JSON.stringify(data));
+      }catch(_){}
+    }
+
+    async function kirimVerifikasiSekali(user,email){
+      if(user.emailVerified) return {status:"sudah"};
+      if(!bolehKirimVerifikasi(email)) return {status:"cooldown"};
+      await sendEmailVerification(user);
+      catatKirimVerifikasi(email);
+      return {status:"terkirim"};
+    }
+
     document.getElementById("loginForm").addEventListener("submit",async event=>{
       event.preventDefault();
       const email=document.getElementById("email").value.trim();
@@ -118,46 +146,41 @@
       try{
         const userCredential=await signInWithEmailAndPassword(auth,email,password);
         const user=userCredential.user;
+
         if(!user.emailVerified){
-          await sendEmailVerification(user);
-          await signOut(auth);
-          tampilkanPesan("Email belum diverifikasi. Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox/Spam lalu klik link tersebut.");
+          try{
+            const hasil=await kirimVerifikasiSekali(user,email);
+            await signOut(auth);
+            if(hasil.status==="terkirim"){
+              tampilkanPesan("Email Anda belum diverifikasi. Email verifikasi sudah dikirim ke " + email + ". Cek Inbox/Spam, klik link verifikasi, lalu login kembali.");
+            }else if(hasil.status==="cooldown"){
+              tampilkanPesan("Email Anda belum diverifikasi. Firebase sedang membatasi pengiriman sementara karena terlalu banyak permintaan. Jangan klik kirim berulang-ulang. Cek Inbox/Spam dari email verifikasi sebelumnya dan coba login kembali setelah batas sementara berakhir.");
+            }else{
+              tampilkanPesan("Email akun ini sudah diverifikasi. Silakan login kembali.","sukses");
+            }
+          }catch(verificationError){
+            console.error("Gagal mengirim email verifikasi:",verificationError);
+            await signOut(auth);
+            if(verificationError.code==="auth/too-many-requests"){
+              tampilkanPesan("Firebase sedang membatasi pengiriman email karena terlalu banyak permintaan. Jangan lakukan pengiriman berulang. Cek Inbox/Spam dan coba lagi setelah batas sementara berakhir.");
+            }else if(verificationError.code==="auth/quota-exceeded"){
+              tampilkanPesan("Kuota pengiriman email verifikasi Firebase sedang tercapai. Tunggu sampai kuota tersedia kembali atau gunakan paket dengan kuota lebih tinggi.");
+            }else if(verificationError.code==="auth/network-request-failed"){
+              tampilkanPesan("Koneksi internet bermasalah saat mengirim email verifikasi. Silakan coba lagi nanti.");
+            }else{
+              tampilkanPesan("Email verifikasi gagal dikirim. Kode: " + (verificationError.code || "tidak diketahui") + ".");
+            }
+          }
           return;
         }
+
         tampilkanPesan("Login berhasil! Mengarahkan ke dashboard...","sukses");
         setTimeout(()=>{window.location.href="dashboard.html"},700);
       }catch(error){
         console.error(error);
-        if(error.code==="auth/too-many-requests") tampilkanPesan("Terlalu banyak permintaan. Tunggu beberapa saat lalu coba lagi.");
+        if(error.code==="auth/too-many-requests") tampilkanPesan("Terlalu banyak percobaan login. Tunggu sampai pembatasan sementara Firebase berakhir, lalu coba lagi.");
         else if(error.code==="auth/network-request-failed") tampilkanPesan("Koneksi internet bermasalah.");
         else tampilkanPesan("Email atau password salah.");
-      }
-    });
-
-    document.getElementById("btnKirimVerifikasi").addEventListener("click",async()=>{
-      const email=document.getElementById("email").value.trim();
-      const password=document.getElementById("password").value;
-      if(!email || !password){
-        tampilkanPesan("Masukkan email dan password terlebih dahulu, lalu klik Kirim Ulang Email Verifikasi.");
-        return;
-      }
-      tampilkanPesan("Memeriksa akun dan mengirim email verifikasi...","sukses");
-      try{
-        const userCredential=await signInWithEmailAndPassword(auth,email,password);
-        const user=userCredential.user;
-        if(user.emailVerified){
-          await signOut(auth);
-          tampilkanPesan("Email akun ini sudah terverifikasi. Silakan login.","sukses");
-          return;
-        }
-        await sendEmailVerification(user);
-        await signOut(auth);
-        tampilkanPesan("Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox dan folder Spam.","sukses");
-      }catch(error){
-        console.error(error);
-        if(error.code==="auth/too-many-requests") tampilkanPesan("Terlalu banyak permintaan. Tunggu beberapa saat lalu coba lagi.");
-        else if(error.code==="auth/network-request-failed") tampilkanPesan("Koneksi internet bermasalah. Silakan coba lagi.");
-        else tampilkanPesan("Email atau password tidak sesuai, atau akun belum berhasil dibuat.");
       }
     });
 
@@ -181,18 +204,26 @@
         await setDoc(doc(db,"users",user.uid),{
           nama,email,role:"guru",nip,mapel,kelasWali,dibuatPada:serverTimestamp()
         });
+        let hasilVerifikasi="";
         try{
           await sendEmailVerification(user);
+          catatKirimVerifikasi(email);
+          hasilVerifikasi=" Email verifikasi sudah dikirim ke " + email + ". Cek Inbox/Spam, klik link verifikasi, lalu login.";
         }catch(verificationError){
           console.error("Gagal mengirim email verifikasi:",verificationError);
-          await signOut(auth);
-          throw verificationError;
+          if(verificationError.code==="auth/too-many-requests"){
+            hasilVerifikasi=" Akun berhasil dibuat, tetapi Firebase sedang membatasi pengiriman email sementara. Jangan meminta kirim berulang-ulang; login kembali nanti untuk mencoba pengiriman setelah batas berakhir.";
+          }else if(verificationError.code==="auth/quota-exceeded"){
+            hasilVerifikasi=" Akun berhasil dibuat, tetapi kuota email verifikasi Firebase sedang tercapai. Email dapat dikirim setelah kuota tersedia kembali.";
+          }else{
+            hasilVerifikasi=" Akun berhasil dibuat, tetapi email verifikasi belum berhasil dikirim (" + (verificationError.code || "error tidak diketahui") + ").";
+          }
         }
         await signOut(auth);
         document.getElementById("daftarForm").reset();
         pilihMode("login");
         document.getElementById("email").value=email;
-        tampilkanPesan("Akun Guru berhasil dibuat. Silakan masuk menggunakan email dan password Anda.","sukses");
+        tampilkanPesan("Akun Guru berhasil dibuat." + hasilVerifikasi,"sukses");
       }catch(error){
         console.error(error);
         let pesanError="Gagal membuat akun.";
