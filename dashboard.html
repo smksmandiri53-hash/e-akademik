@@ -3531,6 +3531,9 @@ document
     "click",
     () => {
 
+      if (roleUser !== "admin" && roleUser !== "guru") {
+        return;
+      }
 
       formGuru.style.display =
         "block";
@@ -3581,6 +3584,13 @@ document
     "click",
     async () => {
 
+      if (roleUser !== "admin" && roleUser !== "guru") {
+        tampilkanPesanGuru(
+          "Anda tidak memiliki izin mengelola data guru.",
+          "error"
+        );
+        return;
+      }
 
       const id =
         document
@@ -3898,6 +3908,9 @@ async function tampilkanGuru() {
 window.editGuru =
   function(id) {
 
+    if (roleUser !== "admin" && roleUser !== "guru") {
+      return;
+    }
 
     const guru =
       dataGuru.find(
@@ -3971,6 +3984,9 @@ window.editGuru =
 window.hapusGuru =
   async function(id) {
 
+    if (roleUser !== "admin" && roleUser !== "guru") {
+      return;
+    }
 
     const guru =
       dataGuru.find(
