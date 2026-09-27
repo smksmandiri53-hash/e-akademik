@@ -25,27 +25,6 @@
       padding: 20px;
     }
 
-    .brand-header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-
-    .brand-logo {
-      width: 78px;
-      height: 78px;
-      object-fit: contain;
-      border-radius: 50%;
-      background: white;
-      padding: 3px;
-      flex: 0 0 auto;
-    }
-
-    .brand-text {
-      flex: 1 1 280px;
-    }
-
     header h1 {
       margin: 0 0 8px;
     }
@@ -254,299 +233,16 @@
         padding: 15px;
       }
     }
-  
-
-    /* =========================================================
-       E-AKADEMIK UI REFRESH — TAMPILAN SAJA
-       Tidak mengubah ID, JavaScript, Firebase, query, atau alur.
-       ========================================================= */
-    :root{
-      --akademik-navy:#073b4c;
-      --akademik-teal:#0f7185;
-      --akademik-cyan:#19a7c2;
-      --akademik-bg:#eef5f8;
-      --akademik-card:#ffffff;
-      --akademik-line:#d9e7ed;
-      --akademik-text:#123047;
-      --akademik-muted:#6b7f8c;
-      --akademik-shadow:0 8px 24px rgba(9,54,73,.08);
-    }
-
-    body{
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
-      background:linear-gradient(180deg,#eef5f8 0%,#f7fafc 100%);
-      color:var(--akademik-text);
-    }
-
-    header{
-      position:relative;
-      z-index:20;
-      background:linear-gradient(120deg,#073b4c 0%,#0b5568 55%,#0d7183 100%);
-      padding:18px 26px;
-      box-shadow:0 4px 18px rgba(0,0,0,.12);
-      overflow:hidden;
-    }
-    header::after{
-      content:"";
-      position:absolute;
-      right:-100px;
-      top:-130px;
-      width:430px;
-      height:300px;
-      border-radius:50%;
-      background:rgba(255,255,255,.07);
-      transform:rotate(-20deg);
-      pointer-events:none;
-    }
-    .brand-header{
-      position:relative;
-      z-index:1;
-      max-width:1450px;
-      margin:auto;
-      display:flex;
-      align-items:center;
-      gap:16px;
-      flex-wrap:nowrap;
-    }
-    .brand-logo{
-      width:68px;
-      height:68px;
-      border:2px solid rgba(255,255,255,.75);
-      box-shadow:0 4px 12px rgba(0,0,0,.18);
-      padding:4px;
-    }
-    .brand-text{
-      flex:1 1 auto;
-      min-width:0;
-    }
-    header h1{
-      font-size:22px;
-      letter-spacing:.3px;
-      margin:0 0 5px;
-    }
-    header p{
-      color:rgba(255,255,255,.88);
-      margin:4px 0;
-      font-size:13px;
-    }
-    #emailAdmin{
-      font-weight:600;
-    }
-    #roleUser{
-      color:#bfeaf2 !important;
-    }
-    .btn-danger{
-      background:rgba(255,255,255,.12);
-      border:1px solid rgba(255,255,255,.28);
-      color:#fff;
-      padding:10px 16px;
-      border-radius:10px;
-      transition:.2s;
-      white-space:nowrap;
-    }
-    .btn-danger:hover{
-      background:#dc3545;
-      transform:translateY(-1px);
-    }
-
-    .container{
-      max-width:none;
-      margin:0;
-      padding:28px 30px 40px 270px;
-      min-height:calc(100vh - 104px);
-    }
-    #judulDashboard{
-      font-size:26px;
-      color:var(--akademik-navy);
-      margin:0 0 22px;
-      font-weight:800;
-    }
-
-    .menu{
-      position:fixed;
-      z-index:15;
-      left:0;
-      top:104px;
-      bottom:0;
-      width:242px;
-      margin:0;
-      padding:22px 12px 18px;
-      display:flex;
-      flex-direction:column;
-      gap:7px;
-      overflow-y:auto;
-      background:linear-gradient(180deg,#073b4c 0%,#08495c 72%,#063645 100%);
-      box-shadow:5px 0 20px rgba(4,47,61,.12);
-    }
-    .menu::before{
-      content:"SMK MANDIRI BANDAR AGUNG";
-      color:rgba(255,255,255,.72);
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:1px;
-      padding:0 14px 13px;
-    }
-    .menu .card{
-      position:relative;
-      flex:0 0 auto;
-      min-height:49px;
-      padding:14px 15px 14px 18px;
-      display:flex;
-      align-items:center;
-      background:transparent;
-      color:#eaf8fb;
-      border:1px solid transparent;
-      border-radius:10px;
-      box-shadow:none;
-      cursor:pointer;
-      transition:.2s ease;
-    }
-    .menu .card::before{
-      content:"";
-      width:7px;
-      height:7px;
-      border-radius:50%;
-      background:#63d2e4;
-      margin-right:12px;
-      opacity:.8;
-    }
-    .menu .card:hover{
-      transform:translateX(3px);
-      background:rgba(255,255,255,.09);
-    }
-    .menu .card.aktif{
-      border:1px solid rgba(255,255,255,.13);
-      background:linear-gradient(90deg,#1091a9,#0b6f83);
-      box-shadow:0 6px 14px rgba(0,0,0,.12);
-    }
-    .menu .card h3{
-      margin:0;
-      color:inherit;
-      font-size:14px;
-    }
-    .menu .card p{
-      display:none;
-    }
-
-    .panel,
-    #panelPersetujuanNilai{
-      background:rgba(255,255,255,.97) !important;
-      border:1px solid var(--akademik-line);
-      border-radius:16px !important;
-      box-shadow:var(--akademik-shadow) !important;
-      padding:24px;
-      margin-bottom:22px;
-    }
-    .topbar{
-      padding-bottom:14px;
-      border-bottom:1px solid #e6eef2;
-      margin-bottom:6px;
-    }
-    .topbar h2{
-      color:var(--akademik-navy);
-      font-size:20px;
-      margin:0;
-    }
-    .btn-primary{
-      background:linear-gradient(135deg,#0c7185,#1599b0);
-      color:white;
-      border-radius:9px;
-      box-shadow:0 4px 10px rgba(15,113,133,.18);
-    }
-    .btn-primary:hover{filter:brightness(1.05);transform:translateY(-1px)}
-    .btn-secondary{border-radius:9px;background:#60727c;color:white}
-    .btn-warning{border-radius:9px}
-    button{transition:.18s ease}
-
-    .form-grid{gap:15px;margin-top:18px}
-    input,select,textarea{
-      border:1px solid #cddde4;
-      border-radius:9px;
-      background:#fbfdfe;
-      color:var(--akademik-text);
-      padding:11px 12px;
-      outline:none;
-    }
-    input:focus,select:focus,textarea:focus{
-      border-color:#4db5c7;
-      box-shadow:0 0 0 3px rgba(25,167,194,.10);
-    }
-    label{color:#35515f}
-
-    #formSiswa,#formGuru,#formKelas,#formMapel,#formJadwal,#formNilai,#formAbsensi,#formPengumuman{
-      background:#f5f9fb;
-      border:1px solid #e1edf1;
-      border-radius:12px;
-    }
-    .table-wrapper{border-radius:12px}
-    table{margin-top:16px;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--akademik-line);border-radius:10px}
-    th,td{border:0;border-bottom:1px solid #e3edf1;padding:11px 12px}
-    th{background:#edf6f8;color:#23495a;font-size:13px}
-    tr:last-child td{border-bottom:0}
-    tbody tr:hover td{background:#f8fcfd}
-
-    .student-info,.akun-box{
-      background:#f8fbfc;
-      border:1px solid #deebef;
-      border-radius:13px;
-      box-shadow:none;
-    }
-    .student-info-row{border-bottom:1px solid #e5eef1}
-    .pesan{border-radius:9px}
-
-    /* Sentuhan profil pada header: menggunakan data yang sudah ada, tanpa mengubah database. */
-    .brand-text::after{
-      content:"Sistem Informasi Akademik";
-      display:block;
-      color:rgba(255,255,255,.65);
-      font-size:11px;
-      margin-top:3px;
-      letter-spacing:.2px;
-    }
-
-    @media (max-width:900px){
-      .menu{
-        position:static;
-        width:auto;
-        height:auto;
-        flex-direction:row;
-        overflow-x:auto;
-        overflow-y:hidden;
-        padding:10px;
-        border-radius:0;
-      }
-      .menu::before{display:none}
-      .menu .card{min-width:150px;justify-content:flex-start}
-      .container{padding:18px}
-    }
-    @media (max-width:600px){
-      header{padding:13px 15px}
-      .brand-header{gap:10px;flex-wrap:wrap}
-      .brand-logo{width:54px;height:54px}
-      header h1{font-size:17px}
-      header p{font-size:11px}
-      .btn-danger{padding:8px 10px;font-size:12px}
-      .container{padding:15px 12px 30px}
-      #judulDashboard{font-size:21px}
-      .menu .card{min-width:135px;padding:11px 12px}
-      .panel,#panelPersetujuanNilai{padding:16px !important;border-radius:13px !important}
-    }
-
   </style>
 </head>
 
 <body>
 
 <header>
-  <div class="brand-header">
-    <img class="brand-logo" src="logo-smks-mandiri.png" alt="Logo SMK Mandiri Bandar Agung">
-    <div class="brand-text">
-      <h1>E-Akademik SMKS Mandiri Bandar Agung</h1>
-      <p id="emailAdmin">Memeriksa login...</p>
-      <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
-    </div>
-    <button class="btn-danger" id="logout">Logout</button>
-  </div>
+  <h1>E-Akademik SMKS Mandiri Bandar Agung</h1>
+  <p id="emailAdmin">Memeriksa login...</p>
+  <p id="roleUser" style="margin:6px 0 0;font-weight:bold;">Role: memeriksa...</p>
+  <button class="btn-danger" id="logout">Logout</button>
 </header>
 
 <div class="container">
@@ -587,7 +283,7 @@
 
     <div class="card" id="menuAbsensi">
       <h3>📋 Absensi</h3>
-      <p>Kelola absensi siswa.</p>
+      <p>Kelola absensi siswa. Guru dapat menyimpan langsung.</p>
     </div>
 
     <div class="card" id="menuPengumuman">
@@ -1597,9 +1293,9 @@ import {
   setDoc,
   collection,
   getDocs,
-  addDoc,
   query,
   where,
+  addDoc,
   updateDoc,
   deleteDoc,
   doc
@@ -1743,15 +1439,46 @@ onAuthStateChanged(auth, async (user) => {
 
 
 function aturTampilanBerdasarkanRole() {
-  const adminGuru=["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"];
-  const siswa=["menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"];
-  if(roleUser === "siswa"){
-    adminGuru.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-    siswa.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="block";});
-    ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  } else {
-    adminGuru.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="";});
-    siswa.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  const menuOperasional = [
+    "menuSiswa", "menuGuru", "menuKelas", "menuMapel", "menuJadwal",
+    "menuNilai", "menuAbsensi", "menuPengumuman", "menuERapor", "menuAkun"
+  ];
+  const menuSiswa = [
+    "menuDataSaya", "menuNilaiSaya", "menuAbsensiSaya", "menuRaporSaya", "menuPengumumanSaya"
+  ];
+
+  if (roleUser === "siswa") {
+    menuOperasional.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+    menuSiswa.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "block";
+    });
+    [
+      "panelSiswa", "panelGuru", "panelKelas", "panelMapel", "panelJadwal",
+      "panelNilai", "panelAbsensi", "panelPengumuman", "panelERapor",
+      "panelAkun", "panelPersetujuanNilai"
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+    return;
+  }
+
+  menuOperasional.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "";
+  });
+  menuSiswa.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  const panelPersetujuan = document.getElementById("panelPersetujuanNilai");
+  if (panelPersetujuan) {
+    panelPersetujuan.style.display = roleUser === "admin" ? "block" : "none";
   }
 }
 function sembunyikanSemuaPanel(){
@@ -2143,9 +1870,26 @@ document.getElementById("btnSimpanAbsensi").addEventListener("click", async () =
       const siswa = siswaKelas.find(s => s.id === select.dataset.siswaId);
       if (!siswa) continue;
       const existing = dataAbsensi.find(a => a.tanggal === tanggal && a.kelas === kelas && a.siswaId === siswa.id);
-      const data = { tanggal, kelas, siswaId: siswa.id, siswaNama: siswa.nama || "-", nis: siswa.nis || "-", status: select.value };
-      if (existing) await updateDoc(doc(db, "absensi", existing.id), data);
-      else await addDoc(collection(db, "absensi"), data);
+      const data = {
+        tanggal,
+        kelas,
+        siswaId: siswa.id,
+        siswaNama: siswa.nama || "-",
+        nis: siswa.nis || "-",
+        status: select.value,
+        diinputOlehUid: currentUser?.uid || "",
+        diinputOlehNama: profilUser?.nama || currentUser?.email || "-",
+        diinputOlehRole: roleUser || "",
+        diperbaruiPada: serverTimestamp()
+      };
+      if (existing) {
+        await updateDoc(doc(db, "absensi", existing.id), data);
+      } else {
+        await addDoc(collection(db, "absensi"), {
+          ...data,
+          dibuatPada: serverTimestamp()
+        });
+      }
     }
     tampilkanPesanAbsensi("Absensi berhasil disimpan.", "sukses");
     await tampilkanRiwayatAbsensi();
@@ -4200,7 +3944,8 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
     status: statusBaru,
     submittedByUid: currentUser?.uid || "",
     submittedByNama: profilUser?.nama || currentUser?.email || "-",
-    submittedAt: serverTimestamp()
+    submittedAt: serverTimestamp(),
+    rejectionReason: roleUser === "admin" ? "" : ""
   };
 
   try {
@@ -4225,28 +3970,22 @@ async function tampilkanPersetujuanNilai() {
   const panel = document.getElementById("panelPersetujuanNilai");
   const tabel = document.getElementById("tabelPersetujuanNilai");
   if (!panel || !tabel) return;
-
   if (roleUser !== "admin") {
     panel.style.display = "none";
     return;
   }
-
   panel.style.display = "block";
   tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Memuat pengajuan...</td></tr>';
 
   try {
-    // Hanya Admin yang boleh membaca seluruh pengajuan nilai.
     const snapshot = await getDocs(collection(db, "nilai"));
     const pengajuan = [];
-
     snapshot.forEach(d => {
       const item = { id: d.id, ...d.data() };
-      if (item.status === "menunggu_persetujuan") {
-        pengajuan.push(item);
-      }
+      if (item.status === "menunggu_persetujuan") pengajuan.push(item);
     });
 
-    pengajuan.sort((a, b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
+    pengajuan.sort((a,b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
 
     if (!pengajuan.length) {
       tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Tidak ada pengajuan nilai yang menunggu persetujuan.</td></tr>';
@@ -4263,15 +4002,15 @@ async function tampilkanPersetujuanNilai() {
         <td>${n.submittedByNama || n.guru || "-"}</td>
         <td>${n.semester || "-"}</td>
         <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
-        <td><span style="color:#856404;font-weight:bold;">Menunggu Persetujuan</span></td>
+        <td>Menunggu Persetujuan</td>
         <td><div class="aksi">
-          <button type="button" class="btn-primary" onclick="setujuiNilai('${n.id}')">Setujui</button>
-          <button type="button" class="btn-danger" onclick="tolakNilai('${n.id}')">Tolak</button>
+          <button class="btn-primary" onclick="setujuiNilai('${n.id}')">Setujui</button>
+          <button class="btn-danger" onclick="tolakNilai('${n.id}')">Tolak</button>
         </div></td>`;
       tabel.appendChild(tr);
     });
   } catch (error) {
-    console.error("Gagal mengambil pengajuan nilai:", error);
+    console.error(error);
     tabel.innerHTML = `<tr><td colspan="9" style="color:red;text-align:center;">Gagal mengambil pengajuan: ${error.message}</td></tr>`;
   }
 }
@@ -4326,16 +4065,15 @@ window.tolakNilai = async function(id) {
 async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
   tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>';
-
   try {
     let snapshot;
 
-    // Firestore Rules bukan filter. Karena itu query harus sesuai hak akses masing-masing role.
+    // Sesuaikan query dengan Firestore Rules agar Guru hanya
+    // membaca nilai yang dia ajukan sendiri dan Siswa hanya
+    // membaca nilai miliknya yang sudah disetujui.
     if (roleUser === "admin") {
-      // Admin dapat melihat seluruh nilai.
       snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "guru") {
-      // Guru hanya melihat nilai yang dia ajukan sendiri, termasuk yang masih menunggu, ditolak, dan sudah disetujui.
       snapshot = await getDocs(
         query(
           collection(db, "nilai"),
@@ -4343,7 +4081,6 @@ async function tampilkanNilai() {
         )
       );
     } else if (roleUser === "siswa") {
-      // Siswa hanya melihat nilai miliknya yang sudah disahkan Admin.
       snapshot = await getDocs(
         query(
           collection(db, "nilai"),
@@ -4357,58 +4094,25 @@ async function tampilkanNilai() {
 
     dataNilai = [];
     snapshot.forEach(d => {
-      dataNilai.push({ id: d.id, ...d.data() });
+      const item = { id: d.id, ...d.data() };
+      dataNilai.push(item);
     });
-
-    dataNilai.sort((a, b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
-
+    dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
     if (!dataNilai.length) {
       tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Belum ada data nilai.</td></tr>';
       return;
     }
-
     tabel.innerHTML = "";
     dataNilai.forEach((n, index) => {
       const tr = document.createElement("tr");
-      const statusLabel = n.status === "disetujui"
-        ? '<span style="color:#198754;font-weight:bold;">Disetujui</span>'
-        : n.status === "ditolak"
-          ? '<span style="color:#dc3545;font-weight:bold;">Ditolak</span>'
-          : '<span style="color:#856404;font-weight:bold;">Menunggu Persetujuan</span>';
-
-      let aksi = "";
-
-      if (roleUser === "siswa") {
-        aksi = '<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>';
-      } else if (roleUser === "admin") {
-        // Admin selalu memiliki kontrol penuh, termasuk menghapus nilai yang sudah disetujui.
-        aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
-                <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
-      } else if (roleUser === "guru") {
-        if (n.status === "disetujui") {
-          aksi = '<span style="color:#198754;font-weight:bold;">Resmi</span>';
-        } else {
-          aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
-        }
-      }
-
-      tr.innerHTML = `<td>${index + 1}</td>
-        <td>${n.siswaNama || "-"}</td>
-        <td>${n.kelas || "-"}</td>
-        <td>${n.mapel || "-"}</td>
-        <td>${n.guru || "-"}</td>
-        <td>${n.semester || "-"}</td>
-        <td>${n.tugas ?? "-"}</td>
-        <td>${n.uts ?? "-"}</td>
-        <td>${n.uas ?? "-"}</td>
-        <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
-        <td>${statusLabel}${n.status === "ditolak" && n.rejectionReason ? `<br><small style="color:#dc3545;">Alasan: ${n.rejectionReason}</small>` : ""}</td>
-        <td><div class="aksi">${aksi}</div></td>`;
+      const statusLabel = n.status === "disetujui" ? "Disetujui" : n.status === "ditolak" ? "Ditolak" : "Menunggu Persetujuan";
+      const aksi = roleUser === "siswa" ? `<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>` : (roleUser === "admin" || n.status !== "disetujui" ? `<button class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>${roleUser === "admin" ? `<button class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>` : ""}` : `<span style="color:#198754;font-weight:bold;">Resmi</span>`);
+      tr.innerHTML = `<td>${index+1}</td><td>${n.siswaNama || "-"}</td><td>${n.kelas || "-"}</td><td>${n.mapel || "-"}</td><td>${n.guru || "-"}</td><td>${n.semester || "-"}</td><td>${n.tugas ?? "-"}</td><td>${n.uts ?? "-"}</td><td>${n.uas ?? "-"}</td><td><strong>${n.nilaiAkhir ?? "-"}</strong></td><td>${statusLabel}</td><td><div class="aksi">${aksi}</div></td>`;
       tabel.appendChild(tr);
     });
   } catch (error) {
-    console.error("Gagal mengambil data nilai:", error);
-    tabel.innerHTML = `<tr><td colspan="12" style="color:red;text-align:center;">Gagal mengambil data nilai: ${error.message}</td></tr>`;
+    console.error(error);
+    tabel.innerHTML = `<tr><td colspan="12" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
   }
 }
 
@@ -4432,15 +4136,17 @@ window.editNilai = async function(id) {
 };
 
 window.hapusNilai = async function(id) {
-  if (roleUser !== "admin") return;
+  if (roleUser !== "admin") {
+    tampilkanPesanNilai("Hanya Admin yang dapat menghapus nilai.", "error");
+    return;
+  }
   const n = dataNilai.find(item => item.id === id);
   if (!n) return;
   if (!confirm(`Apakah Anda yakin ingin menghapus nilai ${n.siswaNama || "siswa"} - ${n.mapel || "mata pelajaran"}?`)) return;
   try {
     await deleteDoc(doc(db, "nilai", id));
     tampilkanPesanNilai("Data nilai berhasil dihapus.", "sukses");
-    await tampilkanNilai();
-    await tampilkanPersetujuanNilai();
+    tampilkanNilai();
   } catch (error) {
     console.error(error);
     tampilkanPesanNilai("Gagal menghapus nilai: " + error.message, "error");
