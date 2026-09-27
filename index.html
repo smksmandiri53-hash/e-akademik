@@ -8,7 +8,7 @@
     *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
     body{min-height:100vh;background:linear-gradient(135deg,#0f766e,#164e63);display:flex;justify-content:center;align-items:center;padding:20px}
     .login-box{width:100%;max-width:430px;background:white;padding:30px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-    .logo{text-align:center;margin-bottom:10px}.logo img{width:105px;height:105px;object-fit:contain;border-radius:50%}
+    .logo{text-align:center;font-size:50px;margin-bottom:10px}
     h1{text-align:center;color:#164e63;margin-bottom:5px}
     .subtitle{text-align:center;color:#666;margin-bottom:22px}
     .mode-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
@@ -27,13 +27,13 @@
 </head>
 <body>
   <div class="login-box">
-    <div class="logo"><img src="logo-smks-mandiri.png" alt="Logo SMK Mandiri Bandar Agung"></div>
+    <div class="logo">🎓</div>
     <h1>E-AKADEMIK</h1>
     <p class="subtitle">SMKS Mandiri Bandar Agung</p>
 
     <div class="mode-buttons">
       <button type="button" class="mode-btn aktif" id="btnModeLogin">🔐 Masuk Akun</button>
-      <button type="button" class="mode-btn" id="btnModeDaftar">📝 Buat Akun</button>
+      <button type="button" class="mode-btn" id="btnModeDaftar">📝 Buat Akun Guru</button>
     </div>
 
     <div id="panelLogin" class="form-panel aktif">
@@ -43,77 +43,30 @@
         <label for="password">Password</label>
         <input type="password" id="password" placeholder="Masukkan password" autocomplete="current-password" required>
         <button type="submit">LOGIN</button>
+      <p style="text-align:center;margin-top:10px;"><button type="button" id="btnKirimVerifikasi" class="mode-btn">📧 Kirim Ulang Email Verifikasi</button></p>
       </form>
       <p class="secondary-text">Gunakan email dan password akun yang sudah terdaftar.</p>
     </div>
 
     <div id="panelDaftar" class="form-panel">
-      <div class="info-box">Silakan pilih jenis akun. <b>Akun Guru</b> untuk guru dan <b>Akun Siswa</b> untuk siswa. Akun siswa hanya dapat melihat data akademiknya dan tidak dapat menginput data.</div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
-        <button type="button" class="mode-btn aktif" id="btnJenisGuru">👨‍🏫 Guru</button>
-        <button type="button" class="mode-btn" id="btnJenisSiswa">🎓 Siswa</button>
-      </div>
-
-      <div id="formGuruWrap">
-        <form id="daftarForm">
-          <label for="namaGuru">Nama Lengkap</label>
-          <input type="text" id="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." autocomplete="name" required>
-          <label for="nipGuru">NIP</label>
-          <input type="text" id="nipGuru" placeholder="Masukkan NIP" autocomplete="off" required>
-          <label for="kelasWaliGuru">Kelas Wali <span style="font-weight:normal;color:#777">(opsional)</span></label>
-          <input type="text" id="kelasWaliGuru" placeholder="Contoh: XI TKJ 1" autocomplete="off">
-          <label for="emailGuru">Email</label>
-          <input type="email" id="emailGuru" placeholder="Masukkan email sendiri" autocomplete="email" required>
-          <label for="passwordGuru">Password</label>
-          <input type="password" id="passwordGuru" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
-          <label for="konfirmasiPasswordGuru">Konfirmasi Password</label>
-          <input type="password" id="konfirmasiPasswordGuru" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
-          <button type="submit">BUAT AKUN GURU</button>
-        </form>
-      </div>
-
-      <div id="formSiswaWrap" style="display:none">
-        <form id="daftarSiswaForm">
-          <label for="namaSiswa">Nama Lengkap</label>
-          <input type="text" id="namaSiswa" placeholder="Nama lengkap siswa" autocomplete="name" required>
-
-          <label for="nisSiswa">NIS</label>
-          <input type="text" id="nisSiswa" placeholder="Nomor Induk Siswa" autocomplete="off" required>
-
-          <label for="kelasSiswa">Kelas</label>
-          <input type="text" id="kelasSiswa" placeholder="Contoh: X TKJ 1" autocomplete="off" required>
-
-          <label for="jenisKelaminSiswa">Jenis Kelamin</label>
-          <select id="jenisKelaminSiswa" required style="width:100%;padding:13px;margin-bottom:15px;border:1px solid #ccc;border-radius:9px;font-size:15px">
-            <option value="">Pilih jenis kelamin</option>
-            <option value="L">Laki-laki</option>
-            <option value="P">Perempuan</option>
-          </select>
-
-          <label for="tempatLahirSiswa">Tempat Lahir</label>
-          <input type="text" id="tempatLahirSiswa" placeholder="Tempat lahir" autocomplete="off" required>
-
-          <label for="tanggalLahirSiswa">Tanggal Lahir</label>
-          <input type="date" id="tanggalLahirSiswa" required>
-
-          <label for="alamatSiswa">Alamat</label>
-          <textarea id="alamatSiswa" placeholder="Alamat lengkap" required style="width:100%;min-height:85px;padding:13px;margin-bottom:15px;border:1px solid #ccc;border-radius:9px;font-size:15px;resize:vertical"></textarea>
-
-          <label for="emailSiswa">Email</label>
-          <input type="email" id="emailSiswa" placeholder="Masukkan email sendiri" autocomplete="email" required>
-
-          <label for="passwordSiswa">Password</label>
-          <input type="password" id="passwordSiswa" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
-
-          <label for="konfirmasiPasswordSiswa">Konfirmasi Password</label>
-          <input type="password" id="konfirmasiPasswordSiswa" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
-
-          <button type="submit">BUAT AKUN SISWA</button>
-        </form>
-        <p class="secondary-text">Akun siswa bersifat <b>read-only</b>: hanya dapat melihat data akademik sendiri.</p>
-      </div>
-
+      <div class="info-box">Akun yang dibuat melalui halaman ini otomatis menjadi <b>akun Guru</b>. Role Admin tidak dapat dibuat dari halaman ini.</div>
+      <form id="daftarForm">
+        <label for="namaGuru">Nama Lengkap</label>
+        <input type="text" id="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." autocomplete="name" required>
+        <label for="nipGuru">NIP</label>
+        <input type="text" id="nipGuru" placeholder="Masukkan NIP" autocomplete="off" required>
+        <label for="mapelGuru">Mata Pelajaran</label>
+        <input type="text" id="mapelGuru" placeholder="Contoh: Matematika" required>
+        <label for="kelasWaliGuru">Kelas Wali <span style="font-weight:normal;color:#777">(opsional)</span></label>
+        <input type="text" id="kelasWaliGuru" placeholder="Contoh: XI TKJ 1" autocomplete="off">
+        <label for="emailGuru">Email</label>
+        <input type="email" id="emailGuru" placeholder="Masukkan email sendiri" autocomplete="email" required>
+        <label for="passwordGuru">Password</label>
+        <input type="password" id="passwordGuru" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+        <label for="konfirmasiPasswordGuru">Konfirmasi Password</label>
+        <input type="password" id="konfirmasiPasswordGuru" placeholder="Ulangi password" autocomplete="new-password" minlength="6" required>
+        <button type="submit">BUAT AKUN GURU</button>
+      </form>
       <p class="secondary-text">Setelah akun dibuat, silakan masuk menggunakan email dan password tersebut.</p>
     </div>
 
@@ -123,7 +76,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     const firebaseConfig={
@@ -157,18 +110,6 @@
     document.getElementById("btnModeLogin").addEventListener("click",()=>pilihMode("login"));
     document.getElementById("btnModeDaftar").addEventListener("click",()=>pilihMode("daftar"));
 
-    function pilihJenisAkun(jenis){
-      const guru=jenis==="guru";
-      document.getElementById("formGuruWrap").style.display=guru?"block":"none";
-      document.getElementById("formSiswaWrap").style.display=guru?"none":"block";
-      document.getElementById("btnJenisGuru").classList.toggle("aktif",guru);
-      document.getElementById("btnJenisSiswa").classList.toggle("aktif",!guru);
-      pesan.textContent="";
-    }
-
-    document.getElementById("btnJenisGuru").addEventListener("click",()=>pilihJenisAkun("guru"));
-    document.getElementById("btnJenisSiswa").addEventListener("click",()=>pilihJenisAkun("siswa"));
-
     document.getElementById("loginForm").addEventListener("submit",async event=>{
       event.preventDefault();
       const email=document.getElementById("email").value.trim();
@@ -177,24 +118,46 @@
       try{
         const userCredential=await signInWithEmailAndPassword(auth,email,password);
         const user=userCredential.user;
-
         if(!user.emailVerified){
-          try{
-            await sendEmailVerification(user);
-            tampilkanPesan("Email Anda belum diverifikasi. Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox/Spam, klik link verifikasi, lalu login kembali.");
-          }catch(verificationError){
-            console.error(verificationError);
-            tampilkanPesan("Email Anda belum diverifikasi. Silakan cek email verifikasi yang sudah dikirim sebelumnya, lalu login kembali.");
-          }
+          await sendEmailVerification(user);
           await signOut(auth);
+          tampilkanPesan("Email belum diverifikasi. Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox/Spam lalu klik link tersebut.");
           return;
         }
-
         tampilkanPesan("Login berhasil! Mengarahkan ke dashboard...","sukses");
         setTimeout(()=>{window.location.href="dashboard.html"},700);
       }catch(error){
         console.error(error);
-        tampilkanPesan("Email atau password salah.");
+        if(error.code==="auth/too-many-requests") tampilkanPesan("Terlalu banyak permintaan. Tunggu beberapa saat lalu coba lagi.");
+        else if(error.code==="auth/network-request-failed") tampilkanPesan("Koneksi internet bermasalah.");
+        else tampilkanPesan("Email atau password salah.");
+      }
+    });
+
+    document.getElementById("btnKirimVerifikasi").addEventListener("click",async()=>{
+      const email=document.getElementById("email").value.trim();
+      const password=document.getElementById("password").value;
+      if(!email || !password){
+        tampilkanPesan("Masukkan email dan password terlebih dahulu, lalu klik Kirim Ulang Email Verifikasi.");
+        return;
+      }
+      tampilkanPesan("Memeriksa akun dan mengirim email verifikasi...","sukses");
+      try{
+        const userCredential=await signInWithEmailAndPassword(auth,email,password);
+        const user=userCredential.user;
+        if(user.emailVerified){
+          await signOut(auth);
+          tampilkanPesan("Email akun ini sudah terverifikasi. Silakan login.","sukses");
+          return;
+        }
+        await sendEmailVerification(user);
+        await signOut(auth);
+        tampilkanPesan("Link verifikasi baru sudah dikirim ke " + email + ". Silakan cek Inbox dan folder Spam.","sukses");
+      }catch(error){
+        console.error(error);
+        if(error.code==="auth/too-many-requests") tampilkanPesan("Terlalu banyak permintaan. Tunggu beberapa saat lalu coba lagi.");
+        else if(error.code==="auth/network-request-failed") tampilkanPesan("Koneksi internet bermasalah. Silakan coba lagi.");
+        else tampilkanPesan("Email atau password tidak sesuai, atau akun belum berhasil dibuat.");
       }
     });
 
@@ -202,6 +165,7 @@
       event.preventDefault();
       const nama=document.getElementById("namaGuru").value.trim();
       const nip=document.getElementById("nipGuru").value.trim();
+      const mapel=document.getElementById("mapelGuru").value.trim();
       const kelasWali=document.getElementById("kelasWaliGuru").value.trim();
       const email=document.getElementById("emailGuru").value.trim();
       const password=document.getElementById("passwordGuru").value;
@@ -215,15 +179,20 @@
         const userCredential=await createUserWithEmailAndPassword(auth,email,password);
         const user=userCredential.user;
         await setDoc(doc(db,"users",user.uid),{
-          nama,email,role:"guru",nip,kelasWali,dibuatPada:serverTimestamp()
+          nama,email,role:"guru",nip,mapel,kelasWali,dibuatPada:serverTimestamp()
         });
-
-        await sendEmailVerification(user);
+        try{
+          await sendEmailVerification(user);
+        }catch(verificationError){
+          console.error("Gagal mengirim email verifikasi:",verificationError);
+          await signOut(auth);
+          throw verificationError;
+        }
         await signOut(auth);
         document.getElementById("daftarForm").reset();
         pilihMode("login");
         document.getElementById("email").value=email;
-        tampilkanPesan("Akun Guru berhasil dibuat. Email verifikasi sudah dikirim ke " + email + ". Silakan buka email tersebut, klik link verifikasi, lalu login.","sukses");
+        tampilkanPesan("Akun Guru berhasil dibuat. Silakan masuk menggunakan email dan password Anda.","sukses");
       }catch(error){
         console.error(error);
         let pesanError="Gagal membuat akun.";
@@ -232,69 +201,7 @@
         else if(error.code==="auth/weak-password") pesanError="Password terlalu lemah. Gunakan minimal 6 karakter.";
         else if(error.code==="auth/operation-not-allowed") pesanError="Login Email/Password belum diaktifkan di Firebase Authentication.";
         else if(error.code==="permission-denied" || error.code==="firestore/permission-denied") pesanError="Akun berhasil dibuat di Firebase Authentication, tetapi profil Guru tidak dapat disimpan. Security Rules Firestore perlu mengizinkan pembuatan profil Guru.";
-        else if(error.code==="auth/network-request-failed") pesanError="Koneksi internet bermasalah. Silakan coba lagi.";
-        tampilkanPesan(pesanError);
-      }
-    });
-
-    document.getElementById("daftarSiswaForm").addEventListener("submit",async event=>{
-      event.preventDefault();
-
-      const nama=document.getElementById("namaSiswa").value.trim();
-      const nis=document.getElementById("nisSiswa").value.trim();
-      const kelas=document.getElementById("kelasSiswa").value.trim();
-      const jenisKelamin=document.getElementById("jenisKelaminSiswa").value;
-      const tempatLahir=document.getElementById("tempatLahirSiswa").value.trim();
-      const tanggalLahir=document.getElementById("tanggalLahirSiswa").value;
-      const alamat=document.getElementById("alamatSiswa").value.trim();
-      const email=document.getElementById("emailSiswa").value.trim();
-      const password=document.getElementById("passwordSiswa").value;
-      const konfirmasi=document.getElementById("konfirmasiPasswordSiswa").value;
-
-      if(password.length<6){tampilkanPesan("Password minimal 6 karakter.");return;}
-      if(password!==konfirmasi){tampilkanPesan("Konfirmasi password tidak sama.");return;}
-
-      tampilkanPesan("Sedang membuat akun siswa...","sukses");
-
-      try{
-        const userCredential=await createUserWithEmailAndPassword(auth,email,password);
-        const user=userCredential.user;
-
-        await setDoc(doc(db,"users",user.uid),{
-          nama,
-          email,
-          role:"siswa",
-          siswaId:user.uid,
-          dibuatPada:serverTimestamp()
-        });
-
-        await setDoc(doc(db,"siswa",user.uid),{
-          nama,
-          nis,
-          kelas,
-          jenisKelamin,
-          tempatLahir,
-          tanggalLahir,
-          alamat,
-          email,
-          akunUid:user.uid,
-          dibuatPada:serverTimestamp()
-        });
-
-        await sendEmailVerification(user);
-        await signOut(auth);
-        document.getElementById("daftarSiswaForm").reset();
-        pilihMode("login");
-        document.getElementById("email").value=email;
-        tampilkanPesan("Akun Siswa berhasil dibuat. Email verifikasi sudah dikirim ke " + email + ". Silakan buka email tersebut, klik link verifikasi, lalu login.","sukses");
-      }catch(error){
-        console.error(error);
-        let pesanError="Gagal membuat akun siswa.";
-        if(error.code==="auth/email-already-in-use") pesanError="Email tersebut sudah digunakan. Gunakan email lain atau masuk ke akun yang sudah ada.";
-        else if(error.code==="auth/invalid-email") pesanError="Format email tidak valid.";
-        else if(error.code==="auth/weak-password") pesanError="Password terlalu lemah. Gunakan minimal 6 karakter.";
-        else if(error.code==="auth/operation-not-allowed") pesanError="Login Email/Password belum diaktifkan di Firebase Authentication.";
-        else if(error.code==="permission-denied" || error.code==="firestore/permission-denied") pesanError="Akun berhasil dibuat di Firebase Authentication, tetapi data siswa tidak dapat disimpan. Security Rules perlu diperbarui.";
+        else if(error.code==="auth/too-many-requests") pesanError="Terlalu banyak permintaan. Tunggu beberapa saat sebelum meminta email verifikasi lagi.";
         else if(error.code==="auth/network-request-failed") pesanError="Koneksi internet bermasalah. Silakan coba lagi.";
         tampilkanPesan(pesanError);
       }
