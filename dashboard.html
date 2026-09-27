@@ -556,12 +556,12 @@
   <div class="menu">
 
     <div class="card aktif" id="menuSiswa">
-      <h3>👨🎓 Data Siswa</h3>
+      <h3>👨‍🎓 Data Siswa</h3>
       <p>Kelola data siswa.</p>
     </div>
 
     <div class="card" id="menuGuru">
-      <h3>👨🏫 Data Guru</h3>
+      <h3>👨‍🏫 Data Guru</h3>
       <p>Kelola data guru.</p>
     </div>
 
@@ -627,7 +627,7 @@
 
     <div class="topbar">
 
-      <h2>👨🎓 Data Siswa</h2>
+      <h2>👨‍🎓 Data Siswa</h2>
 
       <button class="btn-primary" id="btnTambah">
         + Tambah Siswa
@@ -1168,7 +1168,7 @@
 
     <div class="topbar">
 
-      <h2>👨🏫 Data Guru</h2>
+      <h2>👨‍🏫 Data Guru</h2>
 
       <button class="btn-primary" id="btnTambahGuru">
         + Tambah Guru
@@ -1743,15 +1743,52 @@ onAuthStateChanged(auth, async (user) => {
 
 
 function aturTampilanBerdasarkanRole() {
-  const adminGuru=["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"];
-  const siswa=["menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"];
-  if(roleUser === "siswa"){
-    adminGuru.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-    siswa.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="block";});
-    ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  } else {
-    adminGuru.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="";});
-    siswa.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  const menuOperasional = [
+    "menuSiswa", "menuGuru", "menuKelas", "menuMapel", "menuJadwal",
+    "menuNilai", "menuAbsensi", "menuPengumuman", "menuERapor", "menuAkun"
+  ];
+  const menuSiswa = [
+    "menuDataSaya", "menuNilaiSaya", "menuAbsensiSaya", "menuRaporSaya", "menuPengumumanSaya"
+  ];
+
+  if (roleUser === "siswa") {
+    menuOperasional.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+
+    menuSiswa.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "block";
+    });
+
+    [
+      "panelSiswa", "panelGuru", "panelKelas", "panelMapel", "panelJadwal",
+      "panelNilai", "panelAbsensi", "panelPengumuman", "panelERapor",
+      "panelAkun", "panelPersetujuanNilai"
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+
+    return;
+  }
+
+  // Admin dan Guru tetap menggunakan tampilan dashboard yang sama.
+  menuOperasional.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "";
+  });
+
+  menuSiswa.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  // Panel persetujuan nilai hanya tampil untuk Admin.
+  const panelPersetujuan = document.getElementById("panelPersetujuanNilai");
+  if (panelPersetujuan) {
+    panelPersetujuan.style.display = roleUser === "admin" ? "block" : "none";
   }
 }
 function sembunyikanSemuaPanel(){
@@ -4200,7 +4237,8 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
     status: statusBaru,
     submittedByUid: currentUser?.uid || "",
     submittedByNama: profilUser?.nama || currentUser?.email || "-",
-    submittedAt: serverTimestamp()
+    submittedAt: serverTimestamp(),
+    rejectionReason: roleUser === "guru" ? "" : ""
   };
 
   try {
