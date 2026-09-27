@@ -615,6 +615,18 @@
 
   <div class="panel" id="panelDataSaya" style="display:none;">
     <div class="topbar"><h2>👤 Data Saya</h2></div>
+    <div class="akun-box" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <img id="fotoProfilSiswa" src="logo-smks-mandiri.png" alt="Pas Foto Siswa" style="width:120px;height:160px;object-fit:cover;border-radius:10px;border:3px solid #d7e7ea;background:#fff;">
+        <div style="flex:1;min-width:240px;">
+          <h3 style="margin-top:0;">📷 Pas Foto Akademik</h3>
+          <p style="color:#666;font-size:13px;line-height:1.6;">Tambahkan pas foto untuk melengkapi profil akademik. Format JPG/PNG, maksimal 2 MB, disarankan rasio portrait 3:4.</p>
+          <input type="file" id="fotoProfilSiswaInput" accept="image/jpeg,image/png">
+          <div style="margin-top:12px;"><button class="btn-primary" id="btnSimpanFotoSiswa">📷 Simpan Pas Foto</button></div>
+          <div id="pesanFotoSiswa" class="pesan"></div>
+        </div>
+      </div>
+    </div>
     <div class="student-info" id="dataPribadiSiswa">Memuat data siswa...</div>
   </div>
 
@@ -1486,6 +1498,16 @@
     <div id="pesanAkun" class="pesan"></div>
 
     <div class="akun-box">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+        <img id="fotoProfilPreview" src="logo-smks-mandiri.png" alt="Pas Foto Pengguna" style="width:120px;height:160px;object-fit:cover;border-radius:10px;border:3px solid #d7e7ea;background:#fff;">
+        <div style="flex:1;min-width:240px;">
+          <h3 style="margin-top:0;">📷 Pas Foto Profil Akademik</h3>
+          <p style="color:#666;font-size:13px;line-height:1.6;">Gunakan pas foto resmi untuk melengkapi identitas akun akademik. Format JPG/PNG, maksimal 2 MB, disarankan rasio portrait 3:4.</p>
+          <input type="file" id="fotoProfilInput" accept="image/jpeg,image/png">
+          <div style="margin-top:12px;"><button class="btn-primary" id="btnSimpanFotoProfil">📷 Simpan Pas Foto</button></div>
+          <div id="pesanFotoProfil" class="pesan"></div>
+        </div>
+      </div>
       <h3 style="margin-top:0;">👤 Profil Pengguna</h3>
       <p style="color:#666;font-size:13px;">Profil ini terhubung langsung dengan UID akun Firebase yang sedang login.</p>
 
@@ -1606,6 +1628,9 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL }
+from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
+
 
 const firebaseConfig = {
 
@@ -1640,6 +1665,9 @@ const auth =
 
 const db =
   getFirestore(app);
+
+const storage = getStorage(app);
+let fotoProfilUrl = "";
 
 
 /* =========================
@@ -1712,6 +1740,11 @@ async function muatProfilPengguna(user) {
       console.error("Profil siswa tidak memiliki siswaId. Pastikan users/" + user.uid + " memiliki field siswaId yang berisi ID dokumen pada koleksi siswa.");
       return false;
     }
+    fotoProfilUrl = profilUser.fotoUrl || "";
+    const fotoAwal = fotoProfilUrl || "logo-smks-mandiri.png";
+    document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=fotoAwal);
+    const fotoPreview = document.getElementById("fotoProfilPreview"); if(fotoPreview) fotoPreview.src=fotoAwal;
+    const fotoPreviewSiswa = document.getElementById("fotoProfilSiswa"); if(fotoPreviewSiswa) fotoPreviewSiswa.src=fotoAwal;
     const namaTampil = profilUser.nama || user.email || "Pengguna";
     const roleTampil = roleUser === "admin" ? "ADMIN" : roleUser === "guru" ? "GURU" : "SISWA";
     document.getElementById("emailAdmin").textContent = "Login sebagai: " + namaTampil + " (" + (user.email || "") + ")";
@@ -1840,10 +1873,42 @@ document.addEventListener("click", event => {
 });
 async function tampilkanDataSaya(){
   const box=document.getElementById("dataPribadiSiswa");if(!box)return;box.innerHTML="Memuat data siswa...";
-  try{const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));if(!snap.exists()){box.innerHTML='<div style="color:#dc3545;">Data siswa tidak ditemukan. Hubungi Admin.</div>';return;}const s={id:snap.id,...snap.data()};
+  try{
+    const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));
+    const userSnap=await getDoc(doc(db,"users",currentUser.uid));
+    if(!snap.exists()){box.innerHTML='<div style="color:#dc3545;">Data siswa tidak ditemukan. Hubungi Admin.</div>';return;}
+    const s={id:snap.id,...snap.data()};
+    const u=userSnap.exists()?userSnap.data():profilUser||{};
+    const foto=u.fotoUrl||"logo-smks-mandiri.png";
+    const fotoEl=document.getElementById("fotoProfilSiswa");if(fotoEl)fotoEl.src=foto;
     box.innerHTML=`<h3 style="margin-top:0;">Identitas Siswa</h3><div class="student-info-row"><strong>Nama</strong><span>${s.nama||"-"}</span></div><div class="student-info-row"><strong>NIS</strong><span>${s.nis||"-"}</span></div><div class="student-info-row"><strong>Tingkat</strong><span>${s.tingkat||"-"}</span></div><div class="student-info-row"><strong>Jurusan</strong><span>${s.jurusan||"-"}</span></div><div class="student-info-row"><strong>Kelas</strong><span>${s.kelas||"-"}</span></div><div class="student-info-row"><strong>Status</strong><span>${s.status||"Aktif"}</span></div>`;
   }catch(error){console.error(error);box.innerHTML='<div style="color:#dc3545;">Gagal memuat data siswa: '+error.message+'</div>';}}
+
 function bukaPortalSiswa(panelId,menuId){if(roleUser!=="siswa")return;sembunyikanSemuaPanel();document.getElementById(panelId).style.display="block";document.getElementById(menuId).classList.add("aktif");}
+function pesanFoto(id,teks,tipe="sukses"){const e=document.getElementById(id);if(!e)return;e.textContent=teks;e.className="pesan "+tipe;e.style.display="block";setTimeout(()=>e.style.display="none",4500);}
+async function validasiPasFoto(file){
+  if(!file)throw new Error("Silakan pilih pas foto terlebih dahulu.");
+  if(!["image/jpeg","image/png"].includes(file.type))throw new Error("Pas foto harus JPG atau PNG.");
+  if(file.size>2*1024*1024)throw new Error("Ukuran pas foto maksimal 2 MB.");
+  const url=URL.createObjectURL(file);
+  try{const ukuran=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve({w:img.naturalWidth,h:img.naturalHeight});img.onerror=()=>reject(new Error("File foto tidak dapat dibaca."));img.src=url;});const rasio=ukuran.w/ukuran.h;if(rasio<0.62||rasio>0.88)throw new Error("Pas foto harus portrait dengan rasio sekitar 3:4.");}
+  finally{URL.revokeObjectURL(url);}
+}
+async function unggahPasFoto(file){
+  const user=auth.currentUser;if(!user)throw new Error("Sesi login tidak ditemukan.");
+  await validasiPasFoto(file);
+  const ref=storageRef(storage,`profilePhotos/${user.uid}`);
+  await uploadBytes(ref,file,{contentType:file.type,customMetadata:{uid:user.uid,role:roleUser||""}});
+  const url=await getDownloadURL(ref);
+  await setDoc(doc(db,"users",user.uid),{fotoUrl:url},{merge:true});
+  fotoProfilUrl=url;profilUser={...(profilUser||{}),fotoUrl:url};
+  document.querySelectorAll(".header-avatar,.profile-photo").forEach(img=>img.src=url);
+  const a=document.getElementById("fotoProfilPreview");if(a)a.src=url;
+  const b=document.getElementById("fotoProfilSiswa");if(b)b.src=url;
+  return url;
+}
+document.getElementById("btnSimpanFotoProfil")?.addEventListener("click",async()=>{try{const f=document.getElementById("fotoProfilInput").files[0];await unggahPasFoto(f);document.getElementById("fotoProfilInput").value="";pesanFoto("pesanFotoProfil","Pas foto berhasil disimpan.","sukses");}catch(e){console.error(e);pesanFoto("pesanFotoProfil",e.message,"error");}});
+document.getElementById("btnSimpanFotoSiswa")?.addEventListener("click",async()=>{try{if(roleUser!=="siswa")return;const f=document.getElementById("fotoProfilSiswaInput").files[0];await unggahPasFoto(f);document.getElementById("fotoProfilSiswaInput").value="";pesanFoto("pesanFotoSiswa","Pas foto berhasil disimpan.","sukses");}catch(e){console.error(e);pesanFoto("pesanFotoSiswa",e.message,"error");}});
 
 /* =========================
    LOGOUT
