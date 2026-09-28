@@ -665,7 +665,7 @@
     .panel,#panelPersetujuanNilai{border-radius:14px!important}
     .panel:not(#panelDataSaya):not(#panelSiswa):not(#panelGuru):not(#panelKelas):not(#panelMapel):not(#panelJadwal):not(#panelNilai):not(#panelAbsensi):not(#panelPengumuman):not(#panelERapor):not(#panelAkun){ }
     #panelHome{display:grid!important}
-    #panelSiswa,#panelGuru,#panelKelas,#panelMapel,#panelJadwal,#panelNilai,#panelAbsensi,#panelPengumuman,#panelERapor,#panelAkun,#panelDataSaya,#panelPersetujuanNilai,#panelAgenda{display:none}
+    #panelSiswa,#panelGuru,#panelKelas,#panelMapel,#panelJadwal,#panelNilai,#panelAbsensi,#panelPengumuman,#panelERapor,#panelAkun,#panelDataSaya,#panelPersetujuanNilai,#panelAgenda,#panelBackupData{display:none}
     .agenda-admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px}
     .agenda-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .agenda-form-grid .full{grid-column:1/-1}
@@ -770,6 +770,11 @@
     <div class="card" id="menuJadwal">
       <h3>🗓️ Jadwal</h3>
       <p>Kelola jadwal.</p>
+    </div>
+
+    <div class="card" id="menuAgenda">
+      <h3>📅 Agenda</h3>
+      <p>Kelola agenda akademik.</p>
     </div>
 
     <div class="card" id="menuNilai">
@@ -1909,7 +1914,36 @@
         Username pada sistem ini adalah <b>email login Firebase</b>. Untuk keamanan, password saat ini wajib dimasukkan sebelum username atau password diubah.
       </p>
     </div>
+    <div class="akun-box" id="backupShortcutBox" style="display:none;">
+      <h3 style="margin-top:0;">💾 Backup Data & Daftar Akun</h3>
+      <p style="color:#666;font-size:13px;">Admin dapat mencadangkan data sistem dan melihat akun Guru/Siswa yang tersimpan.</p>
+      <button type="button" class="btn-primary" id="btnBukaBackupData">💾 Buka Backup Data</button>
+    </div>
   </div>
+
+<!-- BACKUP DATA ADMIN -->
+<div class="panel" id="panelBackupData" style="display:none;">
+  <div class="topbar"><h2>💾 Backup Data</h2></div>
+  <div class="akun-box">
+    <h3 style="margin-top:0;">💾 Cadangkan Data Sistem</h3>
+    <p style="color:#666;font-size:13px;line-height:1.6;">Backup menyimpan data Firestore E-Akademik ke satu file JSON. Fitur ini hanya dapat digunakan oleh Admin.</p>
+    <button type="button" class="btn-primary" id="btnBackupData">⬇️ Unduh Backup Data</button>
+    <span id="statusBackupData" style="margin-left:10px;color:#198754;font-size:13px;"></span>
+  </div>
+  <div class="akun-box">
+    <div class="topbar" style="margin-bottom:10px;">
+      <h3 style="margin:0;">👥 Akun Guru & Siswa</h3>
+      <button type="button" class="btn-secondary" id="btnRefreshAkunAdmin">🔄 Refresh</button>
+    </div>
+    <p style="color:#666;font-size:13px;">Akun Guru/Siswa yang tersimpan pada koleksi <b>users</b> akan tampil di sini.</p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>No</th><th>Nama</th><th>Email</th><th>Role</th><th>UID</th></tr></thead>
+        <tbody id="tabelAkunAdmin"><tr><td colspan="5" style="text-align:center;">Memuat akun...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script type="module">
 
@@ -2169,7 +2203,7 @@ onAuthStateChanged(auth, async (user) => {
 
 function aturTampilanBerdasarkanRole() {
   const menuOperasional = [
-    "menuSiswa", "menuGuru", "menuKelas", "menuMapel", "menuJadwal",
+    "menuSiswa", "menuGuru", "menuKelas", "menuMapel", "menuJadwal", "menuAgenda",
     "menuNilai", "menuAbsensi", "menuPengumuman", "menuERapor", "menuAkun"
   ];
   const menuSiswa = [
@@ -2217,8 +2251,8 @@ function aturTampilanBerdasarkanRole() {
   }
 }
 function sembunyikanSemuaPanel(){
-  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
+  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelBackupData","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuAgenda","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
 // Pengaman tampilan: setiap kali menu diklik, hanya panel menu tersebut yang boleh terlihat.
@@ -5111,6 +5145,10 @@ function tampilkanPesanNilai(teks, tipe) {
 /* =========================
    MENU PENGUMUMAN
 ========================= */
+document.getElementById("menuAgenda")?.addEventListener("click", () => {
+  bukaPanelAgenda();
+});
+
 document.getElementById("menuPengumuman").addEventListener("click", async () => {
   ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id => document.getElementById(id).style.display="none");
   document.getElementById("panelPengumuman").style.display="block";
@@ -5291,10 +5329,12 @@ function bukaPanelAkun(){
   const user=auth.currentUser;
   document.getElementById("akunEmailSekarang").textContent=user?.email || "-";
   document.getElementById("emailBaru").value=user?.email || "";
-  if(user) muatFormProfil(user);
+  const backupBox=document.getElementById("backupShortcutBox");if(backupBox)backupBox.style.display=roleUser==="admin"?"block":"none";
+   if(user) muatFormProfil(user);
 }
 
 document.getElementById("menuAkun").addEventListener("click",bukaPanelAkun);
+document.getElementById("btnBukaBackupData")?.addEventListener("click",bukaPanelBackupData);
 document.getElementById("btnBatalAkun").addEventListener("click",()=>{kosongkanFormAkun();bukaPanelAkun();});
 
 document.getElementById("btnSimpanAkun").addEventListener("click",async()=>{
@@ -5339,6 +5379,67 @@ document.getElementById("btnSimpanAkun").addEventListener("click",async()=>{
     pesanAkun(pesan,"error");
   }
 });
+
+
+/* =========================
+   BACKUP DATA & DAFTAR AKUN ADMIN
+========================= */
+const koleksiBackupEakademik=["users","siswa","guru","kelas","mataPelajaran","jadwal","nilai","absensi","pengumuman","agendaAkademik","profilFoto"];
+
+function serialisasiBackup(value){
+  if(value&&typeof value==="object"){
+    if(typeof value.toDate==="function")return value.toDate().toISOString();
+    if(Array.isArray(value))return value.map(serialisasiBackup);
+    const o={};Object.keys(value).forEach(k=>o[k]=serialisasiBackup(value[k]));return o;
+  }
+  return value;
+}
+
+async function muatDaftarAkunAdmin(){
+  const tabel=document.getElementById("tabelAkunAdmin");if(!tabel)return;
+  if(roleUser!=="admin"){tabel.innerHTML='<tr><td colspan="5" style="text-align:center;">Hanya Admin yang dapat melihat daftar akun.</td></tr>';return;}
+  tabel.innerHTML='<tr><td colspan="5" style="text-align:center;">Memuat akun...</td></tr>';
+  try{
+    const snap=await getDocs(collection(db,"users")),akun=[];
+    snap.forEach(d=>{const a=d.data()||{},r=String(a.role||"").toLowerCase();if(r==="guru"||r==="siswa")akun.push({id:d.id,...a});});
+    akun.sort((a,b)=>String(a.role||"").localeCompare(String(b.role||""))||String(a.nama||a.email||"").localeCompare(String(b.nama||b.email||""),"id"));
+    if(!akun.length){tabel.innerHTML='<tr><td colspan="5" style="text-align:center;">Belum ada akun Guru/Siswa pada koleksi users.</td></tr>';return;}
+    tabel.innerHTML=akun.map((a,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAgenda(a.nama||"-")}</td><td>${escapeHtmlAgenda(a.email||"-")}</td><td>${escapeHtmlAgenda(String(a.role||"-").toUpperCase())}</td><td style="font-size:11px;word-break:break-all;">${escapeHtmlAgenda(a.id||"-")}</td></tr>`).join("");
+  }catch(error){
+    console.error(error);tabel.innerHTML=`<tr><td colspan="5" style="color:#c62828;text-align:center;">Gagal mengambil akun: ${escapeHtmlAgenda(error.message)}</td></tr>`;
+  }
+}
+
+function bukaPanelBackupData(){
+  if(roleUser!=="admin"){pesanAkun("Fitur Backup Data hanya dapat digunakan oleh Admin.","error");return;}
+  sembunyikanSemuaPanel();
+  const panel=document.getElementById("panelBackupData");if(panel)panel.style.display="block";
+  document.querySelectorAll(".menu .card").forEach(e=>e.classList.remove("aktif"));
+  const ma=document.getElementById("menuAkun");if(ma)ma.classList.add("aktif");
+  muatDaftarAkunAdmin();
+}
+
+async function backupDataEakademik(){
+  if(roleUser!=="admin"){pesanAkun("Backup Data hanya dapat dilakukan oleh Admin.","error");return;}
+  const status=document.getElementById("statusBackupData"),btn=document.getElementById("btnBackupData");
+  if(status)status.textContent="Sedang membuat backup...";if(btn)btn.disabled=true;
+  try{
+    const backup={aplikasi:"E-Akademik SMKS Mandiri Bandar Agung",versi:"backup-v1",waktuBackup:new Date().toISOString(),data:{}};
+    for(const nama of koleksiBackupEakademik){
+      try{
+        const snap=await getDocs(collection(db,nama));backup.data[nama]=[];
+        snap.forEach(d=>backup.data[nama].push({id:d.id,...serialisasiBackup(d.data())}));
+      }catch(error){backup.data[nama]={error:"Koleksi tidak dapat dibaca",pesan:error.message};}
+    }
+    const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a"),waktu=new Date(),pad=n=>String(n).padStart(2,"0");
+    a.href=url;a.download=`backup-e-akademik-${waktu.getFullYear()}${pad(waktu.getMonth()+1)}${pad(waktu.getDate())}-${pad(waktu.getHours())}${pad(waktu.getMinutes())}${pad(waktu.getSeconds())}.json`;
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    if(status)status.textContent="Backup berhasil diunduh.";
+  }catch(error){console.error(error);if(status)status.textContent="Backup gagal: "+error.message;}
+  finally{if(btn)btn.disabled=false;}
+}
+document.getElementById("btnBackupData")?.addEventListener("click",backupDataEakademik);
+document.getElementById("btnRefreshAkunAdmin")?.addEventListener("click",muatDaftarAkunAdmin);
 
 /* =========================
    AGENDA AKADEMIK — FIRESTORE
