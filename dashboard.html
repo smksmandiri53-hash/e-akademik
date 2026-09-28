@@ -5093,13 +5093,8 @@ async function tampilkanNilai() {
       // Admin dapat melihat seluruh nilai.
       snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "guru") {
-      // Guru hanya melihat nilai yang dia ajukan sendiri, termasuk yang masih menunggu, ditolak, dan sudah disetujui.
-      snapshot = await getDocs(
-        query(
-          collection(db, "nilai"),
-          where("submittedByUid", "==", currentUser?.uid || "")
-        )
-      );
+      // Guru dapat melihat seluruh data nilai untuk kebutuhan pembelajaran dan E-Rapor.
+      snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "siswa") {
       // Siswa hanya melihat nilai miliknya yang sudah disahkan Admin.
       snapshot = await getDocs(
@@ -5143,11 +5138,7 @@ async function tampilkanNilai() {
         aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
                 <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
       } else if (roleUser === "guru") {
-        if (n.status === "disetujui") {
-          aksi = '<span style="color:#198754;font-weight:bold;">Resmi</span>';
-        } else {
-          aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
-        }
+        aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
       }
 
       tr.innerHTML = `<td>${index + 1}</td>
@@ -5187,6 +5178,17 @@ window.editNilai = async function(id) {
   document.getElementById("judulFormNilai").textContent = "Edit Nilai";
   document.getElementById("formNilai").style.display = "block";
   window.scrollTo({top:0, behavior:"smooth"});
+};
+
+window.editNilaiDariRapor = async function(id) {
+  if (roleUser !== "guru" && roleUser !== "admin") return;
+  sembunyikanSemuaPanel();
+  const panelNilai = document.getElementById("panelNilai");
+  const menuNilai = document.getElementById("menuNilai");
+  if (panelNilai) panelNilai.style.display = "block";
+  if (menuNilai) menuNilai.classList.add("aktif");
+  await tampilkanNilai();
+  await window.editNilai(id);
 };
 
 window.hapusNilai = async function(id) {
@@ -5299,6 +5301,7 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
     const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
+    dataNilai = dataERaporNilai.slice();
     const siswa=dataSiswa.find(s=>s.id===siswaId);
     const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
@@ -5317,7 +5320,7 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
         </table>
         <table style="width:100%;border-collapse:collapse;">
           <thead><tr><th style="border:1px solid #222;padding:8px;">No</th><th style="border:1px solid #222;padding:8px;text-align:left;">Mata Pelajaran</th><th style="border:1px solid #222;padding:8px;">Tugas</th><th style="border:1px solid #222;padding:8px;">UTS</th><th style="border:1px solid #222;padding:8px;">UAS</th><th style="border:1px solid #222;padding:8px;">Nilai Akhir</th></tr></thead>
-          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>'}</tbody>
+          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));const aksiGuru=roleUser === "guru" ? `<br><button type="button" class="btn-warning" style="margin-top:6px;" onclick="editNilaiDariRapor('${n.id}')">✏️ Edit</button>` : "";return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}${aksiGuru}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>'}</tbody>
           <tfoot><tr><td colspan="5" style="border:1px solid #222;padding:8px;text-align:right;"><b>Rata-rata</b></td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${avg.toFixed(2)}</b></td></tr></tfoot>
         </table>
         <div style="display:flex;justify-content:space-between;margin-top:55px;text-align:center;gap:30px;"><div style="flex:1;">Mengetahui,<br>Wali Kelas<br><br><br>________________________</div><div style="flex:1;">Orang Tua/Wali<br><br><br><br>________________________</div><div style="flex:1;">Kepala Sekolah<br><br><br><br>________________________</div></div>
