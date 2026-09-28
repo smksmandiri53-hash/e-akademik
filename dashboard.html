@@ -5605,14 +5605,50 @@ function escapeHtmlAkademik(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":
 function timestampBackupAkademik(v){if(v&&typeof v.toDate==="function")return v.toDate().toISOString();return v;}
 async function bacaKoleksiAkademik(nama){const snap=await getDocs(collection(db,nama));return snap.docs.map(d=>({id:d.id,...d.data()}));}
 async function simpanPengaturanAkademik(){
-  if(roleUser!=="admin"){return;}
-  const payload={tahunPelajaran:document.getElementById("akademikTahunAktif").value.trim()||"2026/2027",semester:document.getElementById("akademikSemesterAktif").value,kepalaSekolah:document.getElementById("akademikKepalaSekolah").value.trim(),nipKepalaSekolah:document.getElementById("akademikNipKepala").value.trim(),keterangan:document.getElementById("akademikKeterangan").value.trim(),diperbaruiPada:serverTimestamp(),diperbaruiOlehUid:currentUser?.uid||""};
-  try{await setDoc(doc(db,"pengaturanAkademik","utama"),payload,{merge:true}); pesanTambahanAkademik("Pengaturan akademik berhasil disimpan.","sukses"); await muatPengaturanAkademik();}
-  catch(e){pesanTambahanAkademik("Gagal menyimpan: "+e.message,"error");}
+  const pesan=document.getElementById("pesanAkademik");
+  if(roleUser!=="admin"){
+    pesanTambahanAkademik("Hanya Admin yang dapat menyimpan Pengaturan Akademik.","error");
+    return;
+  }
+  if(!currentUser){
+    pesanTambahanAkademik("Sesi login belum siap. Silakan login ulang.","error");
+    return;
+  }
+  const tahunEl=document.getElementById("akademikTahunAktif");
+  const semesterEl=document.getElementById("akademikSemesterAktif");
+  const kepalaEl=document.getElementById("akademikKepalaSekolah");
+  const nipEl=document.getElementById("akademikNipKepala");
+  const ketEl=document.getElementById("akademikKeterangan");
+  if(!tahunEl||!semesterEl){
+    pesanTambahanAkademik("Form Pengaturan Akademik tidak ditemukan. Muat ulang halaman.","error");
+    return;
+  }
+  const payload={
+    tahunPelajaran:tahunEl.value.trim()||"2026/2027",
+    semester:semesterEl.value||"Ganjil",
+    kepalaSekolah:kepalaEl?.value.trim()||"",
+    nipKepalaSekolah:nipEl?.value.trim()||"",
+    keterangan:ketEl?.value.trim()||"",
+    diperbaruiPada:serverTimestamp(),
+    diperbaruiOlehUid:currentUser.uid
+  };
+  const tombol=document.getElementById("btnSimpanAkademik");
+  try{
+    if(tombol){tombol.disabled=true;tombol.textContent="⏳ Menyimpan...";}
+    await setDoc(doc(db,"pengaturanAkademik","utama"),payload,{merge:true});
+    periodeAkademikAktif={tahunPelajaran:payload.tahunPelajaran,semester:payload.semester};
+    tampilkanPeriodeAkademikHome();
+    pesanTambahanAkademik("Pengaturan akademik berhasil disimpan.","sukses");
+  }catch(e){
+    console.error("Pengaturan Akademik:",e);
+    pesanTambahanAkademik("Gagal menyimpan Pengaturan Akademik: "+(e.code?e.code+" — ":"")+e.message,"error");
+  }finally{
+    if(tombol){tombol.disabled=false;tombol.textContent="💾 Simpan Pengaturan";}
+  }
 }
 function pesanTambahanAkademik(msg,tipe="sukses"){const e=document.getElementById("pesanAkademik");if(e){e.textContent=msg;e.className="pesan "+tipe;}}
 async function muatPengaturanAkademik(){try{const s=await getDoc(doc(db,"pengaturanAkademik","utama"));const d=s.exists()?s.data():{};document.getElementById("akademikTahunAktif").value=d.tahunPelajaran||"2026/2027";document.getElementById("akademikSemesterAktif").value=d.semester||"Ganjil";document.getElementById("akademikKepalaSekolah").value=d.kepalaSekolah||"";document.getElementById("akademikNipKepala").value=d.nipKepalaSekolah||"";document.getElementById("akademikKeterangan").value=d.keterangan||"";periodeAkademikAktif={tahunPelajaran:d.tahunPelajaran||"2026/2027",semester:d.semester||"Ganjil"};tampilkanPeriodeAkademikHome();}catch(e){console.warn(e);}}
-async function tampilkanJurusan(){const tb=document.getElementById("tabelJurusan");if(!tb)return;try{let rows=await bacaKoleksiAkademik("jurusan");if(!rows.length){for(const nama of ["TKJ","AKL","TBSM","Pemasaran"]){await setDoc(doc(collection(db,"jurusan")),{nama,aktif:true,dibuatPada:serverTimestamp()});}rows=await bacaKoleksiAkademik("jurusan");}rows.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||"")));tb.innerHTML=rows.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama)}</td><td><button type="button" class="btn-danger btn-hapus-jurusan" data-id="${escapeHtmlAkademik(d.id)}">Hapus</button></td></tr>`).join("");}catch(e){tb.innerHTML=`<tr><td colspan="3">Gagal memuat: ${escapeHtmlAkademik(e.message)}</td></tr>`;}}
+async function tampilkanJurusan(){const tb=document.getElementById("tabelJurusan");if(!tb)return;try{let rows=await bacaKoleksiAkademik("jurusan");if(!rows.length){for(const nama of ["TKJ","AKL","TBSM","Pemasaran"]){await setDoc(doc(db,"jurusan",nama.toLowerCase().replace(/[^a-z0-9]+/g,"-")),{nama,aktif:true,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||""});}rows=await bacaKoleksiAkademik("jurusan");}rows.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||"")));tb.innerHTML=rows.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama)}</td><td>${roleUser==="admin"?`<button type="button" class="btn-danger btn-hapus-jurusan" data-id="${escapeHtmlAkademik(d.id)}">Hapus</button>`:`<span style="color:#6f7f89;">Lihat</span>`}</td></tr>`).join("");}catch(e){tb.innerHTML=`<tr><td colspan="3" style="color:#b02a37;">Gagal memuat jurusan: ${escapeHtmlAkademik(e.message)}</td></tr>`;}}
 async function tambahJurusan(){if(roleUser!=="admin")return;const input=document.getElementById("jurusanNamaBaru"),nama=input.value.trim();if(!nama)return;const ada=await getDocs(query(collection(db,"jurusan"),where("nama","==",nama)));if(!ada.empty){alert("Jurusan sudah ada.");return;}await addDoc(collection(db,"jurusan"),{nama,aktif:true,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||""});input.value="";await tampilkanJurusan();}
 async function hapusJurusan(id){if(roleUser!=="admin")return;if(!confirm("Hapus jurusan ini? Data siswa yang sudah ada tidak ikut dihapus."))return;await deleteDoc(doc(db,"jurusan",id));await tampilkanJurusan();}
 async function terapkanPeriodeKeDataAkademik(){
