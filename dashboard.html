@@ -797,6 +797,16 @@
       <p>Ubah username/email dan password.</p>
     </div>
 
+    <div class="card" id="menuAkademik">
+      <h3>🎓 Pengaturan Akademik</h3>
+      <p>Tahun pelajaran, semester, jurusan dan identitas sekolah.</p>
+    </div>
+
+    <div class="card" id="menuBackup">
+      <h3>💾 Backup & Akun</h3>
+      <p>Cadangkan data dan lihat akun Guru/Siswa.</p>
+    </div>
+
     <div class="card" id="menuDataSaya" style="display:none;"><h3>👤 Data Saya</h3><p>Lihat data pribadi siswa.</p></div>
     <div class="card" id="menuNilaiSaya" style="display:none;"><h3>📝 Nilai Saya</h3><p>Lihat nilai yang sudah disahkan.</p></div>
     <div class="card" id="menuAbsensiSaya" style="display:none;"><h3>📋 Absensi Saya</h3><p>Lihat riwayat kehadiran.</p></div>
@@ -892,6 +902,61 @@
   </div>
 
   <h2 id="judulDashboard">Dashboard</h2>
+
+
+  <div class="panel" id="panelAkademik" style="display:none;">
+    <div class="topbar"><h2>🎓 Pengaturan Akademik</h2></div>
+    <div class="akun-box">
+      <div class="agenda-admin-head"><div><h3 style="margin:0 0 5px;">Tahun Pelajaran & Semester</h3><p style="margin:0;color:#6f7f89;font-size:13px;">Atur periode akademik yang digunakan untuk agenda, nilai, absensi dan rapor.</p></div></div>
+      <div class="agenda-form-grid" style="margin-top:15px;">
+        <div><label>Tahun Pelajaran Aktif</label><input id="akademikTahunAktif" type="text" placeholder="2026/2027"></div>
+        <div><label>Semester Aktif</label><select id="akademikSemesterAktif"><option value="Ganjil">Ganjil</option><option value="Genap">Genap</option></select></div>
+        <div><label>Nama Kepala Sekolah</label><input id="akademikKepalaSekolah" type="text"></div>
+        <div><label>NIP Kepala Sekolah</label><input id="akademikNipKepala" type="text"></div>
+        <div class="full"><label>Visi / Keterangan Akademik</label><textarea id="akademikKeterangan" rows="3"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button type="button" class="btn-primary" id="btnSimpanAkademik">💾 Simpan Pengaturan</button>
+        <button type="button" class="btn-secondary" id="btnMuatAkademik">↻ Muat Ulang</button>
+        <button type="button" class="btn-secondary" id="btnTerapkanPeriode">🔗 Terapkan Periode ke Data Akademik</button>
+      </div>
+      <div id="pesanAkademik" class="pesan"></div>
+    </div>
+    <div class="akun-box" style="margin-top:15px;">
+      <h3 style="margin-top:0;">📚 Jurusan</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input id="jurusanNamaBaru" type="text" placeholder="Contoh: TKJ" style="max-width:260px;">
+        <button type="button" class="btn-primary" id="btnTambahJurusan">＋ Tambah Jurusan</button>
+      </div>
+      <div class="table-wrapper" style="margin-top:15px;"><table><thead><tr><th>No</th><th>Jurusan</th><th>Aksi</th></tr></thead><tbody id="tabelJurusan"><tr><td colspan="3">Memuat...</td></tr></tbody></table></div>
+    </div>
+    <div class="akun-box" style="margin-top:15px;">
+      <h3 style="margin-top:0;">🏫 Identitas Sekolah</h3>
+      <p style="color:#6f7f89;font-size:13px;margin-bottom:0;">Data identitas dapat disimpan di koleksi <b>pengaturanAkademik</b> dan digunakan sebagai dasar laporan/cetakan berikutnya.</p>
+    </div>
+  </div>
+
+
+  <div class="panel" id="panelBackup" style="display:none;">
+    <div class="topbar"><h2>💾 Backup Data & Daftar Akun</h2></div>
+    <div class="akun-box">
+      <h3 style="margin-top:0;">Backup Data Firestore</h3>
+      <p style="color:#6f7f89;font-size:13px;">Backup ini menyimpan data Firestore. Password akun Firebase Authentication tidak dapat diekspor dari browser.</p>
+      <button type="button" class="btn-primary" id="btnBackupData">💾 Unduh Backup Data</button>
+    </div>
+    <div class="akun-box" style="margin-top:15px;">
+      <div class="agenda-admin-head"><div><h3 style="margin:0 0 5px;">👥 Akun Guru & Siswa</h3><p style="margin:0;color:#6f7f89;font-size:13px;">Akun dipisahkan berdasarkan Guru dan Siswa. Data siswa dapat difilter berdasarkan tingkat dan jurusan.</p></div><button type="button" class="btn-secondary" id="btnRefreshAkunAdmin">↻ Refresh</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;align-items:center;">
+        <input type="search" id="cariBackupAkun" placeholder="🔎 Cari nama, email, NIS, NIP, UID..." style="flex:1;min-width:220px;">
+        <select id="filterBackupRole" style="min-width:150px;"><option value="semua">Semua Akun</option><option value="guru">👨‍🏫 Guru</option><option value="siswa">👨‍🎓 Siswa</option></select>
+        <select id="filterBackupTingkat" style="min-width:120px;"><option value="semua">Semua Tingkat</option><option value="X">Kelas X</option><option value="XI">Kelas XI</option><option value="XII">Kelas XII</option></select>
+        <select id="filterBackupJurusan" style="min-width:150px;"><option value="semua">Semua Jurusan</option><option value="TKJ">TKJ</option><option value="AKL">AKL</option><option value="TBSM">TBSM</option><option value="Pemasaran">Pemasaran</option></select>
+      </div>
+      <div id="ringkasanBackupAkun" style="margin-top:10px;color:#6f7f89;font-size:13px;">Memuat data...</div>
+      <div id="boxBackupGuru" style="margin-top:15px;"><h4 style="margin:0 0 8px;">👨‍🏫 Akun Guru</h4><div class="table-wrapper"><table><thead><tr><th>No</th><th>Nama</th><th>Email</th><th>NIP</th><th>NUPTK</th><th>UID</th></tr></thead><tbody id="tabelBackupGuru"><tr><td colspan="6">Memuat...</td></tr></tbody></table></div></div>
+      <div id="boxBackupSiswa" style="margin-top:18px;"><h4 style="margin:0 0 8px;">👨‍🎓 Akun Siswa</h4><div class="table-wrapper"><table><thead><tr><th>No</th><th>Nama</th><th>Email</th><th>NIS</th><th>Tingkat</th><th>Jurusan</th><th>Kelas</th><th>UID</th></tr></thead><tbody id="tabelBackupSiswa"><tr><td colspan="8">Memuat...</td></tr></tbody></table></div></div>
+      <div id="boxBackupKelompokSiswa" style="margin-top:18px;"><h4 style="margin:0 0 8px;">📚 Data Siswa per Tingkat & Jurusan</h4><div id="kelompokBackupSiswa"></div></div>
+    </div></div>
 
 
   <div class="panel" id="panelAgenda" style="display:none;">
@@ -2006,6 +2071,15 @@ let dataJadwal = [];
 let dataNilai = [];
 let dataAbsensi = [];
 
+/* Periode akademik aktif — dipakai oleh Pengaturan Akademik. */
+let periodeAkademikAktif = { tahunPelajaran: "2026/2027", semester: "Ganjil" };
+function periodeAkademikSaatIni(){ return { ...periodeAkademikAktif }; }
+function tampilkanPeriodeAkademikHome(){
+  const tahun=periodeAkademikAktif.tahunPelajaran||"2026/2027";
+  const sem=periodeAkademikAktif.semester||"Ganjil";
+  document.querySelectorAll('.academic-status .status-box strong').forEach((e,i)=>{ if(i===0)e.textContent=tahun; if(i===1)e.textContent=sem; });
+}
+
 
 const formSiswa =
   document.getElementById("formSiswa");
@@ -2170,7 +2244,7 @@ onAuthStateChanged(auth, async (user) => {
 function aturTampilanBerdasarkanRole() {
   const menuOperasional = [
     "menuSiswa", "menuGuru", "menuKelas", "menuMapel", "menuJadwal",
-    "menuNilai", "menuAbsensi", "menuPengumuman", "menuERapor", "menuAkun"
+    "menuNilai", "menuAbsensi", "menuPengumuman", "menuERapor", "menuAkun", "menuAkademik", "menuBackup"
   ];
   const menuSiswa = [
     "menuDataSaya", "menuNilaiSaya", "menuAbsensiSaya", "menuRaporSaya", "menuPengumumanSaya"
@@ -2190,7 +2264,7 @@ function aturTampilanBerdasarkanRole() {
     [
       "panelSiswa", "panelGuru", "panelKelas", "panelMapel", "panelJadwal",
       "panelNilai", "panelAbsensi", "panelPengumuman", "panelERapor",
-      "panelAkun", "panelPersetujuanNilai"
+      "panelAkun", "panelAkademik", "panelBackup", "panelPersetujuanNilai"
     ].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = "none";
@@ -2217,8 +2291,8 @@ function aturTampilanBerdasarkanRole() {
   }
 }
 function sembunyikanSemuaPanel(){
-  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
+  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelAkademik","panelBackup","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuAkademik","menuBackup","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
 // Pengaman tampilan: setiap kali menu diklik, hanya panel menu tersebut yang boleh terlihat.
@@ -2238,6 +2312,8 @@ document.addEventListener("click", event => {
     menuPengumuman:"panelPengumuman",
     menuERapor:"panelERapor",
     menuAkun:"panelAkun",
+    menuAkademik:"panelAkademik",
+    menuBackup:"panelBackup",
     menuDataSaya:"panelDataSaya",
     menuNilaiSaya:"panelNilai",
     menuAbsensiSaya:"panelAbsensi",
@@ -4975,9 +5051,13 @@ async function tampilkanNilai() {
       // Admin dapat melihat seluruh nilai.
       snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "guru") {
-      // Guru dapat melihat seluruh data nilai yang tersedia agar Daftar Nilai, E-Rapor,
-      // dan proses edit/cetak tetap bekerja untuk siswa dari kelas mana pun.
-      snapshot = await getDocs(collection(db, "nilai"));
+      // Guru hanya melihat nilai yang dia ajukan sendiri, termasuk yang masih menunggu, ditolak, dan sudah disetujui.
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("submittedByUid", "==", currentUser?.uid || "")
+        )
+      );
     } else if (roleUser === "siswa") {
       // Siswa hanya melihat nilai miliknya yang sudah disahkan Admin.
       snapshot = await getDocs(
@@ -5021,9 +5101,11 @@ async function tampilkanNilai() {
         aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
                 <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
       } else if (roleUser === "guru") {
-        // Guru dapat membuka dan mengedit nilai dari Daftar Nilai.
-        // Saat disimpan kembali, alur persetujuan yang sudah ada tetap dipakai.
-        aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
+        if (n.status === "disetujui") {
+          aksi = '<span style="color:#198754;font-weight:bold;">Resmi</span>';
+        } else {
+          aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
+        }
       }
 
       tr.innerHTML = `<td>${index + 1}</td>
@@ -5175,8 +5257,6 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
     const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
-    // Sinkronkan hasil E-Rapor ke dataNilai agar tombol Edit memakai form nilai yang sama.
-    dataNilai = [...dataERaporNilai];
     const siswa=dataSiswa.find(s=>s.id===siswaId);
     const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
@@ -5194,9 +5274,9 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
           <tr><td style="padding:5px;"><b>NIS</b></td><td>${esc(siswa?.nis)}</td><td><b>Semester</b></td><td>${esc(semester)}</td></tr>
         </table>
         <table style="width:100%;border-collapse:collapse;">
-          <thead><tr><th style="border:1px solid #222;padding:8px;">No</th><th style="border:1px solid #222;padding:8px;text-align:left;">Mata Pelajaran</th><th style="border:1px solid #222;padding:8px;">Tugas</th><th style="border:1px solid #222;padding:8px;">UTS</th><th style="border:1px solid #222;padding:8px;">UAS</th><th style="border:1px solid #222;padding:8px;">Nilai Akhir</th>${roleUser === "guru" ? '<th style="border:1px solid #222;padding:8px;">Aksi</th>' : ''}</tr></thead>
-          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));const aksiRapor=roleUser === "guru" ? `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>` : '';return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td>${roleUser === "guru" ? `<td style="border:1px solid #222;padding:8px;text-align:center;">${aksiRapor}</td>` : ''}</tr>`}).join(""): `<tr><td colspan="${roleUser === "guru" ? 7 : 6}" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>`}</tbody>
-          <tfoot><tr><td colspan="${roleUser === "guru" ? 6 : 5}" style="border:1px solid #222;padding:8px;text-align:right;"><b>Rata-rata</b></td><td style="border:1px solid #222;padding:8px;text-align:center;${roleUser === "guru" ? '' : ''}"><b>${avg.toFixed(2)}</b></td>${roleUser === "guru" ? '<td style="border:1px solid #222;padding:8px;"></td>' : ''}</tr></tfoot>
+          <thead><tr><th style="border:1px solid #222;padding:8px;">No</th><th style="border:1px solid #222;padding:8px;text-align:left;">Mata Pelajaran</th><th style="border:1px solid #222;padding:8px;">Tugas</th><th style="border:1px solid #222;padding:8px;">UTS</th><th style="border:1px solid #222;padding:8px;">UAS</th><th style="border:1px solid #222;padding:8px;">Nilai Akhir</th></tr></thead>
+          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>'}</tbody>
+          <tfoot><tr><td colspan="5" style="border:1px solid #222;padding:8px;text-align:right;"><b>Rata-rata</b></td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${avg.toFixed(2)}</b></td></tr></tfoot>
         </table>
         <div style="display:flex;justify-content:space-between;margin-top:55px;text-align:center;gap:30px;"><div style="flex:1;">Mengetahui,<br>Wali Kelas<br><br><br>________________________</div><div style="flex:1;">Orang Tua/Wali<br><br><br><br>________________________</div><div style="flex:1;">Kepala Sekolah<br><br><br><br>________________________</div></div>
       </div>`;
@@ -5475,6 +5555,87 @@ document.getElementById("btnSimpanAgenda")?.addEventListener("click",async()=>{
 });
 
 /* =========================
+   FITUR AKADEMIK TAMBAHAN
+   Menambah modul tanpa mengubah CRUD lama.
+========================= */
+const koleksiBackupEakademik=["users","siswa","guru","kelas","mataPelajaran","jadwal","nilai","absensi","pengumuman","agendaAkademik","profilFoto","tahunPelajaran","jurusan","pengaturanAkademik"];
+function escapeHtmlAkademik(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+function timestampBackupAkademik(v){if(v&&typeof v.toDate==="function")return v.toDate().toISOString();return v;}
+async function bacaKoleksiAkademik(nama){const snap=await getDocs(collection(db,nama));return snap.docs.map(d=>({id:d.id,...d.data()}));}
+async function simpanPengaturanAkademik(){
+  const pesan=document.getElementById("pesanAkademik");
+  if(roleUser!=="admin"){
+    pesanTambahanAkademik("Hanya Admin yang dapat menyimpan Pengaturan Akademik.","error");
+    return;
+  }
+  if(!currentUser){
+    pesanTambahanAkademik("Sesi login belum siap. Silakan login ulang.","error");
+    return;
+  }
+  const tahunEl=document.getElementById("akademikTahunAktif");
+  const semesterEl=document.getElementById("akademikSemesterAktif");
+  const kepalaEl=document.getElementById("akademikKepalaSekolah");
+  const nipEl=document.getElementById("akademikNipKepala");
+  const ketEl=document.getElementById("akademikKeterangan");
+  if(!tahunEl||!semesterEl){
+    pesanTambahanAkademik("Form Pengaturan Akademik tidak ditemukan. Muat ulang halaman.","error");
+    return;
+  }
+  const payload={
+    tahunPelajaran:tahunEl.value.trim()||"2026/2027",
+    semester:semesterEl.value||"Ganjil",
+    kepalaSekolah:kepalaEl?.value.trim()||"",
+    nipKepalaSekolah:nipEl?.value.trim()||"",
+    keterangan:ketEl?.value.trim()||"",
+    diperbaruiPada:serverTimestamp(),
+    diperbaruiOlehUid:currentUser.uid
+  };
+  const tombol=document.getElementById("btnSimpanAkademik");
+  try{
+    if(tombol){tombol.disabled=true;tombol.textContent="⏳ Menyimpan...";}
+    await setDoc(doc(db,"pengaturanAkademik","utama"),payload,{merge:true});
+    periodeAkademikAktif={tahunPelajaran:payload.tahunPelajaran,semester:payload.semester};
+    tampilkanPeriodeAkademikHome();
+    pesanTambahanAkademik("Pengaturan akademik berhasil disimpan.","sukses");
+  }catch(e){
+    console.error("Pengaturan Akademik:",e);
+    pesanTambahanAkademik("Gagal menyimpan Pengaturan Akademik: "+(e.code?e.code+" — ":"")+e.message,"error");
+  }finally{
+    if(tombol){tombol.disabled=false;tombol.textContent="💾 Simpan Pengaturan";}
+  }
+}
+function pesanTambahanAkademik(msg,tipe="sukses"){const e=document.getElementById("pesanAkademik");if(e){e.textContent=msg;e.className="pesan "+tipe;}}
+async function muatPengaturanAkademik(){try{const s=await getDoc(doc(db,"pengaturanAkademik","utama"));const d=s.exists()?s.data():{};document.getElementById("akademikTahunAktif").value=d.tahunPelajaran||"2026/2027";document.getElementById("akademikSemesterAktif").value=d.semester||"Ganjil";document.getElementById("akademikKepalaSekolah").value=d.kepalaSekolah||"";document.getElementById("akademikNipKepala").value=d.nipKepalaSekolah||"";document.getElementById("akademikKeterangan").value=d.keterangan||"";periodeAkademikAktif={tahunPelajaran:d.tahunPelajaran||"2026/2027",semester:d.semester||"Ganjil"};tampilkanPeriodeAkademikHome();}catch(e){console.warn(e);}}
+async function tampilkanJurusan(){const tb=document.getElementById("tabelJurusan");if(!tb)return;try{let rows=await bacaKoleksiAkademik("jurusan");if(!rows.length){for(const nama of ["TKJ","AKL","TBSM","Pemasaran"]){await setDoc(doc(db,"jurusan",nama.toLowerCase().replace(/[^a-z0-9]+/g,"-")),{nama,aktif:true,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||""});}rows=await bacaKoleksiAkademik("jurusan");}rows.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||"")));tb.innerHTML=rows.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama)}</td><td>${roleUser==="admin"?`<button type="button" class="btn-danger btn-hapus-jurusan" data-id="${escapeHtmlAkademik(d.id)}">Hapus</button>`:`<span style="color:#6f7f89;">Lihat</span>`}</td></tr>`).join("");}catch(e){tb.innerHTML=`<tr><td colspan="3" style="color:#b02a37;">Gagal memuat jurusan: ${escapeHtmlAkademik(e.message)}</td></tr>`;}}
+async function tambahJurusan(){if(roleUser!=="admin")return;const input=document.getElementById("jurusanNamaBaru"),nama=input.value.trim();if(!nama)return;const ada=await getDocs(query(collection(db,"jurusan"),where("nama","==",nama)));if(!ada.empty){alert("Jurusan sudah ada.");return;}await addDoc(collection(db,"jurusan"),{nama,aktif:true,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||""});input.value="";await tampilkanJurusan();}
+async function hapusJurusan(id){if(roleUser!=="admin")return;if(!confirm("Hapus jurusan ini? Data siswa yang sudah ada tidak ikut dihapus."))return;await deleteDoc(doc(db,"jurusan",id));await tampilkanJurusan();}
+async function terapkanPeriodeKeDataAkademik(){
+  if(roleUser!=="admin"){alert("Hanya Admin yang dapat menerapkan periode akademik.");return;}
+  const p=periodeAkademikSaatIni();
+  if(!confirm(`Terapkan Tahun Pelajaran ${p.tahunPelajaran} / Semester ${p.semester} ke data akademik yang sudah ada?`))return;
+  const koleksi=["siswa","guru","kelas","mataPelajaran","jadwal","nilai","absensi","pengumuman","agendaAkademik"];
+  let jumlah=0;
+  try{
+    for(const nama of koleksi){
+      const snap=await getDocs(collection(db,nama));
+      for(const d of snap.docs){
+        await updateDoc(doc(db,nama,d.id),{tahunPelajaran:p.tahunPelajaran,semester:p.semester});
+        jumlah++;
+      }
+    }
+    alert(`Periode berhasil diterapkan ke ${jumlah} dokumen.`);
+  }catch(e){alert("Gagal menerapkan periode: "+e.message);}
+}
+
+async function bukaPanelAkademik(){if(!["admin","guru"].includes(roleUser))return;sembunyikanSemuaPanel();document.getElementById("panelAkademik").style.display="block";document.getElementById("menuAkademik").classList.add("aktif");document.getElementById("btnSimpanAkademik").style.display=roleUser==="admin"?"":"none";document.getElementById("btnTambahJurusan").style.display=roleUser==="admin"?"":"none";await muatPengaturanAkademik();await tampilkanJurusan();}
+async function backupDataEakademik(){if(roleUser!=="admin")return;const hasil={backupAt:new Date().toISOString(),catatan:"Backup Firestore; password Firebase Authentication tidak termasuk.",collections:{}};try{for(const nama of koleksiBackupEakademik){const rows=await bacaKoleksiAkademik(nama);hasil.collections[nama]=rows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k,timestampBackupAkademik(v)])));}const blob=new Blob([JSON.stringify(hasil,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a"),d=new Date();a.href=url;a.download=`backup-e-akademik-${d.toISOString().slice(0,19).replace(/[:T]/g,"-")}.json`;a.click();URL.revokeObjectURL(url);}catch(e){alert("Backup gagal: "+e.message);}}
+let dataBackupUsersAdmin=[], dataBackupSiswaAdmin=[], dataBackupGuruAdmin=[];
+function nilaiBackupCari(d){return [d.nama,d.email,d.nis,d.nip,d.nuptk,d.id,d.kelas,d.tingkat,d.jurusan,d.siswaId].map(v=>String(v??"").toLowerCase()).join(" ");}
+function renderBackupKelompokSiswa(rows){const box=document.getElementById("kelompokBackupSiswa");if(!box)return;const tingkatOrder=["X","XI","XII"],jurusanOrder=["TKJ","AKL","TBSM","Pemasaran"];let html="";for(const tingkat of tingkatOrder){const dataT=rows.filter(x=>String(x.tingkat||"").toUpperCase()===tingkat);if(!dataT.length)continue;html+=`<div style="margin-bottom:15px;"><h5 style="margin:0 0 8px;">📘 Kelas ${tingkat} (${dataT.length} siswa)</h5>`;for(const jurusan of jurusanOrder){const dataJ=dataT.filter(x=>String(x.jurusan||"").toLowerCase()===jurusan.toLowerCase());if(!dataJ.length)continue;html+=`<div style="margin:8px 0 5px;font-weight:700;">${escapeHtmlAkademik(jurusan)} — ${dataJ.length} siswa</div><div class="table-wrapper"><table><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Kelas</th><th>Email</th></tr></thead><tbody>${dataJ.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama||"-")}</td><td>${escapeHtmlAkademik(d.nis||"-")}</td><td>${escapeHtmlAkademik(d.kelas||"-")}</td><td>${escapeHtmlAkademik(d.email||"-")}</td></tr>`).join("")}</tbody></table></div>`;}html+=`</div>`;}box.innerHTML=html||`<div style="padding:12px;border:1px solid #dbe8ed;border-radius:8px;color:#6f7f89;">Tidak ada data siswa sesuai pencarian/filter.</div>`;}
+function renderDaftarAkunAdmin(){const cari=(document.getElementById("cariBackupAkun")?.value||"").trim().toLowerCase(),role=(document.getElementById("filterBackupRole")?.value||"semua").toLowerCase(),tingkat=(document.getElementById("filterBackupTingkat")?.value||"semua").toUpperCase(),jurusan=(document.getElementById("filterBackupJurusan")?.value||"semua").toLowerCase();const match=d=>{const r=String(d.role||"").toLowerCase(),t=String(d.tingkat||"").toUpperCase(),j=String(d.jurusan||"").toLowerCase();return(!cari||nilaiBackupCari(d).includes(cari))&&(role==="semua"||r===role)&&(r!=="siswa"||tingkat==="SEMUA"||t===tingkat)&&(r!=="siswa"||jurusan==="semua"||j===jurusan);};const users=dataBackupUsersAdmin.filter(match),guru=users.filter(x=>x.role==="guru").sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""))),siswa=users.filter(x=>x.role==="siswa").sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||"")));const tg=document.getElementById("tabelBackupGuru"),ts=document.getElementById("tabelBackupSiswa");if(tg)tg.innerHTML=guru.length?guru.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama||"-")}</td><td>${escapeHtmlAkademik(d.email||"-")}</td><td>${escapeHtmlAkademik(d.nip||"-")}</td><td>${escapeHtmlAkademik(d.nuptk||"-")}</td><td style="font-size:11px;word-break:break-all;">${escapeHtmlAkademik(d.id)}</td></tr>`).join(""):`<tr><td colspan="6">Tidak ada akun Guru sesuai pencarian/filter.</td></tr>`;if(ts)ts.innerHTML=siswa.length?siswa.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama||"-")}</td><td>${escapeHtmlAkademik(d.email||"-")}</td><td>${escapeHtmlAkademik(d.nis||"-")}</td><td>${escapeHtmlAkademik(d.tingkat||"-")}</td><td>${escapeHtmlAkademik(d.jurusan||"-")}</td><td>${escapeHtmlAkademik(d.kelas||"-")}</td><td style="font-size:11px;word-break:break-all;">${escapeHtmlAkademik(d.id)}</td></tr>`).join(""):`<tr><td colspan="8">Tidak ada akun Siswa sesuai pencarian/filter.</td></tr>`;const boxGuru=document.getElementById("boxBackupGuru"),boxSiswa=document.getElementById("boxBackupSiswa");if(boxGuru)boxGuru.style.display=role==="siswa"?"none":"block";if(boxSiswa)boxSiswa.style.display=role==="guru"?"none":"block";renderBackupKelompokSiswa(siswa);const ring=document.getElementById("ringkasanBackupAkun");if(ring)ring.textContent=`Menampilkan ${users.length} dari ${dataBackupUsersAdmin.length} akun • Guru: ${guru.length} • Siswa: ${siswa.length}`;}
+async function muatDaftarAkunAdmin(){try{const[users,siswa,guru]=await Promise.all([bacaKoleksiAkademik("users"),bacaKoleksiAkademik("siswa"),bacaKoleksiAkademik("guru")]);const profilSiswa=new Map(siswa.map(x=>[x.id,x])),profilGuru=new Map(guru.map(x=>[x.id,x]));dataBackupUsersAdmin=users.filter(x=>["guru","siswa"].includes(String(x.role||"").toLowerCase())).map(x=>{const r=String(x.role||"").toLowerCase(),p=r==="siswa"?(profilSiswa.get(x.siswaId||x.id)||{}):(profilGuru.get(x.id)||{});return{...p,...x,id:x.id,role:r};});dataBackupSiswaAdmin=dataBackupUsersAdmin.filter(x=>x.role==="siswa");dataBackupGuruAdmin=dataBackupUsersAdmin.filter(x=>x.role==="guru");renderDaftarAkunAdmin();}catch(e){["tabelBackupGuru","tabelBackupSiswa"].forEach(id=>{const tb=document.getElementById(id);if(tb)tb.innerHTML=`<tr><td colspan="8">Gagal memuat: ${escapeHtmlAkademik(e.message)}</td></tr>`;});const ring=document.getElementById("ringkasanBackupAkun");if(ring)ring.textContent="Gagal memuat data akun: "+e.message;}}
+async function bukaPanelBackup(){if(roleUser!=="admin")return;sembunyikanSemuaPanel();document.getElementById("panelBackup").style.display="block";document.getElementById("menuBackup").classList.add("aktif");await muatDaftarAkunAdmin();}
+/* =========================
    DASHBOARD HOME — TAMPILAN SAJA
 ========================= */
 function bukaHomeDashboard(){
@@ -5484,6 +5645,17 @@ function bukaHomeDashboard(){
   document.querySelectorAll(".menu .card").forEach(e=>e.classList.remove("aktif"));
   const m=document.getElementById("menuHome"); if(m)m.classList.add("aktif");
 }
+
+document.getElementById("menuAkademik")?.addEventListener("click",bukaPanelAkademik);
+document.getElementById("menuBackup")?.addEventListener("click",bukaPanelBackup);
+document.getElementById("btnSimpanAkademik")?.addEventListener("click",simpanPengaturanAkademik);
+document.getElementById("btnMuatAkademik")?.addEventListener("click",muatPengaturanAkademik);
+document.getElementById("btnTerapkanPeriode")?.addEventListener("click",terapkanPeriodeKeDataAkademik);
+document.getElementById("btnTambahJurusan")?.addEventListener("click",tambahJurusan);
+document.getElementById("tabelJurusan")?.addEventListener("click",e=>{const b=e.target.closest(".btn-hapus-jurusan");if(b)hapusJurusan(b.dataset.id);});
+document.getElementById("btnBackupData")?.addEventListener("click",backupDataEakademik);
+document.getElementById("btnRefreshAkunAdmin")?.addEventListener("click",muatDaftarAkunAdmin);
+["cariBackupAkun","filterBackupRole","filterBackupTingkat","filterBackupJurusan"].forEach(id=>document.getElementById(id)?.addEventListener(id==="cariBackupAkun"?"input":"change",renderDaftarAkunAdmin));
 
 document.getElementById("menuHome")?.addEventListener("click",bukaHomeDashboard);
 document.getElementById("btnHomeApproval")?.addEventListener("click",()=>{ const m=document.getElementById("menuNilai"); if(m) m.click(); });
