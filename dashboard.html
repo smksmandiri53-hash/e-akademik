@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta name="e-akademik-version" content="nilai-refresh-v1">
-  <meta name="e-akademik-version" content="persetujuan-panel-fix-v1">
+  <meta name="e-akademik-version" content="agenda-akademik-v1">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Akademik - Dashboard</title>
@@ -665,7 +665,15 @@
     .panel,#panelPersetujuanNilai{border-radius:14px!important}
     .panel:not(#panelDataSaya):not(#panelSiswa):not(#panelGuru):not(#panelKelas):not(#panelMapel):not(#panelJadwal):not(#panelNilai):not(#panelAbsensi):not(#panelPengumuman):not(#panelERapor):not(#panelAkun){ }
     #panelHome{display:grid!important}
-    #panelSiswa,#panelGuru,#panelKelas,#panelMapel,#panelJadwal,#panelNilai,#panelAbsensi,#panelPengumuman,#panelERapor,#panelAkun,#panelDataSaya,#panelPersetujuanNilai{display:none}
+    #panelSiswa,#panelGuru,#panelKelas,#panelMapel,#panelJadwal,#panelNilai,#panelAbsensi,#panelPengumuman,#panelERapor,#panelAkun,#panelDataSaya,#panelPersetujuanNilai,#panelAgenda{display:none}
+    .agenda-admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px}
+    .agenda-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .agenda-form-grid .full{grid-column:1/-1}
+    .agenda-manage-table{width:100%;border-collapse:collapse;margin-top:15px}
+    .agenda-manage-table th,.agenda-manage-table td{padding:10px 9px;border-bottom:1px solid #e6ecef;text-align:left;font-size:12px;vertical-align:top}
+    .agenda-manage-table th{background:#f3f8fa;color:#1b5263}
+    .agenda-empty{padding:18px;text-align:center;color:#71808d}
+    @media(max-width:760px){.agenda-form-grid{grid-template-columns:1fr}.agenda-form-grid .full{grid-column:auto}.agenda-manage-table{display:block;overflow-x:auto;white-space:nowrap}}
 
     @media(max-width:980px){
       .header-contact{font-size:9.5px}.header-account-info{min-width:190px}
@@ -830,13 +838,8 @@
     <div class="dashboard-content-grid">
       <div>
         <div class="dashboard-card">
-          <div class="dashboard-card-head"><div><h3>📅 Agenda Akademik</h3><p>Informasi kegiatan penting sekolah</p></div><span class="card-tag">2026/2027</span></div>
-          <div class="academic-agenda-list">
-            <div class="agenda-row"><div class="agenda-day"><small>SEP</small><b>28</b></div><div><h4>Kegiatan Akademik Sekolah</h4><p>Pelaksanaan kegiatan pembelajaran dan administrasi akademik.</p><div class="agenda-type">Agenda Sekolah</div></div></div>
-            <div class="agenda-row"><div class="agenda-day"><small>SEP</small><b>30</b></div><div><h4>Pengumpulan dan Pemeriksaan Nilai</h4><p>Guru melakukan input dan pemeriksaan nilai peserta didik.</p><div class="agenda-type">Penilaian</div></div></div>
-            <div class="agenda-row"><div class="agenda-day"><small>OKT</small><b>05</b></div><div><h4>Evaluasi Tengah Semester</h4><p>Persiapan kegiatan evaluasi pembelajaran semester ganjil.</p><div class="agenda-type">Evaluasi</div></div></div>
-            <div class="agenda-row"><div class="agenda-day"><small>OKT</small><b>10</b></div><div><h4>Rapat Evaluasi Akademik</h4><p>Koordinasi dan evaluasi kegiatan akademik sekolah.</p><div class="agenda-type">Manajemen Akademik</div></div></div>
-          </div>
+          <div class="dashboard-card-head"><div><h3>📅 Agenda Akademik</h3><p>Informasi kegiatan penting sekolah</p></div><div style="display:flex;gap:8px;align-items:center;"><span class="card-tag">2026/2027</span><button type="button" class="btn-primary" id="btnKelolaAgendaHome" style="padding:7px 10px;font-size:11px;">Kelola Agenda</button></div></div>
+          <div class="academic-agenda-list" id="homeAgendaList"><div class="agenda-empty">Memuat agenda akademik...</div></div>
         </div>
 
         <div class="dashboard-card">
@@ -848,6 +851,7 @@
             <button class="quick-item" type="button" data-home-menu="menuNilai"><span class="qi-icon">📝</span><span><strong>Nilai</strong><span>Penilaian siswa</span></span></button>
             <button class="quick-item" type="button" data-home-menu="menuAbsensi"><span class="qi-icon">📋</span><span><strong>Absensi</strong><span>Kehadiran siswa</span></span></button>
             <button class="quick-item" type="button" data-home-menu="menuERapor"><span class="qi-icon">📄</span><span><strong>E-Rapor</strong><span>Rapor akademik</span></span></button>
+            <button class="quick-item" type="button" id="btnHomeAgenda"><span class="qi-icon">📅</span><span><strong>Kalender Akademik</strong><span>Agenda sekolah</span></span></button>
           </div>
         </div>
 
@@ -889,6 +893,38 @@
 
   <h2 id="judulDashboard">Dashboard</h2>
 
+
+  <div class="panel" id="panelAgenda" style="display:none;">
+    <div class="topbar"><h2>📅 Kalender / Agenda Akademik</h2></div>
+    <div class="akun-box">
+      <div class="agenda-admin-head">
+        <div><h3 style="margin:0 0 5px;">Agenda Akademik Sekolah</h3><p style="margin:0;color:#6f7f89;font-size:13px;">Kelola kegiatan penting sekolah dan tampilkan secara otomatis di Dashboard.</p></div>
+        <button type="button" class="btn-primary" id="btnTambahAgenda">＋ Tambah Agenda</button>
+      </div>
+      <div id="formAgenda" style="display:none;margin-top:15px;padding:15px;border:1px solid #dbe8ed;border-radius:10px;background:#f8fbfc;">
+        <input type="hidden" id="agendaId">
+        <div class="agenda-form-grid">
+          <div><label>Judul Agenda</label><input type="text" id="agendaJudul" placeholder="Contoh: Rapat Evaluasi Akademik"></div>
+          <div><label>Tanggal</label><input type="date" id="agendaTanggal"></div>
+          <div><label>Jenis Kegiatan</label><select id="agendaJenis"><option value="Agenda Sekolah">Agenda Sekolah</option><option value="Pembelajaran">Pembelajaran</option><option value="Penilaian">Penilaian</option><option value="Ujian">Ujian</option><option value="Rapat">Rapat</option><option value="Kegiatan Siswa">Kegiatan Siswa</option><option value="Lainnya">Lainnya</option></select></div>
+          <div><label>Tahun Pelajaran</label><input type="text" id="agendaTahun" value="2026/2027"></div>
+          <div><label>Semester</label><select id="agendaSemester"><option value="Ganjil">Ganjil</option><option value="Genap">Genap</option></select></div>
+          <div class="full"><label>Deskripsi</label><textarea id="agendaDeskripsi" rows="3" placeholder="Keterangan singkat kegiatan..."></textarea></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button type="button" class="btn-primary" id="btnSimpanAgenda">Simpan Agenda</button>
+          <button type="button" class="btn-secondary" id="btnBatalAgenda">Batal</button>
+        </div>
+        <div id="pesanAgenda" class="pesan"></div>
+      </div>
+      <div class="table-wrapper" style="margin-top:18px;">
+        <table class="agenda-manage-table">
+          <thead><tr><th>No</th><th>Tanggal</th><th>Agenda</th><th>Jenis</th><th>Semester</th><th>Dibuat Oleh</th><th>Aksi</th></tr></thead>
+          <tbody id="tabelAgenda"><tr><td colspan="7" class="agenda-empty">Memuat agenda...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <div class="panel" id="panelDataSaya" style="display:none;">
     <div class="topbar"><h2>👤 Data Saya</h2></div>
@@ -2066,6 +2102,7 @@ async function muatProfilPengguna(user) {
     const loginTime = document.getElementById("homeLoginTime");
     if (loginTime) loginTime.textContent = new Date().toLocaleString("id-ID", {day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"}) + " WIB";
     await muatRingkasanDashboard();
+    await muatAgendaAkademikHome();
     document.getElementById("emailAdmin").textContent = "Login sebagai: " + namaTampil + " (" + (user.email || "") + ")";
     document.getElementById("roleUser").textContent = "Role: " + roleTampil + (roleUser === "guru" && profilUser.kelasWali ? " • Wali Kelas: " + profilUser.kelasWali : "");
     document.getElementById("judulDashboard").textContent = roleUser === "admin" ? "Dashboard Admin" : roleUser === "guru" ? "Dashboard Guru" : "Dashboard Siswa";
@@ -2180,7 +2217,7 @@ function aturTampilanBerdasarkanRole() {
   }
 }
 function sembunyikanSemuaPanel(){
-  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
   ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
@@ -5075,7 +5112,7 @@ function tampilkanPesanNilai(teks, tipe) {
    MENU PENGUMUMAN
 ========================= */
 document.getElementById("menuPengumuman").addEventListener("click", async () => {
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun"].forEach(id => document.getElementById(id).style.display="none");
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id => document.getElementById(id).style.display="none");
   document.getElementById("panelPengumuman").style.display="block";
   ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id => document.getElementById(id).classList.remove("aktif"));
   document.getElementById("menuPengumuman").classList.add("aktif");
@@ -5111,7 +5148,7 @@ function pesanERapor(teks,tipe){
 }
 
 function hideAllPanelsERapor(){
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
   ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
@@ -5247,7 +5284,7 @@ function kosongkanFormAkun(){
 }
 
 function bukaPanelAkun(){
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun"].forEach(id=>document.getElementById(id).style.display="none");
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id=>document.getElementById(id).style.display="none");
   document.getElementById("panelAkun").style.display="block";
   ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>document.getElementById(id).classList.remove("aktif"));
   document.getElementById("menuAkun").classList.add("aktif");
@@ -5301,6 +5338,144 @@ document.getElementById("btnSimpanAkun").addEventListener("click",async()=>{
     else if(error.code==="auth/requires-recent-login") pesan="Sesi login sudah terlalu lama. Silakan logout lalu login kembali, kemudian coba lagi.";
     pesanAkun(pesan,"error");
   }
+});
+
+/* =========================
+   AGENDA AKADEMIK — FIRESTORE
+========================= */
+function escapeHtmlAgenda(value){
+  return String(value ?? "").replace(/[&<>'"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[ch]));
+}
+function formatTanggalAgenda(value){
+  if(!value) return {day:"-",month:"-",full:"-"};
+  const d=new Date(value+"T00:00:00");
+  if(Number.isNaN(d.getTime())) return {day:"-",month:"-",full:value};
+  return {day:String(d.getDate()).padStart(2,"0"),month:d.toLocaleDateString("id-ID",{month:"short"}).replace(".","").toUpperCase(),full:d.toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"})};
+}
+function kosongkanFormAgenda(){
+  ["agendaId","agendaJudul","agendaTanggal","agendaDeskripsi"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
+  const j=document.getElementById("agendaJenis");if(j)j.value="Agenda Sekolah";
+  const t=document.getElementById("agendaTahun");if(t)t.value="2026/2027";
+  const s=document.getElementById("agendaSemester");if(s)s.value="Ganjil";
+}
+function pesanAgenda(text,type="sukses"){
+  const e=document.getElementById("pesanAgenda");if(!e)return;
+  e.className="pesan "+type;e.textContent=text;
+  setTimeout(()=>{if(e)e.textContent="";},3500);
+}
+function renderAgendaHome(items){
+  const el=document.getElementById("homeAgendaList");if(!el)return;
+  if(!items.length){el.innerHTML='<div class="agenda-empty">Belum ada agenda akademik yang tersimpan.</div>';return;}
+  el.innerHTML=items.slice(0,6).map(a=>{
+    const f=formatTanggalAgenda(a.tanggal);
+    return `<div class="agenda-row"><div class="agenda-day"><small>${escapeHtmlAgenda(f.month)}</small><b>${escapeHtmlAgenda(f.day)}</b></div><div><h4>${escapeHtmlAgenda(a.judul||"Agenda Akademik")}</h4><p>${escapeHtmlAgenda(a.deskripsi||"Tidak ada keterangan.")}</p><div class="agenda-type">${escapeHtmlAgenda(a.jenis||"Agenda Sekolah")} • ${escapeHtmlAgenda(a.semester||"-")}</div></div></div>`;
+  }).join("");
+}
+async function ambilAgendaAkademik(){
+  const snap=await getDocs(collection(db,"agendaAkademik"));
+  const items=[];
+  snap.forEach(d=>items.push({id:d.id,...d.data()}));
+  items.sort((a,b)=>String(a.tanggal||"").localeCompare(String(b.tanggal||"")));
+  return items;
+}
+async function muatAgendaAkademikHome(){
+  try{
+    const items=await ambilAgendaAkademik();
+    renderAgendaHome(items);
+    return items;
+  }catch(error){
+    console.warn("Agenda akademik belum dapat dimuat:",error);
+    const el=document.getElementById("homeAgendaList");
+    if(el)el.innerHTML='<div class="agenda-empty">Agenda belum dapat dimuat. Periksa koneksi atau Firestore Rules.</div>';
+    return [];
+  }
+}
+async function tampilkanAgendaAkademik(){
+  const tabel=document.getElementById("tabelAgenda");
+  if(!tabel)return;
+  tabel.innerHTML='<tr><td colspan="7" class="agenda-empty">Memuat agenda...</td></tr>';
+  try{
+    const items=await ambilAgendaAkademik();
+    renderAgendaHome(items);
+    if(!items.length){tabel.innerHTML='<tr><td colspan="7" class="agenda-empty">Belum ada agenda akademik.</td></tr>';return;}
+    const bolehKelola=roleUser==="admin"||roleUser==="guru";
+    tabel.innerHTML=items.map((a,i)=>{
+      const f=formatTanggalAgenda(a.tanggal);
+      const aksi=bolehKelola
+        ? `<button type="button" class="btn-warning" onclick="editAgendaAkademik('${a.id}')">Edit</button> <button type="button" class="btn-danger" onclick="hapusAgendaAkademik('${a.id}')">Hapus</button>`
+        : '<span style="color:#198754;font-weight:bold;">Lihat</span>';
+      return `<tr><td>${i+1}</td><td>${escapeHtmlAgenda(f.full)}</td><td><strong>${escapeHtmlAgenda(a.judul||"-")}</strong><br><small>${escapeHtmlAgenda(a.deskripsi||"")}</small></td><td>${escapeHtmlAgenda(a.jenis||"-")}</td><td>${escapeHtmlAgenda(a.semester||"-")}</td><td>${escapeHtmlAgenda(a.dibuatOlehNama||"-")}</td><td>${aksi}</td></tr>`;
+    }).join("");
+  }catch(error){
+    console.error(error);
+    tabel.innerHTML=`<tr><td colspan="7" class="agenda-empty" style="color:#c62828;">Gagal memuat agenda: ${escapeHtmlAgenda(error.message)}</td></tr>`;
+  }
+}
+function bukaPanelAgenda(){
+  sembunyikanSemuaPanel();
+  const p=document.getElementById("panelAgenda");if(p)p.style.display="block";
+  document.querySelectorAll(".menu .card").forEach(e=>e.classList.remove("aktif"));
+  const m=document.getElementById("menuHome");if(m)m.classList.remove("aktif");
+  const btn=document.getElementById("btnTambahAgenda");if(btn)btn.style.display=(roleUser==="admin"||roleUser==="guru")?"inline-block":"none";
+  const form=document.getElementById("formAgenda");if(form)form.style.display="none";
+  tampilkanAgendaAkademik();
+}
+window.editAgendaAkademik=async function(id){
+  if(roleUser!=="admin"&&roleUser!=="guru")return;
+  try{
+    const snap=await getDoc(doc(db,"agendaAkademik",id));
+    if(!snap.exists())return;
+    const a=snap.data();
+    document.getElementById("agendaId").value=id;
+    document.getElementById("agendaJudul").value=a.judul||"";
+    document.getElementById("agendaTanggal").value=a.tanggal||"";
+    document.getElementById("agendaJenis").value=a.jenis||"Agenda Sekolah";
+    document.getElementById("agendaTahun").value=a.tahunPelajaran||"2026/2027";
+    document.getElementById("agendaSemester").value=a.semester||"Ganjil";
+    document.getElementById("agendaDeskripsi").value=a.deskripsi||"";
+    document.getElementById("formAgenda").style.display="block";
+    document.getElementById("agendaJudul").focus();
+  }catch(error){pesanAgenda("Gagal membuka agenda: "+error.message,"error");}
+};
+window.hapusAgendaAkademik=async function(id){
+  if(roleUser!=="admin"&&roleUser!=="guru")return;
+  if(!confirm("Hapus agenda akademik ini?"))return;
+  try{
+    await deleteDoc(doc(db,"agendaAkademik",id));
+    await tampilkanAgendaAkademik();
+  }catch(error){pesanAgenda("Gagal menghapus agenda: "+error.message,"error");}
+};
+
+document.getElementById("btnHomeAgenda")?.addEventListener("click",bukaPanelAgenda);
+document.getElementById("btnKelolaAgendaHome")?.addEventListener("click",bukaPanelAgenda);
+document.getElementById("btnTambahAgenda")?.addEventListener("click",()=>{
+  if(roleUser!=="admin"&&roleUser!=="guru")return;
+  kosongkanFormAgenda();
+  document.getElementById("formAgenda").style.display="block";
+  document.getElementById("agendaTanggal").value=new Date().toISOString().slice(0,10);
+  document.getElementById("agendaJudul").focus();
+});
+document.getElementById("btnBatalAgenda")?.addEventListener("click",()=>{kosongkanFormAgenda();document.getElementById("formAgenda").style.display="none";});
+document.getElementById("btnSimpanAgenda")?.addEventListener("click",async()=>{
+  if(roleUser!=="admin"&&roleUser!=="guru")return;
+  const id=document.getElementById("agendaId").value.trim();
+  const judul=document.getElementById("agendaJudul").value.trim();
+  const tanggal=document.getElementById("agendaTanggal").value;
+  const jenis=document.getElementById("agendaJenis").value;
+  const tahunPelajaran=document.getElementById("agendaTahun").value.trim()||"2026/2027";
+  const semester=document.getElementById("agendaSemester").value;
+  const deskripsi=document.getElementById("agendaDeskripsi").value.trim();
+  if(!judul){pesanAgenda("Judul agenda wajib diisi.","error");return;}
+  if(!tanggal){pesanAgenda("Tanggal agenda wajib diisi.","error");return;}
+  try{
+    const payload={judul,tanggal,jenis,tahunPelajaran,semester,deskripsi,dibuatOlehUid:currentUser?.uid||"",dibuatOlehNama:profilUser?.nama||currentUser?.email||"Pengguna",diperbaruiPada:serverTimestamp()};
+    if(id) await updateDoc(doc(db,"agendaAkademik",id),payload);
+    else await addDoc(collection(db,"agendaAkademik"),{...payload,dibuatPada:serverTimestamp()});
+    pesanAgenda(id?"Agenda berhasil diperbarui.":"Agenda berhasil ditambahkan.","sukses");
+    kosongkanFormAgenda();
+    document.getElementById("formAgenda").style.display="none";
+    await tampilkanAgendaAkademik();
+  }catch(error){console.error(error);pesanAgenda("Gagal menyimpan agenda: "+error.message,"error");}
 });
 
 /* =========================
