@@ -925,6 +925,7 @@
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
         <button type="button" class="btn-primary" id="btnSimpanAkademik">💾 Simpan Pengaturan</button>
         <button type="button" class="btn-secondary" id="btnMuatAkademik">↻ Muat Ulang</button>
+        <button type="button" class="btn-secondary" id="btnTerapkanPeriode">🔗 Terapkan Periode ke Data Akademik</button>
       </div>
       <div id="pesanAkademik" class="pesan"></div>
     </div>
@@ -2088,6 +2089,29 @@ let dataJadwal = [];
 let dataNilai = [];
 let dataAbsensi = [];
 
+/* =========================
+   PERIODE AKADEMIK AKTIF
+   Tambahan ini hanya memberi metadata periode pada data baru/yang diedit.
+   Fitur CRUD lama tetap dipertahankan.
+========================= */
+let periodeAkademikAktif = { tahunPelajaran: "2026/2027", semester: "Ganjil" };
+function periodeAkademikSaatIni(){
+  return { ...periodeAkademikAktif };
+}
+function terapkanPeriodePadaData(data){
+  return { ...data, tahunPelajaran: periodeAkademikAktif.tahunPelajaran, semester: periodeAkademikAktif.semester };
+}
+function tampilkanPeriodeAkademikHome(){
+  const tahun = periodeAkademikAktif.tahunPelajaran || "2026/2027";
+  const sem = periodeAkademikAktif.semester || "Ganjil";
+  document.querySelectorAll('.academic-status .status-box strong').forEach((e,i)=>{
+    if(i===0)e.textContent=tahun;
+    if(i===1)e.textContent=sem;
+  });
+  const tag=document.querySelector('.dashboard-card .card-tag');
+  if(tag && tag.textContent.includes('/')) tag.textContent=tahun;
+}
+
 
 const formSiswa =
   document.getElementById("formSiswa");
@@ -2856,7 +2880,7 @@ document.getElementById("btnSimpanAbsensi").addEventListener("click", async () =
       const siswa = siswaKelas.find(s => s.id === select.dataset.siswaId);
       if (!siswa) continue;
       const existing = dataAbsensi.find(a => a.tanggal === tanggal && a.kelas === kelas && a.siswaId === siswa.id);
-      const data = { tanggal, kelas, siswaId: siswa.id, siswaNama: siswa.nama || "-", nis: siswa.nis || "-", status: select.value };
+      const data = terapkanPeriodePadaData({ tanggal, kelas, siswaId: siswa.id, siswaNama: siswa.nama || "-", nis: siswa.nis || "-", status: select.value });
       if (existing) await updateDoc(doc(db, "absensi", existing.id), data);
       else await addDoc(collection(db, "absensi"), data);
     }
@@ -2949,7 +2973,7 @@ document.getElementById("btnSimpanMapel").addEventListener("click", async () => 
   }
 
   try {
-    const data = { kode, nama, tingkat, guru: guru || "-", status };
+    const data = terapkanPeriodePadaData({ kode, nama, tingkat, guru: guru || "-", status });
     if (id) {
       await updateDoc(doc(db, "mataPelajaran", id), data);
       tampilkanPesanMapel("Mata pelajaran berhasil diperbarui.", "sukses");
@@ -3126,7 +3150,7 @@ document.getElementById("btnSimpanJadwal").addEventListener("click", async () =>
   }
 
   try {
-    const data = { hari, kelas, mapel, guru, jamMulai, jamSelesai, status };
+    const data = terapkanPeriodePadaData({ hari, kelas, mapel, guru, jamMulai, jamSelesai, status });
     if (id) {
       await updateDoc(doc(db, "jadwal", id), data);
       tampilkanPesanJadwal("Jadwal berhasil diperbarui.", "sukses");
@@ -3282,13 +3306,13 @@ document
 
     try {
 
-      const data = {
+      const data = terapkanPeriodePadaData({
         nama,
         tingkat,
         jurusan,
         waliKelas,
         status
-      };
+      });
 
       if (id) {
 
@@ -3727,7 +3751,7 @@ document
     try {
 
 
-      const data = {
+      const data = terapkanPeriodePadaData({
 
         nama,
         nis,
@@ -3736,7 +3760,7 @@ document
         kelas,
         status
 
-      };
+      });
 
 
       if (id) {
@@ -4322,7 +4346,7 @@ document
       try {
 
 
-        const data = {
+        const data = terapkanPeriodePadaData({
 
           nama,
           nip: nip || "-",
@@ -4330,7 +4354,7 @@ document
           mapel,
           status
 
-        };
+        });
 
 
         if (id) {
@@ -4919,7 +4943,7 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
 
   const nilaiAkhir = Number((tugas * 0.3 + uts * 0.3 + uas * 0.4).toFixed(2));
   const statusBaru = roleUser === "admin" ? "disetujui" : "menunggu_persetujuan";
-  const data = {
+  const data = terapkanPeriodePadaData({
     siswaId, siswaNama: siswaData.nama || "-", nis: siswaData.nis || "-",
     kelas, mapel, guru, semester, tugas, uts, uas, nilaiAkhir,
     status: statusBaru,
@@ -4927,7 +4951,7 @@ document.getElementById("btnSimpanNilai").addEventListener("click", async () => 
     submittedByNama: profilUser?.nama || currentUser?.email || "-",
     submittedAt: serverTimestamp(),
     rejectionReason: roleUser === "guru" ? "" : ""
-  };
+  });
 
   try {
     if (id) {
@@ -5214,7 +5238,7 @@ function pesanPengumuman(teks,tipe){const e=document.getElementById("pesanPengum
 function kosongkanPengumuman(){document.getElementById("idPengumuman").value="";document.getElementById("judulPengumuman").value="";document.getElementById("isiPengumuman").value="";document.getElementById("tanggalPengumuman").value=tanggalHariIni();document.getElementById("statusPengumuman").value="Aktif";}
 document.getElementById("btnTambahPengumuman").addEventListener("click",()=>{kosongkanPengumuman();document.getElementById("judulFormPengumuman").textContent="Tambah Pengumuman";document.getElementById("formPengumuman").style.display="block";});
 document.getElementById("btnBatalPengumuman").addEventListener("click",()=>{document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();});
-document.getElementById("btnSimpanPengumuman").addEventListener("click",async()=>{if(roleUser === "siswa"){pesanPengumuman("Akun siswa hanya dapat melihat pengumuman.","error");return;}const id=document.getElementById("idPengumuman").value,judul=document.getElementById("judulPengumuman").value.trim(),isi=document.getElementById("isiPengumuman").value.trim(),tanggal=document.getElementById("tanggalPengumuman").value,status=document.getElementById("statusPengumuman").value;if(!judul||!isi||!tanggal){pesanPengumuman("Judul, isi, dan tanggal wajib diisi.","error");return;}try{const data={judul,isi,tanggal,status};if(id){await updateDoc(doc(db,"pengumuman",id),data);pesanPengumuman("Pengumuman berhasil diperbarui.","sukses");}else{await addDoc(collection(db,"pengumuman"),data);pesanPengumuman("Pengumuman berhasil ditambahkan.","sukses");}document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menyimpan pengumuman: "+error.message,"error");}});
+document.getElementById("btnSimpanPengumuman").addEventListener("click",async()=>{if(roleUser === "siswa"){pesanPengumuman("Akun siswa hanya dapat melihat pengumuman.","error");return;}const id=document.getElementById("idPengumuman").value,judul=document.getElementById("judulPengumuman").value.trim(),isi=document.getElementById("isiPengumuman").value.trim(),tanggal=document.getElementById("tanggalPengumuman").value,status=document.getElementById("statusPengumuman").value;if(!judul||!isi||!tanggal){pesanPengumuman("Judul, isi, dan tanggal wajib diisi.","error");return;}try{const data=terapkanPeriodePadaData({judul,isi,tanggal,status});if(id){await updateDoc(doc(db,"pengumuman",id),data);pesanPengumuman("Pengumuman berhasil diperbarui.","sukses");}else{await addDoc(collection(db,"pengumuman"),data);pesanPengumuman("Pengumuman berhasil ditambahkan.","sukses");}document.getElementById("formPengumuman").style.display="none";kosongkanPengumuman();await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menyimpan pengumuman: "+error.message,"error");}});
 async function tampilkanPengumuman(){const t=document.getElementById("tabelPengumuman");t.innerHTML='<tr><td colspan="6" style="text-align:center">Memuat data...</td></tr>';try{const snap=await getDocs(collection(db,"pengumuman"));dataPengumuman=[];snap.forEach(d=>dataPengumuman.push({id:d.id,...d.data()}));if(roleUser === "siswa") dataPengumuman=dataPengumuman.filter(p=>(p.status||"Aktif")==="Aktif");dataPengumuman.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));if(!dataPengumuman.length){t.innerHTML='<tr><td colspan="6" style="text-align:center">Belum ada pengumuman.</td></tr>';return;}t.innerHTML="";dataPengumuman.forEach((p,i)=>{const tr=document.createElement("tr");const isi=String(p.isi||"").replace(/</g,"&lt;").replace(/>/g,"&gt;");tr.innerHTML=`<td>${i+1}</td><td>${p.tanggal||"-"}</td><td>${p.judul||"-"}</td><td style="white-space:pre-wrap;max-width:420px">${isi}</td><td>${p.status||"Aktif"}</td><td>${roleUser === "siswa" ? "<span style='color:#198754;font-weight:bold;'>Hanya Lihat</span>" : `<div class="aksi"><button class="btn-warning" onclick="editPengumuman('${p.id}')">Edit</button><button class="btn-danger" onclick="hapusPengumuman('${p.id}')">Hapus</button></div>`}</td>`;t.appendChild(tr);});}catch(error){console.error(error);t.innerHTML=`<tr><td colspan="6" style="color:red;text-align:center">Gagal mengambil data: ${error.message}</td></tr>`;}}
 window.editPengumuman=function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;document.getElementById("idPengumuman").value=p.id;document.getElementById("judulPengumuman").value=p.judul||"";document.getElementById("isiPengumuman").value=p.isi||"";document.getElementById("tanggalPengumuman").value=p.tanggal||tanggalHariIni();document.getElementById("statusPengumuman").value=p.status||"Aktif";document.getElementById("judulFormPengumuman").textContent="Edit Pengumuman";document.getElementById("formPengumuman").style.display="block";window.scrollTo({top:0,behavior:"smooth"});};
 window.hapusPengumuman=async function(id){const p=dataPengumuman.find(x=>x.id===id);if(!p)return;if(!confirm(`Hapus pengumuman "${p.judul||""}"?`))return;try{await deleteDoc(doc(db,"pengumuman",id));pesanPengumuman("Pengumuman berhasil dihapus.","sukses");await tampilkanPengumuman();}catch(error){console.error(error);pesanPengumuman("Gagal menghapus pengumuman: "+error.message,"error");}};
@@ -5556,7 +5580,7 @@ document.getElementById("btnSimpanAgenda")?.addEventListener("click",async()=>{
   try{
     const payload={judul,tanggal,jenis,tahunPelajaran,semester,deskripsi,dibuatOlehUid:currentUser?.uid||"",dibuatOlehNama:profilUser?.nama||currentUser?.email||"Pengguna",diperbaruiPada:serverTimestamp()};
     if(id) await updateDoc(doc(db,"agendaAkademik",id),payload);
-    else await addDoc(collection(db,"agendaAkademik"),{...payload,dibuatPada:serverTimestamp()});
+    else await addDoc(collection(db,"agendaAkademik"),{...terapkanPeriodePadaData(payload),dibuatPada:serverTimestamp()});
     pesanAgenda(id?"Agenda berhasil diperbarui.":"Agenda berhasil ditambahkan.","sukses");
     kosongkanFormAgenda();
     document.getElementById("formAgenda").style.display="none";
@@ -5579,10 +5603,28 @@ async function simpanPengaturanAkademik(){
   catch(e){pesanTambahanAkademik("Gagal menyimpan: "+e.message,"error");}
 }
 function pesanTambahanAkademik(msg,tipe="sukses"){const e=document.getElementById("pesanAkademik");if(e){e.textContent=msg;e.className="pesan "+tipe;}}
-async function muatPengaturanAkademik(){try{const s=await getDoc(doc(db,"pengaturanSekolah","akademik"));const d=s.exists()?s.data():{};document.getElementById("akademikTahunAktif").value=d.tahunPelajaran||"2026/2027";document.getElementById("akademikSemesterAktif").value=d.semester||"Ganjil";document.getElementById("akademikKepalaSekolah").value=d.kepalaSekolah||"";document.getElementById("akademikNipKepala").value=d.nipKepalaSekolah||"";document.getElementById("akademikKeterangan").value=d.keterangan||"";}catch(e){console.warn(e);}}
+async function muatPengaturanAkademik(){try{const s=await getDoc(doc(db,"pengaturanSekolah","akademik"));const d=s.exists()?s.data():{};document.getElementById("akademikTahunAktif").value=d.tahunPelajaran||"2026/2027";document.getElementById("akademikSemesterAktif").value=d.semester||"Ganjil";document.getElementById("akademikKepalaSekolah").value=d.kepalaSekolah||"";document.getElementById("akademikNipKepala").value=d.nipKepalaSekolah||"";document.getElementById("akademikKeterangan").value=d.keterangan||"";periodeAkademikAktif={tahunPelajaran:d.tahunPelajaran||"2026/2027",semester:d.semester||"Ganjil"};tampilkanPeriodeAkademikHome();}catch(e){console.warn(e);}}
 async function tampilkanJurusan(){const tb=document.getElementById("tabelJurusan");if(!tb)return;try{let rows=await bacaKoleksiAkademik("jurusan");if(!rows.length){for(const nama of ["TKJ","AKL","TBSM","Pemasaran"]){await setDoc(doc(collection(db,"jurusan")),{nama,aktif:true,dibuatPada:serverTimestamp()});}rows=await bacaKoleksiAkademik("jurusan");}rows.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||"")));tb.innerHTML=rows.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama)}</td><td><button type="button" class="btn-danger btn-hapus-jurusan" data-id="${escapeHtmlAkademik(d.id)}">Hapus</button></td></tr>`).join("");}catch(e){tb.innerHTML=`<tr><td colspan="3">Gagal memuat: ${escapeHtmlAkademik(e.message)}</td></tr>`;}}
 async function tambahJurusan(){if(roleUser!=="admin")return;const input=document.getElementById("jurusanNamaBaru"),nama=input.value.trim();if(!nama)return;const ada=await getDocs(query(collection(db,"jurusan"),where("nama","==",nama)));if(!ada.empty){alert("Jurusan sudah ada.");return;}await addDoc(collection(db,"jurusan"),{nama,aktif:true,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||""});input.value="";await tampilkanJurusan();}
 async function hapusJurusan(id){if(roleUser!=="admin")return;if(!confirm("Hapus jurusan ini? Data siswa yang sudah ada tidak ikut dihapus."))return;await deleteDoc(doc(db,"jurusan",id));await tampilkanJurusan();}
+async function terapkanPeriodeKeDataAkademik(){
+  if(roleUser!=="admin"){alert("Hanya Admin yang dapat menerapkan periode akademik.");return;}
+  const p=periodeAkademikSaatIni();
+  if(!confirm(`Terapkan Tahun Pelajaran ${p.tahunPelajaran} / Semester ${p.semester} ke data akademik yang sudah ada?`))return;
+  const koleksi=["siswa","guru","kelas","mataPelajaran","jadwal","nilai","absensi","pengumuman","agendaAkademik"];
+  let jumlah=0;
+  try{
+    for(const nama of koleksi){
+      const snap=await getDocs(collection(db,nama));
+      for(const d of snap.docs){
+        await updateDoc(doc(db,nama,d.id),{tahunPelajaran:p.tahunPelajaran,semester:p.semester});
+        jumlah++;
+      }
+    }
+    alert(`Periode berhasil diterapkan ke ${jumlah} dokumen.`);
+  }catch(e){alert("Gagal menerapkan periode: "+e.message);}
+}
+
 async function bukaPanelAkademik(){if(!["admin","guru"].includes(roleUser))return;sembunyikanSemuaPanel();document.getElementById("panelAkademik").style.display="block";document.getElementById("menuAkademik").classList.add("aktif");document.getElementById("btnSimpanAkademik").style.display=roleUser==="admin"?"":"none";document.getElementById("btnTambahJurusan").style.display=roleUser==="admin"?"":"none";await muatPengaturanAkademik();await tampilkanJurusan();}
 async function muatLaporan(){try{const [s,g,k,m,n,a]=await Promise.all([bacaKoleksiAkademik("siswa"),bacaKoleksiAkademik("guru"),bacaKoleksiAkademik("kelas"),bacaKoleksiAkademik("mataPelajaran"),bacaKoleksiAkademik("nilai"),bacaKoleksiAkademik("absensi")]);document.getElementById("lapTotalSiswa").textContent=s.length;document.getElementById("lapTotalGuru").textContent=g.length;document.getElementById("lapTotalKelas").textContent=k.length;document.getElementById("lapTotalMapel").textContent=m.length;const aktif=s.filter(x=>String(x.status||"Aktif").toLowerCase()==="aktif").length;const hadir=a.filter(x=>["Hadir","hadir"].includes(x.status)).length;document.getElementById("laporanDetail").innerHTML=`<div class="table-wrapper"><table><thead><tr><th>Indikator</th><th>Jumlah</th></tr></thead><tbody><tr><td>Siswa aktif</td><td>${aktif}</td></tr><tr><td>Total data nilai</td><td>${n.length}</td></tr><tr><td>Total data absensi</td><td>${a.length}</td></tr><tr><td>Absensi hadir</td><td>${hadir}</td></tr></tbody></table></div>`;}catch(e){document.getElementById("laporanDetail").innerHTML=`Gagal memuat laporan: ${escapeHtmlAkademik(e.message)}`;}}
 function csvValue(v){v=timestampBackupAkademik(v);return `"${String(v??"").replace(/"/g,'""')}"`;}
@@ -5599,6 +5641,7 @@ document.getElementById("menuLaporan")?.addEventListener("click",bukaPanelLapora
 document.getElementById("menuBackup")?.addEventListener("click",bukaPanelBackup);
 document.getElementById("btnSimpanAkademik")?.addEventListener("click",simpanPengaturanAkademik);
 document.getElementById("btnMuatAkademik")?.addEventListener("click",muatPengaturanAkademik);
+document.getElementById("btnTerapkanPeriode")?.addEventListener("click",terapkanPeriodeKeDataAkademik);
 document.getElementById("btnTambahJurusan")?.addEventListener("click",tambahJurusan);
 document.getElementById("tabelJurusan")?.addEventListener("click",e=>{const b=e.target.closest(".btn-hapus-jurusan");if(b)hapusJurusan(b.dataset.id);});
 document.getElementById("btnRefreshLaporan")?.addEventListener("click",muatLaporan);
