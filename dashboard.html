@@ -939,7 +939,7 @@
     </div>
     <div class="akun-box" style="margin-top:15px;">
       <h3 style="margin-top:0;">🏫 Identitas Sekolah</h3>
-      <p style="color:#6f7f89;font-size:13px;margin-bottom:0;">Data identitas dapat disimpan di koleksi <b>pengaturanSekolah</b> dan digunakan sebagai dasar laporan/cetakan berikutnya.</p>
+      <p style="color:#6f7f89;font-size:13px;margin-bottom:0;">Data identitas dapat disimpan di koleksi <b>pengaturanAkademik</b> dan digunakan sebagai dasar laporan/cetakan berikutnya.</p>
     </div>
   </div>
 
@@ -5592,18 +5592,18 @@ document.getElementById("btnSimpanAgenda")?.addEventListener("click",async()=>{
    FITUR AKADEMIK TAMBAHAN
    Menambah modul tanpa mengubah CRUD lama.
 ========================= */
-const koleksiBackupEakademik=["users","siswa","guru","kelas","mataPelajaran","jadwal","nilai","absensi","pengumuman","agendaAkademik","profilFoto","tahunPelajaran","jurusan","pengaturanSekolah"];
+const koleksiBackupEakademik=["users","siswa","guru","kelas","mataPelajaran","jadwal","nilai","absensi","pengumuman","agendaAkademik","profilFoto","tahunPelajaran","jurusan","pengaturanAkademik"];
 function escapeHtmlAkademik(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
 function timestampBackupAkademik(v){if(v&&typeof v.toDate==="function")return v.toDate().toISOString();return v;}
 async function bacaKoleksiAkademik(nama){const snap=await getDocs(collection(db,nama));return snap.docs.map(d=>({id:d.id,...d.data()}));}
 async function simpanPengaturanAkademik(){
   if(roleUser!=="admin"){return;}
   const payload={tahunPelajaran:document.getElementById("akademikTahunAktif").value.trim()||"2026/2027",semester:document.getElementById("akademikSemesterAktif").value,kepalaSekolah:document.getElementById("akademikKepalaSekolah").value.trim(),nipKepalaSekolah:document.getElementById("akademikNipKepala").value.trim(),keterangan:document.getElementById("akademikKeterangan").value.trim(),diperbaruiPada:serverTimestamp(),diperbaruiOlehUid:currentUser?.uid||""};
-  try{await setDoc(doc(db,"pengaturanSekolah","akademik"),payload,{merge:true}); pesanTambahanAkademik("Pengaturan akademik berhasil disimpan.","sukses"); await muatPengaturanAkademik();}
+  try{await setDoc(doc(db,"pengaturanAkademik","utama"),payload,{merge:true}); pesanTambahanAkademik("Pengaturan akademik berhasil disimpan.","sukses"); await muatPengaturanAkademik();}
   catch(e){pesanTambahanAkademik("Gagal menyimpan: "+e.message,"error");}
 }
 function pesanTambahanAkademik(msg,tipe="sukses"){const e=document.getElementById("pesanAkademik");if(e){e.textContent=msg;e.className="pesan "+tipe;}}
-async function muatPengaturanAkademik(){try{const s=await getDoc(doc(db,"pengaturanSekolah","akademik"));const d=s.exists()?s.data():{};document.getElementById("akademikTahunAktif").value=d.tahunPelajaran||"2026/2027";document.getElementById("akademikSemesterAktif").value=d.semester||"Ganjil";document.getElementById("akademikKepalaSekolah").value=d.kepalaSekolah||"";document.getElementById("akademikNipKepala").value=d.nipKepalaSekolah||"";document.getElementById("akademikKeterangan").value=d.keterangan||"";periodeAkademikAktif={tahunPelajaran:d.tahunPelajaran||"2026/2027",semester:d.semester||"Ganjil"};tampilkanPeriodeAkademikHome();}catch(e){console.warn(e);}}
+async function muatPengaturanAkademik(){try{const s=await getDoc(doc(db,"pengaturanAkademik","utama"));const d=s.exists()?s.data():{};document.getElementById("akademikTahunAktif").value=d.tahunPelajaran||"2026/2027";document.getElementById("akademikSemesterAktif").value=d.semester||"Ganjil";document.getElementById("akademikKepalaSekolah").value=d.kepalaSekolah||"";document.getElementById("akademikNipKepala").value=d.nipKepalaSekolah||"";document.getElementById("akademikKeterangan").value=d.keterangan||"";periodeAkademikAktif={tahunPelajaran:d.tahunPelajaran||"2026/2027",semester:d.semester||"Ganjil"};tampilkanPeriodeAkademikHome();}catch(e){console.warn(e);}}
 async function tampilkanJurusan(){const tb=document.getElementById("tabelJurusan");if(!tb)return;try{let rows=await bacaKoleksiAkademik("jurusan");if(!rows.length){for(const nama of ["TKJ","AKL","TBSM","Pemasaran"]){await setDoc(doc(collection(db,"jurusan")),{nama,aktif:true,dibuatPada:serverTimestamp()});}rows=await bacaKoleksiAkademik("jurusan");}rows.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||"")));tb.innerHTML=rows.map((d,i)=>`<tr><td>${i+1}</td><td>${escapeHtmlAkademik(d.nama)}</td><td><button type="button" class="btn-danger btn-hapus-jurusan" data-id="${escapeHtmlAkademik(d.id)}">Hapus</button></td></tr>`).join("");}catch(e){tb.innerHTML=`<tr><td colspan="3">Gagal memuat: ${escapeHtmlAkademik(e.message)}</td></tr>`;}}
 async function tambahJurusan(){if(roleUser!=="admin")return;const input=document.getElementById("jurusanNamaBaru"),nama=input.value.trim();if(!nama)return;const ada=await getDocs(query(collection(db,"jurusan"),where("nama","==",nama)));if(!ada.empty){alert("Jurusan sudah ada.");return;}await addDoc(collection(db,"jurusan"),{nama,aktif:true,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||""});input.value="";await tampilkanJurusan();}
 async function hapusJurusan(id){if(roleUser!=="admin")return;if(!confirm("Hapus jurusan ini? Data siswa yang sudah ada tidak ikut dihapus."))return;await deleteDoc(doc(db,"jurusan",id));await tampilkanJurusan();}
