@@ -970,6 +970,23 @@
 
     <div id="pesanSiswa" class="pesan"></div>
 
+    <div id="filterSiswaArea" style="margin:15px 0 18px;padding:12px 14px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;">
+        <div style="min-width:180px;flex:1;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;">Jurusan</label>
+          <select id="filterJurusanSiswa" style="width:100%;padding:9px;border:1px solid #ced4da;border-radius:6px;background:#fff;">
+            <option value="SEMUA">Semua Jurusan</option><option value="TKJ">TKJ</option><option value="AKL">AKL</option><option value="TBSM">TBSM</option><option value="Pemasaran">Pemasaran</option>
+          </select>
+        </div>
+        <div style="min-width:180px;flex:1;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;">Kelas</label>
+          <select id="filterKelasSiswa" style="width:100%;padding:9px;border:1px solid #ced4da;border-radius:6px;background:#fff;"><option value="SEMUA">Semua Kelas</option></select>
+        </div>
+        <div style="padding-bottom:1px;"><button type="button" class="btn-secondary" id="btnResetFilterSiswa">Tampilkan Semua</button></div>
+      </div>
+      <div id="infoFilterSiswa" style="margin-top:9px;color:#6b7280;font-size:12px;">Menampilkan semua siswa.</div>
+    </div>
+
     <div id="formSiswa">
 
       <h3 id="judulForm">Tambah Siswa</h3>
@@ -1562,12 +1579,12 @@
 
         <div class="field">
 
-          <label>Kelas Wali (opsional)</label>
+          <label>Mata Pelajaran</label>
 
           <input
             type="text"
-            id="kelasWaliGuru"
-            placeholder="Isi jika guru menjadi wali kelas">
+            id="mapelGuru"
+            placeholder="Mata pelajaran yang diampu">
 
         </div>
 
@@ -1635,7 +1652,7 @@
 
             <th>NUPTK</th>
 
-            <th>Keterangan</th>
+            <th>Mata Pelajaran</th>
 
             <th>Status</th>
 
@@ -2028,59 +2045,6 @@ let profilUser = null;
 let roleUser = "";
 let currentUser = null;
 
-async function hubungkanAkunGuruKeDataManual(user) {
-  // Menghubungkan akun Guru yang dibuat mandiri dengan data Guru
-  // yang sudah ditambahkan Admin. Pencocokan utama berdasarkan nama.
-  if (roleUser !== "guru") return true;
-
-  const guruIdSaatIni = String(profilUser?.guruId || profilUser?.guruID || "").trim();
-  if (guruIdSaatIni) {
-    try {
-      const snap = await getDoc(doc(db, "guru", guruIdSaatIni));
-      if (snap.exists()) return true;
-    } catch (e) {
-      console.warn("Pengecekan data guru terhubung gagal:", e);
-    }
-  }
-
-  const namaAkun = String(profilUser?.nama || "").trim().toLowerCase().replace(/\s+/g, " ");
-  if (!namaAkun) return false;
-
-  try {
-    const snap = await getDocs(collection(db, "guru"));
-    const cocok = [];
-
-    snap.forEach((d) => {
-      const data = d.data() || {};
-      const namaData = String(data.nama || "").trim().toLowerCase().replace(/\s+/g, " ");
-      if (namaData && namaData === namaAkun) {
-        cocok.push({ id: d.id, data });
-      }
-    });
-
-    if (cocok.length === 0) {
-      console.warn("Data guru dengan nama " + profilUser.nama + " belum ditambahkan Admin.");
-      return false;
-    }
-
-    if (cocok.length > 1) {
-      console.warn("Ditemukan lebih dari satu data guru dengan nama " + profilUser.nama + ". Akun tidak dihubungkan otomatis untuk mencegah salah data.");
-      return false;
-    }
-
-    await updateDoc(doc(db, "users", user.uid), {
-      guruId: cocok[0].id
-    });
-
-    profilUser.guruId = cocok[0].id;
-    console.log("Akun guru berhasil dihubungkan ke data guru:", cocok[0].id);
-    return true;
-  } catch (e) {
-    console.error("Gagal menghubungkan akun guru dengan data manual:", e);
-    return false;
-  }
-}
-
 async function muatProfilPengguna(user) {
   try {
     const snapProfil = await getDoc(doc(db, "users", user.uid));
@@ -2105,15 +2069,6 @@ async function muatProfilPengguna(user) {
     // Normalisasi ID siswa agar tetap terbaca bila nama field berbeda/berisi spasi.
     const siswaIdRaw = profilUser.siswaId ?? profilUser.siswaID ?? profilUser.studentId ?? profilUser.idSiswa ?? "";
     profilUser.siswaId = typeof siswaIdRaw === "string" ? siswaIdRaw.trim() : siswaIdRaw;
-
-    const guruIdRaw = profilUser.guruId ?? profilUser.guruID ?? "";
-    profilUser.guruId = typeof guruIdRaw === "string" ? guruIdRaw.trim() : guruIdRaw;
-
-    // Jika akun Guru dibuat mandiri, coba hubungkan otomatis ke data Guru
-    // yang sudah dibuat Admin. Jika belum ada data manual, akun tetap dapat login.
-    if (roleUser === "guru" && !profilUser.guruId) {
-      await hubungkanAkunGuruKeDataManual(user);
-    }
 
     if (roleUser === "siswa" && !profilUser.siswaId) {
       document.getElementById("emailAdmin").textContent = "Login sebagai: " + (profilUser.nama || user.email || "Siswa") + " (" + (user.email || "") + ")";
@@ -3775,185 +3730,62 @@ document
    TAMPILKAN SISWA
 ========================= */
 
-async function tampilkanSiswa() {
-
-  await muatDataProfilFoto();
-
-  const tabel =
-    document.getElementById("tabelSiswa");
-
-
-  try {
-
-
-    tabel.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="9"
-          style="text-align:center;">
-
-          Memuat data...
-
-        </td>
-
-      </tr>
-
-    `;
-
-
-    const snapshot =
-      await getDocs(
-        collection(db, "siswa")
-      );
-
-
-    dataSiswa = [];
-
-
-    snapshot.forEach((dokumen) => {
-
-      dataSiswa.push({
-
-        id: dokumen.id,
-
-        ...dokumen.data()
-
-      });
-
-    });
-
-
-    if (
-      dataSiswa.length === 0
-    ) {
-
-      tabel.innerHTML = `
-
-        <tr>
-
-          <td
-            colspan="9"
-            style="text-align:center;">
-
-            Belum ada data siswa.
-
-          </td>
-
-        </tr>
-
-      `;
-
-      return;
-
-    }
-
-
-    tabel.innerHTML = "";
-
-
-    dataSiswa.forEach(
-      (siswa, index) => {
-
-
-        const baris =
-          document.createElement("tr");
-
-
-        baris.innerHTML = `
-
-          <td>
-            ${index + 1}
-          </td>
-
-          <td style="text-align:center;">
-            ${fotoHtml(cariFotoProfil(siswa),siswa.nama)}
-          </td>
-
-          <td>
-            ${siswa.nama || "-"}
-          </td>
-
-          <td>
-            ${siswa.nis || "-"}
-          </td>
-
-          <td>
-            ${siswa.tingkat || "-"}
-          </td>
-
-          <td>
-            ${siswa.jurusan || "-"}
-          </td>
-
-          <td>
-            ${siswa.kelas || "-"}
-          </td>
-
-          <td>
-            ${siswa.status || "-"}
-          </td>
-
-          <td>
-
-            <div class="aksi">
-
-              <button
-                class="btn-warning"
-                onclick="editSiswa('${siswa.id}')">
-
-                Edit
-
-              </button>
-
-
-              <button
-                class="btn-danger"
-                onclick="hapusSiswa('${siswa.id}')">
-
-                Hapus
-
-              </button>
-
-            </div>
-
-          </td>
-
-        `;
-
-
-        tabel.appendChild(baris);
-
-      }
-    );
-
-
-  } catch (error) {
-
-    console.error(error);
-
-
-    tabel.innerHTML = `
-
-      <tr>
-
-        <td
-          colspan="8"
-          style="color:red;text-align:center;">
-
-          Gagal mengambil data:
-          ${error.message}
-
-        </td>
-
-      </tr>
-
-    `;
-
-  }
-
+let filterJurusanSiswaAktif = "SEMUA";
+let filterKelasSiswaAktif = "SEMUA";
+
+function isiFilterKelasSiswa() {
+  const select = document.getElementById("filterKelasSiswa");
+  if (!select) return;
+  const kelasSet = new Set();
+  dataSiswa.forEach((siswa) => {
+    const jurusan = String(siswa.jurusan || "").trim();
+    const kelas = String(siswa.kelas || "").trim();
+    if (kelas && (filterJurusanSiswaAktif === "SEMUA" || jurusan.toLowerCase() === filterJurusanSiswaAktif.toLowerCase())) kelasSet.add(kelas);
+  });
+  const kelasList = Array.from(kelasSet).sort((a,b) => a.localeCompare(b,"id",{numeric:true}));
+  if (filterKelasSiswaAktif !== "SEMUA" && !kelasSet.has(filterKelasSiswaAktif)) filterKelasSiswaAktif = "SEMUA";
+  select.innerHTML = '<option value="SEMUA">Semua Kelas</option>';
+  kelasList.forEach((kelas) => { const o=document.createElement("option"); o.value=kelas; o.textContent=kelas; select.appendChild(o); });
+  select.value = filterKelasSiswaAktif;
 }
+
+function tampilkanSiswaTerfilter() {
+  const tabel=document.getElementById("tabelSiswa"); if(!tabel) return;
+  isiFilterKelasSiswa();
+  const daftar=dataSiswa.filter((siswa)=>{
+    const jurusan=String(siswa.jurusan||"").trim(); const kelas=String(siswa.kelas||"").trim();
+    return (filterJurusanSiswaAktif==="SEMUA" || jurusan.toLowerCase()===filterJurusanSiswaAktif.toLowerCase()) &&
+           (filterKelasSiswaAktif==="SEMUA" || kelas.toLowerCase()===filterKelasSiswaAktif.toLowerCase());
+  });
+  const info=document.getElementById("infoFilterSiswa");
+  if(info){
+    if(filterJurusanSiswaAktif==="SEMUA") info.textContent=`Menampilkan semua siswa (${daftar.length} data).`;
+    else if(filterKelasSiswaAktif==="SEMUA") info.textContent=`Jurusan ${filterJurusanSiswaAktif} — semua kelas (${daftar.length} data).`;
+    else info.textContent=`Kelas ${filterKelasSiswaAktif} — jurusan ${filterJurusanSiswaAktif} (${daftar.length} data).`;
+  }
+  if(!daftar.length){tabel.innerHTML='<tr><td colspan="9" style="text-align:center;">Belum ada data siswa untuk pilihan jurusan dan kelas ini.</td></tr>';return;}
+  tabel.innerHTML="";
+  daftar.forEach((siswa,index)=>{const baris=document.createElement("tr");baris.innerHTML=`<td>${index+1}</td><td style="text-align:center;">${fotoHtml(cariFotoProfil(siswa),siswa.nama)}</td><td>${siswa.nama||"-"}</td><td>${siswa.nis||"-"}</td><td>${siswa.tingkat||"-"}</td><td>${siswa.jurusan||"-"}</td><td>${siswa.kelas||"-"}</td><td>${siswa.status||"-"}</td><td><div class="aksi"><button class="btn-warning" onclick="editSiswa('${siswa.id}')">Edit</button><button class="btn-danger" onclick="hapusSiswa('${siswa.id}')">Hapus</button></div></td>`;tabel.appendChild(baris);});
+}
+
+async function tampilkanSiswa() {
+  await muatDataProfilFoto();
+  const tabel=document.getElementById("tabelSiswa"); if(!tabel) return;
+  try{
+    tabel.innerHTML='<tr><td colspan="9" style="text-align:center;">Memuat data...</td></tr>';
+    const snapshot=await getDocs(collection(db,"siswa")); dataSiswa=[];
+    snapshot.forEach((dokumen)=>dataSiswa.push({id:dokumen.id,...dokumen.data()}));
+    if(!dataSiswa.length){tabel.innerHTML='<tr><td colspan="9" style="text-align:center;">Belum ada data siswa.</td></tr>';isiFilterKelasSiswa();return;}
+    tampilkanSiswaTerfilter();
+  }catch(error){console.error(error);tabel.innerHTML=`<tr><td colspan="9" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;}
+}
+
+const filterJurusanEl=document.getElementById("filterJurusanSiswa");
+const filterKelasEl=document.getElementById("filterKelasSiswa");
+const btnResetFilterEl=document.getElementById("btnResetFilterSiswa");
+if(filterJurusanEl) filterJurusanEl.addEventListener("change",()=>{filterJurusanSiswaAktif=filterJurusanEl.value||"SEMUA";filterKelasSiswaAktif="SEMUA";tampilkanSiswaTerfilter();});
+if(filterKelasEl) filterKelasEl.addEventListener("change",()=>{filterKelasSiswaAktif=filterKelasEl.value||"SEMUA";tampilkanSiswaTerfilter();});
+if(btnResetFilterEl) btnResetFilterEl.addEventListener("click",()=>{filterJurusanSiswaAktif="SEMUA";filterKelasSiswaAktif="SEMUA";if(filterJurusanEl)filterJurusanEl.value="SEMUA";tampilkanSiswaTerfilter();});
 
 
 /* =========================
@@ -4239,65 +4071,131 @@ document
     "click",
     async () => {
 
-      const id = document.getElementById("idGuru").value;
-      const nama = document.getElementById("namaGuru").value.trim();
-      const nip = document.getElementById("nipGuru").value.trim();
-      const nuptk = document.getElementById("nuptkGuru").value.trim();
-      const kelasWali = document.getElementById("kelasWaliGuru").value.trim();
-      const status = document.getElementById("statusGuru").value;
 
-      if (!nama) {
-        tampilkanPesanGuru("Nama guru wajib diisi.", "error");
+      const id =
+        document
+          .getElementById("idGuru")
+          .value;
+
+
+      const nama =
+        document
+          .getElementById("namaGuru")
+          .value
+          .trim();
+
+
+      const nip =
+        document
+          .getElementById("nipGuru")
+          .value
+          .trim();
+
+
+      const nuptk =
+        document
+          .getElementById("nuptkGuru")
+          .value
+          .trim();
+
+
+      const mapel =
+        document
+          .getElementById("mapelGuru")
+          .value
+          .trim();
+
+
+      const status =
+        document
+          .getElementById("statusGuru")
+          .value;
+
+
+      if (
+        !nama ||
+        !mapel
+      ) {
+
+        tampilkanPesanGuru(
+          "Nama guru dan mata pelajaran wajib diisi.",
+          "error"
+        );
+
         return;
+
       }
 
+
       try {
-        const namaKey = nama.toLowerCase().replace(/\s+/g, " ");
-        let idSimpan = id;
 
-        // Satu nama guru = satu data guru. Saat menambah, cari nama yang sama
-        // agar tidak membuat data guru kedua.
-        if (!id) {
-          const snapshotGuru = await getDocs(collection(db, "guru"));
-          const cocok = [];
-          snapshotGuru.forEach((dokumen) => {
-            const dataLama = dokumen.data() || {};
-            const namaLama = String(dataLama.nama || "").trim().toLowerCase().replace(/\s+/g, " ");
-            if (namaLama === namaKey) cocok.push({ id: dokumen.id, data: dataLama });
-          });
-
-          if (cocok.length > 1) {
-            tampilkanPesanGuru("Sudah ada lebih dari satu data dengan nama guru tersebut. Rapikan data duplikat terlebih dahulu.", "error");
-            return;
-          }
-          if (cocok.length === 1) idSimpan = cocok[0].id;
-        }
 
         const data = {
+
           nama,
           nip: nip || "-",
           nuptk: nuptk || "-",
-          kelasWali: kelasWali || "",
-          status,
-          namaKey
+          mapel,
+          status
+
         };
 
-        if (idSimpan) {
-          await updateDoc(doc(db, "guru", idSimpan), data);
-          tampilkanPesanGuru("Data guru berhasil diperbarui. Guru dengan banyak mata pelajaran tetap tercatat satu nama.", "sukses");
+
+        if (id) {
+
+
+          await updateDoc(
+            doc(db, "guru", id),
+            data
+          );
+
+
+          tampilkanPesanGuru(
+            "Data guru berhasil diperbarui.",
+            "sukses"
+          );
+
+
         } else {
-          await addDoc(collection(db, "guru"), data);
-          tampilkanPesanGuru("Data guru berhasil ditambahkan.", "sukses");
+
+
+          await addDoc(
+            collection(db, "guru"),
+            data
+          );
+
+
+          tampilkanPesanGuru(
+            "Data guru berhasil ditambahkan.",
+            "sukses"
+          );
+
         }
 
-        formGuru.style.display = "none";
+
+        formGuru.style.display =
+          "none";
+
+
         kosongkanFormGuru();
-        await tampilkanGuru();
+
+
+        tampilkanGuru();
+
 
       } catch (error) {
+
         console.error(error);
-        tampilkanPesanGuru("Gagal menyimpan data: " + error.message, "error");
+
+
+        tampilkanPesanGuru(
+          "Gagal menyimpan data: " +
+          error.message,
+          "error"
+        );
+
       }
+
     }
   );
 
@@ -4309,68 +4207,183 @@ document
 async function tampilkanGuru() {
 
   await muatDataProfilFoto();
-  const tabel = document.getElementById("tabelGuru");
+
+  const tabel =
+    document.getElementById(
+      "tabelGuru"
+    );
+
 
   try {
+
+
     tabel.innerHTML = `
-      <tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>
+
+      <tr>
+
+        <td
+          colspan="8"
+          style="text-align:center;">
+
+          Memuat data...
+
+        </td>
+
+      </tr>
+
     `;
 
-    const snapshot = await getDocs(collection(db, "guru"));
+
+    const snapshot =
+      await getDocs(
+        collection(db, "guru")
+      );
+
+
     dataGuru = [];
-    const namaSudahAda = new Set();
 
-    snapshot.forEach((dokumen) => {
-      const data = dokumen.data() || {};
-      const namaKey = String(data.namaKey || data.nama || "").trim().toLowerCase().replace(/\s+/g, " ");
 
-      // Jangan menampilkan guru yang sama dua kali. Data pertama dipakai,
-      // sehingga tampilan tetap satu nama untuk satu guru.
-      if (namaKey && namaSudahAda.has(namaKey)) return;
-      if (namaKey) namaSudahAda.add(namaKey);
+    snapshot.forEach(
+      (dokumen) => {
 
-      dataGuru.push({ id: dokumen.id, ...data });
-    });
+        dataGuru.push({
 
-    if (dataGuru.length === 0) {
+          id: dokumen.id,
+
+          ...dokumen.data()
+
+        });
+
+      }
+    );
+
+
+    if (
+      dataGuru.length === 0
+    ) {
+
       tabel.innerHTML = `
-        <tr><td colspan="8" style="text-align:center;">Belum ada data guru.</td></tr>
+
+        <tr>
+
+          <td
+            colspan="8"
+            style="text-align:center;">
+
+            Belum ada data guru.
+
+          </td>
+
+        </tr>
+
       `;
+
       return;
+
     }
 
-    tabel.innerHTML = "";
-    dataGuru.forEach((guru, index) => {
-      const baris = document.createElement("tr");
-      const kelasWali = String(guru.kelasWali || "").trim();
-      const keterangan = kelasWali
-        ? "Wali Kelas" + (kelasWali ? " — " + kelasWali : "")
-        : "Guru Mapel";
 
-      baris.innerHTML = `
-        <td>${index + 1}</td>
-        <td style="text-align:center;">${fotoHtml(cariFotoProfil(guru), guru.nama)}</td>
-        <td>${guru.nama || "-"}</td>
-        <td>${guru.nip || "-"}</td>
-        <td>${guru.nuptk || "-"}</td>
-        <td>${keterangan}</td>
-        <td>${guru.status || "-"}</td>
-        <td>
-          <div class="aksi">
-            <button class="btn-warning" onclick="editGuru('${guru.id}')">Edit</button>
-            <button class="btn-danger" onclick="hapusGuru('${guru.id}')">Hapus</button>
-          </div>
-        </td>
-      `;
-      tabel.appendChild(baris);
-    });
+    tabel.innerHTML = "";
+
+
+    dataGuru.forEach(
+      (guru, index) => {
+
+
+        const baris =
+          document.createElement(
+            "tr"
+          );
+
+
+        baris.innerHTML = `
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td style="text-align:center;">
+            ${fotoHtml(cariFotoProfil(guru),guru.nama)}
+          </td>
+
+          <td>
+            ${guru.nama || "-"}
+          </td>
+
+          <td>
+            ${guru.nip || "-"}
+          </td>
+
+          <td>
+            ${guru.nuptk || "-"}
+          </td>
+
+          <td>
+            ${guru.mapel || "-"}
+          </td>
+
+          <td>
+            ${guru.status || "-"}
+          </td>
+
+          <td>
+
+            <div class="aksi">
+
+              <button
+                class="btn-warning"
+                onclick="editGuru('${guru.id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="btn-danger"
+                onclick="hapusGuru('${guru.id}')">
+
+                Hapus
+
+              </button>
+
+            </div>
+
+          </td>
+
+        `;
+
+
+        tabel.appendChild(baris);
+
+      }
+    );
+
 
   } catch (error) {
+
     console.error(error);
+
+
     tabel.innerHTML = `
-      <tr><td colspan="8" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>
+
+      <tr>
+
+        <td
+          colspan="7"
+          style="color:red;text-align:center;">
+
+          Gagal mengambil data:
+          ${error.message}
+
+        </td>
+
+      </tr>
+
     `;
+
   }
+
 }
 
 
@@ -4416,9 +4429,9 @@ window.editGuru =
 
 
     document
-      .getElementById("kelasWaliGuru")
+      .getElementById("mapelGuru")
       .value =
-      guru.kelasWali || "";
+      guru.mapel || "";
 
 
     document
@@ -4535,7 +4548,7 @@ function kosongkanFormGuru() {
 
 
   document
-    .getElementById("kelasWaliGuru")
+    .getElementById("mapelGuru")
     .value = "";
 
 
@@ -4856,9 +4869,13 @@ async function tampilkanNilai() {
       // Admin dapat melihat seluruh nilai.
       snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "guru") {
-      // Guru dapat melihat seluruh data nilai untuk kebutuhan Daftar Nilai dan E-Rapor.
-      // Hak edit tetap mengikuti aturan status/pengaju pada Firestore Rules.
-      snapshot = await getDocs(collection(db, "nilai"));
+      // Guru hanya melihat nilai yang dia ajukan sendiri, termasuk yang masih menunggu, ditolak, dan sudah disetujui.
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("submittedByUid", "==", currentUser?.uid || "")
+        )
+      );
     } else if (roleUser === "siswa") {
       // Siswa hanya melihat nilai miliknya yang sudah disahkan Admin.
       snapshot = await getDocs(
@@ -5057,13 +5074,7 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");return;}
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
-    let snap;
-    if(roleUser === "siswa") {
-      snap=await getDocs(query(collection(db,"nilai"),where("siswaId","==",siswaId),where("kelas","==",kelas),where("semester","==",semester),where("status","==","disetujui")));
-    } else {
-      snap=await getDocs(query(collection(db,"nilai"),where("siswaId","==",siswaId),where("kelas","==",kelas),where("semester","==",semester)));
-    }
-    dataERaporNilai=[]; snap.forEach(d=>dataERaporNilai.push({id:d.id,...d.data()}));
+    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
     const siswa=dataSiswa.find(s=>s.id===siswaId);
     const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
@@ -5381,73 +5392,6 @@ document.querySelectorAll("[data-home-menu]").forEach(btn=>{
     if(el) el.click();
   });
 });
-
-
-/* =========================================================
-   PENGEMBANGAN TAMBAHAN - TIDAK MENGGANTI TAMPILAN LAMA
-   ========================================================= */
-function escapeCsv(v){
-  return '"'+String(v??'').replace(/"/g,'""')+'"';
-}
-function unduhCsv(nama, headers, rows){
-  const csv='\uFEFF'+[headers, ...rows].map(r=>r.map(escapeCsv).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nama; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-function tambahTombolEkspor(container, label, handler){
-  if(!container || container.querySelector('[data-enhanced-export="'+label+'"]')) return;
-  const b=document.createElement('button'); b.type='button'; b.className='btn-secondary'; b.textContent=label;
-  b.setAttribute('data-enhanced-export',label); b.style.marginLeft='8px'; b.addEventListener('click',handler); container.appendChild(b);
-}
-function pasangFiturEkspor(){
-  tambahTombolEkspor(document.querySelector('#panelNilai .topbar'),'⬇ Ekspor CSV',()=>{
-    const rows=dataNilai.map(n=>[n.siswaNama,n.nis,n.kelas,n.mapel,n.guru,n.semester,n.tugas,n.uts,n.uas,n.nilaiAkhir,n.status]);
-    unduhCsv('daftar-nilai.csv',['Siswa','NIS','Kelas','Mapel','Guru','Semester','Tugas','UTS','UAS','Nilai Akhir','Status'],rows);
-  });
-  tambahTombolEkspor(document.querySelector('#panelAbsensi .topbar'),'⬇ Ekspor CSV',()=>{
-    const rows=dataAbsensi.map(a=>[a.tanggal,a.siswaNama,a.nis,a.kelas,a.status]);
-    unduhCsv('riwayat-absensi.csv',['Tanggal','Siswa','NIS','Kelas','Status'],rows);
-  });
-}
-function pasangRekapAbsensi(){
-  const panel=document.getElementById('panelAbsensi'); if(!panel || document.getElementById('rekapAbsensiTambahan')) return;
-  const box=document.createElement('div'); box.id='rekapAbsensiTambahan'; box.style.marginTop='25px';
-  box.innerHTML='<h3>📊 Rekap Kehadiran</h3><div class="table-wrapper"><table><thead><tr><th>No</th><th>Nama Siswa</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpa</th><th>Total</th></tr></thead><tbody id="tabelRekapAbsensi"><tr><td colspan="7" style="text-align:center;">Memuat rekap...</td></tr></tbody></table></div>';
-  panel.appendChild(box);
-}
-function tampilkanRekapAbsensiTambahan(){
-  const t=document.getElementById('tabelRekapAbsensi'); if(!t) return;
-  const map={};
-  dataAbsensi.filter(a=>roleUser!=='siswa'||a.siswaId===profilUser?.siswaId).forEach(a=>{
-    const k=a.siswaId||a.nis||a.siswaNama; if(!map[k]) map[k]={nama:a.siswaNama||'-',hadir:0,sakit:0,izin:0,alpa:0};
-    const st=String(a.status||'').toLowerCase(); if(st==='hadir')map[k].hadir++; else if(st==='sakit')map[k].sakit++; else if(st==='izin')map[k].izin++; else if(st==='alpa')map[k].alpa++;
-  });
-  const arr=Object.values(map).sort((a,b)=>a.nama.localeCompare(b.nama,'id'));
-  t.innerHTML=arr.length?arr.map((x,i)=>`<tr><td>${i+1}</td><td>${x.nama}</td><td>${x.hadir}</td><td>${x.sakit}</td><td>${x.izin}</td><td>${x.alpa}</td><td>${x.hadir+x.sakit+x.izin+x.alpa}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;">Belum ada data absensi.</td></tr>';
-}
-function tambahKontrolERapor(){
-  const preview=document.getElementById('previewERapor'); if(!preview) return;
-  const old=preview.querySelector('#kontrolERaporTambahan'); if(old) old.remove();
-  const wrap=document.createElement('div'); wrap.id='kontrolERaporTambahan'; wrap.style.margin='0 0 12px';
-  wrap.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;"><button type="button" class="btn-secondary" id="btnEditNilaiERapor">✏️ Edit Nilai</button></div>';
-  preview.insertBefore(wrap,preview.firstChild);
-  const b=wrap.querySelector('#btnEditNilaiERapor');
-  if(roleUser==='siswa') b.style.display='none';
-  b.onclick=()=>{const first=dataERaporNilai.find(n=>roleUser==='admin'||(n.submittedByUid===currentUser?.uid&&n.status!=='disetujui')); if(!first){pesanERapor('Tidak ada nilai yang dapat diedit. Nilai yang sudah disetujui mengikuti alur persetujuan Admin.','error');return;} editNilai(first.id);};
-}
-async function tampilkanRaporDenganFiturTambahan(){
-  try{
-    const s= document.getElementById('siswaERapor')?.value;
-    if(s) { await new Promise(r=>setTimeout(r,50)); tambahKontrolERapor(); }
-  }catch(e){console.error(e);}
-}
-// Pastikan fungsi tambahan aktif tanpa mengganggu event lama.
-setTimeout(()=>{pasangFiturEkspor();pasangRekapAbsensi();},1200);
-const _tampilkanRiwayatAbsensiAsli=tampilkanRiwayatAbsensi;
-tampilkanRiwayatAbsensi=async function(){await _tampilkanRiwayatAbsensiAsli();pasangRekapAbsensi();tampilkanRekapAbsensiTambahan();pasangFiturEkspor();};
-const _siapkanERaporAsli=siapkanERapor;
-siapkanERapor=async function(){await _siapkanERaporAsli();};
 
 </script>
 
