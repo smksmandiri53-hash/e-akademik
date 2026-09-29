@@ -18,6 +18,24 @@
       <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Email login"></div>
       <div class="field" style="margin-top:13px"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
       <button class="primary" id="btnLogin">Masuk ke Dashboard</button>
+      <div style="text-align:center;margin-top:12px;">
+        <button type="button" id="btnLupaSandi"
+          style="border:0;background:none;color:#0d7183;font-weight:700;cursor:pointer;padding:7px 10px;">
+          🔑 Lupa Sandi?
+        </button>
+      </div>
+      <div id="panelLupaSandi" class="hidden"
+        style="margin-top:10px;padding:15px;border:1px solid #d8e5ea;border-radius:10px;background:#f7fbfc;">
+        <div class="field">
+          <label for="emailLupaSandi">Email akun</label>
+          <input id="emailLupaSandi" type="email" autocomplete="email"
+            placeholder="Masukkan email yang terdaftar">
+        </div>
+        <button type="button" id="btnKirimReset" class="primary">
+          Kirim Link Ganti Sandi
+        </button>
+        <div id="msgLupaSandi" class="msg"></div>
+      </div>
       <div class="note">Gunakan akun Firebase yang sudah terdaftar. Akun Admin dibuat oleh pengelola sistem.</div>
     </div>
 
@@ -52,7 +70,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig={
@@ -158,6 +176,76 @@ $("btnDaftar").onclick=async()=>{
    msg(t);
  }finally{$("btnDaftar").disabled=false;}
 };
+
+// =========================================================
+// LUPA SANDI / RESET PASSWORD
+// =========================================================
+const btnLupaSandi = $("btnLupaSandi");
+const panelLupaSandi = $("panelLupaSandi");
+const emailLupaSandi = $("emailLupaSandi");
+const btnKirimReset = $("btnKirimReset");
+const msgLupaSandi = $("msgLupaSandi");
+
+function msgReset(teks, sukses=false) {
+  if (!msgLupaSandi) return;
+  msgLupaSandi.textContent = teks;
+  msgLupaSandi.className = "msg " + (sukses ? "ok" : "err");
+}
+
+if (btnLupaSandi) {
+  btnLupaSandi.onclick = () => {
+    panelLupaSandi.classList.toggle("hidden");
+    if (!panelLupaSandi.classList.contains("hidden")) {
+      emailLupaSandi.focus();
+    }
+  };
+}
+
+if (btnKirimReset) {
+  btnKirimReset.onclick = async () => {
+    const email = String(emailLupaSandi.value || "").trim().toLowerCase();
+
+    if (!email) {
+      return msgReset("Masukkan email akun terlebih dahulu.");
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return msgReset("Format email tidak valid.");
+    }
+
+    btnKirimReset.disabled = true;
+    btnKirimReset.textContent = "Mengirim...";
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+
+      msgReset(
+        "Link ganti sandi sudah dikirim ke email Anda. Buka email tersebut lalu ikuti petunjuk untuk membuat sandi baru.",
+        true
+      );
+    } catch (e) {
+      console.error("RESET PASSWORD ERROR", e.code, e.message);
+
+      let pesan = "Gagal mengirim link ganti sandi.";
+
+      if (e.code === "auth/user-not-found") {
+        pesan = "Email tersebut belum terdaftar.";
+      } else if (e.code === "auth/invalid-email") {
+        pesan = "Format email tidak valid.";
+      } else if (e.code === "auth/too-many-requests") {
+        pesan = "Terlalu banyak permintaan. Silakan tunggu beberapa saat lalu coba lagi.";
+      } else if (e.code === "auth/network-request-failed") {
+        pesan = "Koneksi internet bermasalah. Silakan coba lagi.";
+      }
+
+      msgReset(pesan);
+    } finally {
+      btnKirimReset.disabled = false;
+      btnKirimReset.textContent = "Kirim Link Ganti Sandi";
+    }
+  };
+}
+
 </script>
 </body>
 </html>
