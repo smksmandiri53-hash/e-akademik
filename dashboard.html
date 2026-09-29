@@ -537,6 +537,32 @@
     .student-info-row{border-bottom:1px solid #e5eef1}
     .pesan{border-radius:9px}
 
+    /* =========================================================
+       PEMBAYARAN SISWA
+       ========================================================= */
+    .payment-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+    .payment-summary-card{background:#f7fbfc;border:1px solid #dce9ed;border-radius:12px;padding:14px}
+    .payment-summary-card small{display:block;color:#71838d;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+    .payment-summary-card strong{display:block;margin-top:5px;color:#173d50;font-size:18px}
+    .payment-toolbar{display:flex;gap:10px;align-items:end;justify-content:space-between;flex-wrap:wrap;margin:15px 0}
+    .payment-toolbar .field{min-width:180px;flex:1}
+    .payment-status{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800}
+    .payment-status.lunas{background:#d1e7dd;color:#0f5132}
+    .payment-status.cicil{background:#fff3cd;color:#664d03}
+    .payment-status.belum{background:#f8d7da;color:#842029}
+    .payment-readonly{display:inline-block;padding:4px 8px;border-radius:7px;background:#eef3f5;color:#61737d;font-size:10px;font-weight:700}
+    .payment-home-card{margin-top:14px;background:#fff;border:1px solid #d9e2e8;border-radius:14px;box-shadow:0 4px 14px rgba(17,55,70,.05);overflow:hidden}
+    .payment-home-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid #e5ecef}
+    .payment-home-head h3{margin:0;color:#17384a;font-size:14px}
+    .payment-home-head p{margin:3px 0 0;color:#7a8992;font-size:10px}
+    .payment-home-body{padding:12px 15px}
+    .payment-home-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #edf1f3;font-size:10px}
+    .payment-home-row:last-child{border-bottom:0}
+    .payment-home-row strong{color:#304c59}
+    .payment-home-row span{color:#74838c;text-align:right}
+    @media(max-width:900px){.payment-summary-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){.payment-summary-grid{grid-template-columns:1fr}.payment-home-row{display:block}.payment-home-row span{display:block;text-align:left;margin-top:3px}}
+
     /* Sentuhan profil pada header: menggunakan data yang sudah ada, tanpa mengubah database. */
     .brand-text::after{
       content:"Sistem Informasi Akademik";
@@ -665,7 +691,7 @@
     .panel,#panelPersetujuanNilai{border-radius:14px!important}
     .panel:not(#panelDataSaya):not(#panelSiswa):not(#panelGuru):not(#panelKelas):not(#panelMapel):not(#panelJadwal):not(#panelNilai):not(#panelAbsensi):not(#panelPengumuman):not(#panelERapor):not(#panelAkun){ }
     #panelHome{display:grid!important}
-    #panelSiswa,#panelGuru,#panelKelas,#panelMapel,#panelJadwal,#panelNilai,#panelAbsensi,#panelPengumuman,#panelERapor,#panelAkun,#panelDataSaya,#panelPersetujuanNilai,#panelAgenda{display:none}
+    #panelSiswa,#panelGuru,#panelKelas,#panelMapel,#panelJadwal,#panelNilai,#panelAbsensi,#panelPengumuman,#panelERapor,#panelAkun,#panelDataSaya,#panelPersetujuanNilai,#panelAgenda,#panelPembayaran{display:none}
     .agenda-admin-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px}
     .agenda-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .agenda-form-grid .full{grid-column:1/-1}
@@ -782,6 +808,11 @@
       <p>Kelola absensi siswa.</p>
     </div>
 
+    <div class="card" id="menuPembayaran">
+      <h3>💳 Pembayaran Siswa</h3>
+      <p>Informasi pembayaran siswa.</p>
+    </div>
+
     <div class="card" id="menuPengumuman">
       <h3>📢 Pengumuman</h3>
       <p>Kelola pengumuman.</p>
@@ -850,9 +881,15 @@
             <button class="quick-item" type="button" data-home-menu="menuJadwal"><span class="qi-icon">🗓️</span><span><strong>Jadwal</strong><span>Jadwal akademik</span></span></button>
             <button class="quick-item" type="button" data-home-menu="menuNilai"><span class="qi-icon">📝</span><span><strong>Nilai</strong><span>Penilaian siswa</span></span></button>
             <button class="quick-item" type="button" data-home-menu="menuAbsensi"><span class="qi-icon">📋</span><span><strong>Absensi</strong><span>Kehadiran siswa</span></span></button>
+            <button class="quick-item" type="button" data-home-menu="menuPembayaran"><span class="qi-icon">💳</span><span><strong>Pembayaran</strong><span>Informasi pembayaran</span></span></button>
             <button class="quick-item" type="button" data-home-menu="menuERapor"><span class="qi-icon">📄</span><span><strong>E-Rapor</strong><span>Rapor akademik</span></span></button>
             <button class="quick-item" type="button" id="btnHomeAgenda"><span class="qi-icon">📅</span><span><strong>Kalender Akademik</strong><span>Agenda sekolah</span></span></button>
           </div>
+        </div>
+
+        <div class="payment-home-card">
+          <div class="payment-home-head"><div><h3>💳 Informasi Pembayaran Siswa</h3><p>Ringkasan pembayaran sesuai hak akses akun</p></div><button type="button" class="btn-primary" id="btnHomePembayaran" style="padding:7px 10px;font-size:10px;">Lihat Pembayaran</button></div>
+          <div class="payment-home-body" id="homePaymentSummary"><div style="color:#7b8992;font-size:10px;">Memuat informasi pembayaran...</div></div>
         </div>
 
         <div class="dashboard-card">
@@ -969,23 +1006,6 @@
     </div>
 
     <div id="pesanSiswa" class="pesan"></div>
-
-    <div id="filterSiswaArea" style="margin:15px 0 18px;padding:12px 14px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;">
-      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;">
-        <div style="min-width:180px;flex:1;">
-          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;">Jurusan</label>
-          <select id="filterJurusanSiswa" style="width:100%;padding:9px;border:1px solid #ced4da;border-radius:6px;background:#fff;">
-            <option value="SEMUA">Semua Jurusan</option><option value="TKJ">TKJ</option><option value="AKL">AKL</option><option value="TBSM">TBSM</option><option value="Pemasaran">Pemasaran</option>
-          </select>
-        </div>
-        <div style="min-width:180px;flex:1;">
-          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;">Kelas</label>
-          <select id="filterKelasSiswa" style="width:100%;padding:9px;border:1px solid #ced4da;border-radius:6px;background:#fff;"><option value="SEMUA">Semua Kelas</option></select>
-        </div>
-        <div style="padding-bottom:1px;"><button type="button" class="btn-secondary" id="btnResetFilterSiswa">Tampilkan Semua</button></div>
-      </div>
-      <div id="infoFilterSiswa" style="margin-top:9px;color:#6b7280;font-size:12px;">Menampilkan semua siswa.</div>
-    </div>
 
     <div id="formSiswa">
 
@@ -1418,39 +1438,6 @@
 
     <div id="pesanNilai" class="pesan"></div>
 
-    <!-- FILTER NILAI: Jurusan -> Kelas -> Mata Pelajaran -->
-    <div id="filterNilaiBox" style="margin:0 0 18px 0;padding:14px;border:1px solid #e1e5ea;border-radius:10px;background:#f8fafc;">
-      <div style="font-weight:700;margin-bottom:10px;">🔎 Pisahkan Data Nilai</div>
-      <div class="form-grid" style="margin:0;">
-        <div class="field">
-          <label>Jurusan</label>
-          <select id="filterJurusanNilai">
-            <option value="SEMUA">Semua Jurusan</option>
-            <option value="TKJ">TKJ</option>
-            <option value="AKL">AKL</option>
-            <option value="TBSM">TBSM</option>
-            <option value="Pemasaran">Pemasaran</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Kelas</label>
-          <select id="filterKelasNilai">
-            <option value="SEMUA">Semua Kelas</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Mata Pelajaran</label>
-          <select id="filterMapelNilai">
-            <option value="SEMUA">Semua Mata Pelajaran</option>
-          </select>
-        </div>
-        <div class="field" style="display:flex;align-items:end;">
-          <button type="button" class="btn-secondary" id="btnResetFilterNilai" style="width:100%;">Tampilkan Semua</button>
-        </div>
-      </div>
-      <div id="infoFilterNilai" style="margin-top:10px;font-size:13px;color:#666;">Semua Jurusan • Semua Kelas • Semua Mata Pelajaran</div>
-    </div>
-
     <div id="formNilai">
       <h3 id="judulFormNilai">Tambah Nilai</h3>
       <input type="hidden" id="idNilai">
@@ -1821,6 +1808,56 @@
 
 </div>
 
+
+  <!-- =========================
+       PANEL PEMBAYARAN SISWA
+  ========================== -->
+  <div class="panel" id="panelPembayaran" style="display:none;">
+    <div class="topbar">
+      <h2>💳 Informasi Pembayaran Siswa</h2>
+      <button class="btn-primary" id="btnTambahPembayaran">＋ Tambah Pembayaran</button>
+    </div>
+    <div id="pesanPembayaran" class="pesan"></div>
+
+    <div class="payment-summary-grid">
+      <div class="payment-summary-card"><small>Total Tagihan</small><strong id="paymentTotalTagihan">Rp 0</strong></div>
+      <div class="payment-summary-card"><small>Total Dibayar</small><strong id="paymentTotalDibayar">Rp 0</strong></div>
+      <div class="payment-summary-card"><small>Total Sisa</small><strong id="paymentTotalSisa">Rp 0</strong></div>
+      <div class="payment-summary-card"><small>Data Pembayaran</small><strong id="paymentTotalData">0</strong></div>
+    </div>
+
+    <div id="formPembayaran" style="display:none;margin-top:15px;padding:16px;border:1px solid #dbe8ed;border-radius:10px;background:#f8fbfc;">
+      <h3 id="judulFormPembayaran" style="margin-top:0;">Tambah Pembayaran</h3>
+      <input type="hidden" id="idPembayaran">
+      <div class="form-grid">
+        <div class="field"><label>Siswa</label><select id="siswaPembayaran"><option value="">-- Pilih Siswa --</option></select></div>
+        <div class="field"><label>Tanggal Pembayaran</label><input type="date" id="tanggalPembayaran"></div>
+        <div class="field"><label>Periode</label><input type="text" id="periodePembayaran" placeholder="Contoh: September 2026"></div>
+        <div class="field"><label>Jenis Pembayaran</label><select id="jenisPembayaran"><option value="SPP">SPP</option><option value="Uang Gedung">Uang Gedung</option><option value="Seragam">Seragam</option><option value="Ujian">Ujian</option><option value="Praktik">Praktik</option><option value="Kegiatan">Kegiatan</option><option value="Lainnya">Lainnya</option></select></div>
+        <div class="field"><label>Nominal Tagihan</label><input type="number" id="tagihanPembayaran" min="0" step="1000" placeholder="0"></div>
+        <div class="field"><label>Nominal Dibayar</label><input type="number" id="dibayarPembayaran" min="0" step="1000" placeholder="0"></div>
+        <div class="field" style="grid-column:1/-1"><label>Keterangan</label><textarea id="keteranganPembayaran" rows="3" placeholder="Keterangan pembayaran..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button type="button" class="btn-primary" id="btnSimpanPembayaran">Simpan Pembayaran</button>
+        <button type="button" class="btn-secondary" id="btnBatalPembayaran">Batal</button>
+      </div>
+    </div>
+
+    <div class="payment-toolbar">
+      <div class="field"><label>Filter Kelas</label><select id="filterKelasPembayaran"><option value="">Semua Kelas</option></select></div>
+      <div class="field"><label>Filter Status</label><select id="filterStatusPembayaran"><option value="">Semua Status</option><option value="Lunas">Lunas</option><option value="Cicil">Cicil</option><option value="Belum Lunas">Belum Lunas</option></select></div>
+      <div class="field"><label>Cari Siswa / NIS</label><input type="search" id="cariPembayaran" placeholder="Ketik nama atau NIS..."></div>
+      <button type="button" class="btn-secondary" id="btnRefreshPembayaran">↻ Refresh</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>No</th><th>Siswa</th><th>Kelas</th><th>Tanggal</th><th>Periode</th><th>Jenis</th><th>Tagihan</th><th>Dibayar</th><th>Sisa</th><th>Status</th><th>Keterangan</th><th>Aksi</th></tr></thead>
+        <tbody id="tabelPembayaran"><tr><td colspan="12" style="text-align:center;">Memuat data pembayaran...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
   <!-- =========================
        PANEL E-RAPOR
@@ -2210,6 +2247,7 @@ onAuthStateChanged(auth, async (user) => {
     if (profilBerhasil) {
       if (roleUser === "siswa") { await tampilkanDataSaya(); }
       else { await tampilkanSiswa(); await tampilkanPersetujuanNilai(); }
+      await muatPembayaranHome();
     }
   } else {
     window.location.href = "index.html";
@@ -2220,7 +2258,7 @@ onAuthStateChanged(auth, async (user) => {
 function aturTampilanBerdasarkanRole() {
   const menuOperasional = [
     "menuSiswa", "menuGuru", "menuKelas", "menuMapel", "menuJadwal",
-    "menuNilai", "menuAbsensi", "menuPengumuman", "menuERapor", "menuAkun"
+    "menuNilai", "menuAbsensi", "menuPembayaran", "menuPengumuman", "menuERapor", "menuAkun"
   ];
   const menuSiswa = [
     "menuDataSaya", "menuNilaiSaya", "menuAbsensiSaya", "menuRaporSaya", "menuPengumumanSaya"
@@ -2236,6 +2274,8 @@ function aturTampilanBerdasarkanRole() {
       const el = document.getElementById(id);
       if (el) el.style.display = "block";
     });
+    const menuPembayaran = document.getElementById("menuPembayaran");
+    if (menuPembayaran) menuPembayaran.style.display = "block";
 
     [
       "panelSiswa", "panelGuru", "panelKelas", "panelMapel", "panelJadwal",
@@ -2254,6 +2294,8 @@ function aturTampilanBerdasarkanRole() {
     const el = document.getElementById(id);
     if (el) el.style.display = "";
   });
+  const menuPembayaran = document.getElementById("menuPembayaran");
+  if (menuPembayaran) menuPembayaran.style.display = "";
 
   menuSiswa.forEach(id => {
     const el = document.getElementById(id);
@@ -2267,8 +2309,8 @@ function aturTampilanBerdasarkanRole() {
   }
 }
 function sembunyikanSemuaPanel(){
-  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
+  ["panelHome","panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelDataSaya","panelAgenda","panelPembayaran","panelPersetujuanNilai"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPembayaran","menuPengumuman","menuERapor","menuAkun","menuPembayaran","menuDataSaya","menuNilaiSaya","menuAbsensiSaya","menuRaporSaya","menuPengumumanSaya"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
 // Pengaman tampilan: setiap kali menu diklik, hanya panel menu tersebut yang boleh terlihat.
@@ -2285,6 +2327,7 @@ document.addEventListener("click", event => {
     menuJadwal:"panelJadwal",
     menuNilai:"panelNilai",
     menuAbsensi:"panelAbsensi",
+    menuPembayaran:"panelPembayaran",
     menuPengumuman:"panelPengumuman",
     menuERapor:"panelERapor",
     menuAkun:"panelAkun",
@@ -3763,62 +3806,185 @@ document
    TAMPILKAN SISWA
 ========================= */
 
-let filterJurusanSiswaAktif = "SEMUA";
-let filterKelasSiswaAktif = "SEMUA";
-
-function isiFilterKelasSiswa() {
-  const select = document.getElementById("filterKelasSiswa");
-  if (!select) return;
-  const kelasSet = new Set();
-  dataSiswa.forEach((siswa) => {
-    const jurusan = String(siswa.jurusan || "").trim();
-    const kelas = String(siswa.kelas || "").trim();
-    if (kelas && (filterJurusanSiswaAktif === "SEMUA" || jurusan.toLowerCase() === filterJurusanSiswaAktif.toLowerCase())) kelasSet.add(kelas);
-  });
-  const kelasList = Array.from(kelasSet).sort((a,b) => a.localeCompare(b,"id",{numeric:true}));
-  if (filterKelasSiswaAktif !== "SEMUA" && !kelasSet.has(filterKelasSiswaAktif)) filterKelasSiswaAktif = "SEMUA";
-  select.innerHTML = '<option value="SEMUA">Semua Kelas</option>';
-  kelasList.forEach((kelas) => { const o=document.createElement("option"); o.value=kelas; o.textContent=kelas; select.appendChild(o); });
-  select.value = filterKelasSiswaAktif;
-}
-
-function tampilkanSiswaTerfilter() {
-  const tabel=document.getElementById("tabelSiswa"); if(!tabel) return;
-  isiFilterKelasSiswa();
-  const daftar=dataSiswa.filter((siswa)=>{
-    const jurusan=String(siswa.jurusan||"").trim(); const kelas=String(siswa.kelas||"").trim();
-    return (filterJurusanSiswaAktif==="SEMUA" || jurusan.toLowerCase()===filterJurusanSiswaAktif.toLowerCase()) &&
-           (filterKelasSiswaAktif==="SEMUA" || kelas.toLowerCase()===filterKelasSiswaAktif.toLowerCase());
-  });
-  const info=document.getElementById("infoFilterSiswa");
-  if(info){
-    if(filterJurusanSiswaAktif==="SEMUA") info.textContent=`Menampilkan semua siswa (${daftar.length} data).`;
-    else if(filterKelasSiswaAktif==="SEMUA") info.textContent=`Jurusan ${filterJurusanSiswaAktif} — semua kelas (${daftar.length} data).`;
-    else info.textContent=`Kelas ${filterKelasSiswaAktif} — jurusan ${filterJurusanSiswaAktif} (${daftar.length} data).`;
-  }
-  if(!daftar.length){tabel.innerHTML='<tr><td colspan="9" style="text-align:center;">Belum ada data siswa untuk pilihan jurusan dan kelas ini.</td></tr>';return;}
-  tabel.innerHTML="";
-  daftar.forEach((siswa,index)=>{const baris=document.createElement("tr");baris.innerHTML=`<td>${index+1}</td><td style="text-align:center;">${fotoHtml(cariFotoProfil(siswa),siswa.nama)}</td><td>${siswa.nama||"-"}</td><td>${siswa.nis||"-"}</td><td>${siswa.tingkat||"-"}</td><td>${siswa.jurusan||"-"}</td><td>${siswa.kelas||"-"}</td><td>${siswa.status||"-"}</td><td><div class="aksi"><button class="btn-warning" onclick="editSiswa('${siswa.id}')">Edit</button><button class="btn-danger" onclick="hapusSiswa('${siswa.id}')">Hapus</button></div></td>`;tabel.appendChild(baris);});
-}
-
 async function tampilkanSiswa() {
-  await muatDataProfilFoto();
-  const tabel=document.getElementById("tabelSiswa"); if(!tabel) return;
-  try{
-    tabel.innerHTML='<tr><td colspan="9" style="text-align:center;">Memuat data...</td></tr>';
-    const snapshot=await getDocs(collection(db,"siswa")); dataSiswa=[];
-    snapshot.forEach((dokumen)=>dataSiswa.push({id:dokumen.id,...dokumen.data()}));
-    if(!dataSiswa.length){tabel.innerHTML='<tr><td colspan="9" style="text-align:center;">Belum ada data siswa.</td></tr>';isiFilterKelasSiswa();return;}
-    tampilkanSiswaTerfilter();
-  }catch(error){console.error(error);tabel.innerHTML=`<tr><td colspan="9" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;}
-}
 
-const filterJurusanEl=document.getElementById("filterJurusanSiswa");
-const filterKelasEl=document.getElementById("filterKelasSiswa");
-const btnResetFilterEl=document.getElementById("btnResetFilterSiswa");
-if(filterJurusanEl) filterJurusanEl.addEventListener("change",()=>{filterJurusanSiswaAktif=filterJurusanEl.value||"SEMUA";filterKelasSiswaAktif="SEMUA";tampilkanSiswaTerfilter();});
-if(filterKelasEl) filterKelasEl.addEventListener("change",()=>{filterKelasSiswaAktif=filterKelasEl.value||"SEMUA";tampilkanSiswaTerfilter();});
-if(btnResetFilterEl) btnResetFilterEl.addEventListener("click",()=>{filterJurusanSiswaAktif="SEMUA";filterKelasSiswaAktif="SEMUA";if(filterJurusanEl)filterJurusanEl.value="SEMUA";tampilkanSiswaTerfilter();});
+  await muatDataProfilFoto();
+
+  const tabel =
+    document.getElementById("tabelSiswa");
+
+
+  try {
+
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="9"
+          style="text-align:center;">
+
+          Memuat data...
+
+        </td>
+
+      </tr>
+
+    `;
+
+
+    const snapshot =
+      await getDocs(
+        collection(db, "siswa")
+      );
+
+
+    dataSiswa = [];
+
+
+    snapshot.forEach((dokumen) => {
+
+      dataSiswa.push({
+
+        id: dokumen.id,
+
+        ...dokumen.data()
+
+      });
+
+    });
+
+
+    if (
+      dataSiswa.length === 0
+    ) {
+
+      tabel.innerHTML = `
+
+        <tr>
+
+          <td
+            colspan="9"
+            style="text-align:center;">
+
+            Belum ada data siswa.
+
+          </td>
+
+        </tr>
+
+      `;
+
+      return;
+
+    }
+
+
+    tabel.innerHTML = "";
+
+
+    dataSiswa.forEach(
+      (siswa, index) => {
+
+
+        const baris =
+          document.createElement("tr");
+
+
+        baris.innerHTML = `
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td style="text-align:center;">
+            ${fotoHtml(cariFotoProfil(siswa),siswa.nama)}
+          </td>
+
+          <td>
+            ${siswa.nama || "-"}
+          </td>
+
+          <td>
+            ${siswa.nis || "-"}
+          </td>
+
+          <td>
+            ${siswa.tingkat || "-"}
+          </td>
+
+          <td>
+            ${siswa.jurusan || "-"}
+          </td>
+
+          <td>
+            ${siswa.kelas || "-"}
+          </td>
+
+          <td>
+            ${siswa.status || "-"}
+          </td>
+
+          <td>
+
+            <div class="aksi">
+
+              <button
+                class="btn-warning"
+                onclick="editSiswa('${siswa.id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="btn-danger"
+                onclick="hapusSiswa('${siswa.id}')">
+
+                Hapus
+
+              </button>
+
+            </div>
+
+          </td>
+
+        `;
+
+
+        tabel.appendChild(baris);
+
+      }
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="8"
+          style="color:red;text-align:center;">
+
+          Gagal mengambil data:
+          ${error.message}
+
+        </td>
+
+      </tr>
+
+    `;
+
+  }
+
+}
 
 
 /* =========================
@@ -4890,196 +5056,94 @@ window.tolakNilai = async function(id) {
   }
 };
 
-let filterJurusanNilaiAktif = "SEMUA";
-let filterKelasNilaiAktif = "SEMUA";
-let filterMapelNilaiAktif = "SEMUA";
-
-function normalisasiNilaiFilter(value) {
-  return String(value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function jurusanSiswaUntukNilai(siswaId) {
-  const siswa = dataSiswa.find(s => s.id === siswaId);
-  return siswa ? String(siswa.jurusan || "").trim() : "";
-}
-
-function isiFilterNilai() {
-  const kelasSelect = document.getElementById("filterKelasNilai");
-  const mapelSelect = document.getElementById("filterMapelNilai");
-  const info = document.getElementById("infoFilterNilai");
-  if (!kelasSelect || !mapelSelect) return;
-
-  const jurusanNormal = normalisasiNilaiFilter(filterJurusanNilaiAktif);
-  const dataUntukPilihan = dataNilai.filter(n => {
-    const jurusan = normalisasiNilaiFilter(jurusanSiswaUntukNilai(n.siswaId));
-    return filterJurusanNilaiAktif === "SEMUA" || jurusan === jurusanNormal;
-  });
-
-  const kelasSet = new Set();
-  dataUntukPilihan.forEach(n => {
-    const kelas = String(n.kelas || "").trim();
-    if (kelas) kelasSet.add(kelas);
-  });
-  if (filterKelasNilaiAktif !== "SEMUA" && !kelasSet.has(filterKelasNilaiAktif)) {
-    filterKelasNilaiAktif = "SEMUA";
-  }
-  kelasSelect.innerHTML = '<option value="SEMUA">Semua Kelas</option>';
-  Array.from(kelasSet).sort((a,b) => a.localeCompare(b, "id", {numeric:true})).forEach(kelas => {
-    const o = document.createElement("option");
-    o.value = kelas; o.textContent = kelas; kelasSelect.appendChild(o);
-  });
-  kelasSelect.value = filterKelasNilaiAktif;
-
-  const kelasNormal = normalisasiNilaiFilter(filterKelasNilaiAktif);
-  const dataUntukMapel = dataUntukPilihan.filter(n =>
-    filterKelasNilaiAktif === "SEMUA" || normalisasiNilaiFilter(n.kelas) === kelasNormal
-  );
-  const mapelSet = new Set();
-  dataUntukMapel.forEach(n => {
-    const mapel = String(n.mapel || "").trim();
-    if (mapel) mapelSet.add(mapel);
-  });
-  if (filterMapelNilaiAktif !== "SEMUA" && !mapelSet.has(filterMapelNilaiAktif)) {
-    filterMapelNilaiAktif = "SEMUA";
-  }
-  mapelSelect.innerHTML = '<option value="SEMUA">Semua Mata Pelajaran</option>';
-  Array.from(mapelSet).sort((a,b) => a.localeCompare(b, "id")).forEach(mapel => {
-    const o = document.createElement("option");
-    o.value = mapel; o.textContent = mapel; mapelSelect.appendChild(o);
-  });
-  mapelSelect.value = filterMapelNilaiAktif;
-
-  if (info) {
-    const jurusanText = filterJurusanNilaiAktif === "SEMUA" ? "Semua Jurusan" : filterJurusanNilaiAktif;
-    const kelasText = filterKelasNilaiAktif === "SEMUA" ? "Semua Kelas" : filterKelasNilaiAktif;
-    const mapelText = filterMapelNilaiAktif === "SEMUA" ? "Semua Mata Pelajaran" : filterMapelNilaiAktif;
-    info.textContent = `Filter: ${jurusanText} • ${kelasText} • ${mapelText}`;
-  }
-}
-
-function dataNilaiTerfilter() {
-  const jurusanNormal = normalisasiNilaiFilter(filterJurusanNilaiAktif);
-  const kelasNormal = normalisasiNilaiFilter(filterKelasNilaiAktif);
-  const mapelNormal = normalisasiNilaiFilter(filterMapelNilaiAktif);
-  return dataNilai.filter(n => {
-    const jurusan = normalisasiNilaiFilter(jurusanSiswaUntukNilai(n.siswaId));
-    const kelas = normalisasiNilaiFilter(n.kelas);
-    const mapel = normalisasiNilaiFilter(n.mapel);
-    return (filterJurusanNilaiAktif === "SEMUA" || jurusan === jurusanNormal) &&
-           (filterKelasNilaiAktif === "SEMUA" || kelas === kelasNormal) &&
-           (filterMapelNilaiAktif === "SEMUA" || mapel === mapelNormal);
-  });
-}
-
-function renderNilaiTerfilter() {
-  const tabel = document.getElementById("tabelNilai");
-  const info = document.getElementById("infoFilterNilai");
-  if (!tabel) return;
-  isiFilterNilai();
-  const daftar = dataNilaiTerfilter();
-  if (info) {
-    const total = dataNilai.length;
-    info.textContent += ` • Menampilkan ${daftar.length} dari ${total} data nilai`;
-  }
-  if (!daftar.length) {
-    tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Belum ada data nilai untuk pilihan Jurusan/Kelas/Mata Pelajaran tersebut.</td></tr>';
-    return;
-  }
-
-  tabel.innerHTML = "";
-  daftar.forEach((n, index) => {
-    const tr = document.createElement("tr");
-    const statusLabel = n.status === "disetujui"
-      ? '<span style="color:#198754;font-weight:bold;">Disetujui</span>'
-      : n.status === "ditolak"
-        ? '<span style="color:#dc3545;font-weight:bold;">Ditolak</span>'
-        : '<span style="color:#856404;font-weight:bold;">Menunggu Persetujuan</span>';
-
-    let aksi = "";
-    if (roleUser === "siswa") {
-      aksi = '<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>';
-    } else if (roleUser === "admin") {
-      aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
-              <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
-    } else if (roleUser === "guru") {
-      aksi = n.status === "disetujui"
-        ? '<span style="color:#198754;font-weight:bold;">Resmi</span>'
-        : `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
-    }
-
-    tr.innerHTML = `<td>${index + 1}</td>
-      <td>${n.siswaNama || "-"}</td>
-      <td>${n.kelas || "-"}</td>
-      <td>${n.mapel || "-"}</td>
-      <td>${n.guru || "-"}</td>
-      <td>${n.semester || "-"}</td>
-      <td>${n.tugas ?? "-"}</td>
-      <td>${n.uts ?? "-"}</td>
-      <td>${n.uas ?? "-"}</td>
-      <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
-      <td>${statusLabel}${n.status === "ditolak" && n.rejectionReason ? `<br><small style="color:#dc3545;">Alasan: ${n.rejectionReason}</small>` : ""}</td>
-      <td><div class="aksi">${aksi}</div></td>`;
-    tabel.appendChild(tr);
-  });
-}
-
 async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
   tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>';
 
   try {
     let snapshot;
+
+    // Firestore Rules bukan filter. Karena itu query harus sesuai hak akses masing-masing role.
     if (roleUser === "admin") {
+      // Admin dapat melihat seluruh nilai.
       snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "guru") {
-      snapshot = await getDocs(query(collection(db, "nilai"), where("submittedByUid", "==", currentUser?.uid || "")));
+      // Guru hanya melihat nilai yang dia ajukan sendiri, termasuk yang masih menunggu, ditolak, dan sudah disetujui.
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("submittedByUid", "==", currentUser?.uid || "")
+        )
+      );
     } else if (roleUser === "siswa") {
-      snapshot = await getDocs(query(collection(db, "nilai"), where("siswaId", "==", profilUser?.siswaId || ""), where("status", "==", "disetujui")));
+      // Siswa hanya melihat nilai miliknya yang sudah disahkan Admin.
+      snapshot = await getDocs(
+        query(
+          collection(db, "nilai"),
+          where("siswaId", "==", profilUser?.siswaId || ""),
+          where("status", "==", "disetujui")
+        )
+      );
     } else {
       snapshot = { forEach: () => {} };
     }
 
     dataNilai = [];
-    snapshot.forEach(d => { dataNilai.push({ id: d.id, ...d.data() }); });
-    dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
+    snapshot.forEach(d => {
+      dataNilai.push({ id: d.id, ...d.data() });
+    });
 
-    if (!dataSiswa.length && roleUser !== "siswa") {
-      await tampilkanSiswa();
+    dataNilai.sort((a, b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
+
+    if (!dataNilai.length) {
+      tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Belum ada data nilai.</td></tr>';
+      return;
     }
-    renderNilaiTerfilter();
+
+    tabel.innerHTML = "";
+    dataNilai.forEach((n, index) => {
+      const tr = document.createElement("tr");
+      const statusLabel = n.status === "disetujui"
+        ? '<span style="color:#198754;font-weight:bold;">Disetujui</span>'
+        : n.status === "ditolak"
+          ? '<span style="color:#dc3545;font-weight:bold;">Ditolak</span>'
+          : '<span style="color:#856404;font-weight:bold;">Menunggu Persetujuan</span>';
+
+      let aksi = "";
+
+      if (roleUser === "siswa") {
+        aksi = '<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>';
+      } else if (roleUser === "admin") {
+        // Admin selalu memiliki kontrol penuh, termasuk menghapus nilai yang sudah disetujui.
+        aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
+                <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
+      } else if (roleUser === "guru") {
+        if (n.status === "disetujui") {
+          aksi = '<span style="color:#198754;font-weight:bold;">Resmi</span>';
+        } else {
+          aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
+        }
+      }
+
+      tr.innerHTML = `<td>${index + 1}</td>
+        <td>${n.siswaNama || "-"}</td>
+        <td>${n.kelas || "-"}</td>
+        <td>${n.mapel || "-"}</td>
+        <td>${n.guru || "-"}</td>
+        <td>${n.semester || "-"}</td>
+        <td>${n.tugas ?? "-"}</td>
+        <td>${n.uts ?? "-"}</td>
+        <td>${n.uas ?? "-"}</td>
+        <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
+        <td>${statusLabel}${n.status === "ditolak" && n.rejectionReason ? `<br><small style="color:#dc3545;">Alasan: ${n.rejectionReason}</small>` : ""}</td>
+        <td><div class="aksi">${aksi}</div></td>`;
+      tabel.appendChild(tr);
+    });
   } catch (error) {
     console.error("Gagal mengambil data nilai:", error);
     tabel.innerHTML = `<tr><td colspan="12" style="color:red;text-align:center;">Gagal mengambil data nilai: ${error.message}</td></tr>`;
   }
 }
-
-function resetFilterNilai() {
-  filterJurusanNilaiAktif = "SEMUA";
-  filterKelasNilaiAktif = "SEMUA";
-  filterMapelNilaiAktif = "SEMUA";
-  renderNilaiTerfilter();
-}
-
-const filterJurusanNilaiEl = document.getElementById("filterJurusanNilai");
-const filterKelasNilaiEl = document.getElementById("filterKelasNilai");
-const filterMapelNilaiEl = document.getElementById("filterMapelNilai");
-const btnResetFilterNilaiEl = document.getElementById("btnResetFilterNilai");
-if (filterJurusanNilaiEl) filterJurusanNilaiEl.addEventListener("change", () => {
-  filterJurusanNilaiAktif = filterJurusanNilaiEl.value;
-  filterKelasNilaiAktif = "SEMUA";
-  filterMapelNilaiAktif = "SEMUA";
-  renderNilaiTerfilter();
-});
-if (filterKelasNilaiEl) filterKelasNilaiEl.addEventListener("change", () => {
-  filterKelasNilaiAktif = filterKelasNilaiEl.value;
-  filterMapelNilaiAktif = "SEMUA";
-  renderNilaiTerfilter();
-});
-if (filterMapelNilaiEl) filterMapelNilaiEl.addEventListener("change", () => {
-  filterMapelNilaiAktif = filterMapelNilaiEl.value;
-  renderNilaiTerfilter();
-});
-if (btnResetFilterNilaiEl) btnResetFilterNilaiEl.addEventListener("click", resetFilterNilai);
 
 window.editNilai = async function(id) {
   const n = dataNilai.find(item => item.id === id);
@@ -5141,9 +5205,9 @@ function tampilkanPesanNilai(teks, tipe) {
    MENU PENGUMUMAN
 ========================= */
 document.getElementById("menuPengumuman").addEventListener("click", async () => {
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id => document.getElementById(id).style.display="none");
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda","panelPembayaran"].forEach(id => document.getElementById(id).style.display="none");
   document.getElementById("panelPengumuman").style.display="block";
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id => document.getElementById(id).classList.remove("aktif"));
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPembayaran","menuPengumuman","menuERapor","menuAkun","menuPembayaran"].forEach(id => document.getElementById(id).classList.remove("aktif"));
   document.getElementById("menuPengumuman").classList.add("aktif");
   await tampilkanPengumuman();
 });
@@ -5165,6 +5229,180 @@ document.getElementById("tanggalPengumuman").value=tanggalHariIni();
 
 
 /* =========================
+   PEMBAYARAN SISWA
+   Admin = tambah/edit/hapus.
+   Guru/Siswa = hanya lihat.
+   Siswa hanya melihat data pembayaran miliknya.
+========================= */
+let dataPembayaran = [];
+
+function rupiahPembayaran(n){
+  return "Rp " + Number(n||0).toLocaleString("id-ID");
+}
+function statusPembayaran(tagihan,dibayar){
+  const t=Number(tagihan||0), d=Number(dibayar||0), s=Math.max(t-d,0);
+  if(t>0 && s<=0) return "Lunas";
+  if(d>0) return "Cicil";
+  return "Belum Lunas";
+}
+function classStatusPembayaran(status){
+  return status==="Lunas"?"lunas":status==="Cicil"?"cicil":"belum";
+}
+function pesanPembayaran(teks,tipe="sukses"){
+  const e=document.getElementById("pesanPembayaran");if(!e)return;
+  e.textContent=teks;e.className="pesan "+tipe;e.style.display="block";
+  setTimeout(()=>{if(e)e.style.display="none";},4500);
+}
+function tanggalPembayaranHariIni(){return new Date().toISOString().slice(0,10);}
+function escapePembayaran(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+function kosongkanFormPembayaran(){
+  ["idPembayaran","periodePembayaran","tagihanPembayaran","dibayarPembayaran","keteranganPembayaran"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
+  const t=document.getElementById("tanggalPembayaran");if(t)t.value=tanggalPembayaranHariIni();
+  const j=document.getElementById("jenisPembayaran");if(j)j.value="SPP";
+  const s=document.getElementById("siswaPembayaran");if(s)s.value="";
+  const h=document.getElementById("judulFormPembayaran");if(h)h.textContent="Tambah Pembayaran";
+}
+async function isiPilihanSiswaPembayaran(){
+  const s=document.getElementById("siswaPembayaran");if(!s)return;
+  const sebelumnya=s.value;
+  s.innerHTML='<option value="">-- Pilih Siswa --</option>';
+  if(!dataSiswa.length) await tampilkanSiswa();
+  const rows=[...dataSiswa].filter(x=>(x.status||"Aktif")==="Aktif").sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"));
+  rows.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=(x.nama||"-")+" — "+(x.nis||"-")+" — "+(x.kelas||"-");s.appendChild(o);});
+  if(roleUser==="siswa"){
+    const own=profilUser?.siswaId||"";s.value=own;s.disabled=true;
+  }else{s.disabled=false;if([...s.options].some(o=>o.value===sebelumnya))s.value=sebelumnya;}
+}
+function isiFilterKelasPembayaran(){
+  const f=document.getElementById("filterKelasPembayaran");if(!f)return;
+  const old=f.value;f.innerHTML='<option value="">Semua Kelas</option>';
+  const kelas=[...new Set(dataSiswa.map(x=>x.kelas).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"id"));
+  kelas.forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;f.appendChild(o);});
+  if([...f.options].some(o=>o.value===old))f.value=old;
+}
+function updateRingkasanPembayaran(rows){
+  const totalTag=rows.reduce((n,x)=>n+Number(x.tagihan||0),0);
+  const totalBay=rows.reduce((n,x)=>n+Number(x.dibayar||0),0);
+  const totalSisa=rows.reduce((n,x)=>n+Math.max(Number(x.tagihan||0)-Number(x.dibayar||0),0),0);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set("paymentTotalTagihan",rupiahPembayaran(totalTag));
+  set("paymentTotalDibayar",rupiahPembayaran(totalBay));
+  set("paymentTotalSisa",rupiahPembayaran(totalSisa));
+  set("paymentTotalData",rows.length);
+}
+function renderHomePayment(rows){
+  const el=document.getElementById("homePaymentSummary");if(!el)return;
+  if(!rows.length){el.innerHTML='<div style="color:#7b8992;font-size:10px;">Belum ada data pembayaran.</div>';return;}
+  const terbaru=[...rows].sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||""))).slice(0,4);
+  el.innerHTML=terbaru.map(x=>`<div class="payment-home-row"><strong>${escapePembayaran(x.siswaNama||"-")} · ${escapePembayaran(x.jenis||"-")}</strong><span>${rupiahPembayaran(x.dibayar||0)} · ${escapePembayaran(x.status||"-")}</span></div>`).join("");
+}
+async function ambilPembayaran(){
+  let snap;
+  if(roleUser==="siswa"){
+    snap=await getDocs(query(collection(db,"pembayaranSiswa"),where("siswaId","==",profilUser?.siswaId||"")));
+  }else{
+    snap=await getDocs(collection(db,"pembayaranSiswa"));
+  }
+  const rows=[];snap.forEach(d=>rows.push({id:d.id,...d.data()}));
+  rows.forEach(x=>{x.tagihan=Number(x.tagihan||0);x.dibayar=Number(x.dibayar||0);x.sisa=Math.max(x.tagihan-x.dibayar,0);x.status=x.status||statusPembayaran(x.tagihan,x.dibayar);});
+  rows.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||""))||String(a.siswaNama||"").localeCompare(String(b.siswaNama||""),"id"));
+  return rows;
+}
+async function muatPembayaranHome(){
+  try{const rows=await ambilPembayaran();renderHomePayment(rows);}catch(e){console.warn("Ringkasan pembayaran belum dapat dimuat:",e);const el=document.getElementById("homePaymentSummary");if(el)el.innerHTML='<div style="color:#a94442;font-size:10px;">Informasi pembayaran belum dapat dimuat.</div>';}
+}
+async function tampilkanPembayaran(){
+  const t=document.getElementById("tabelPembayaran");if(!t)return;
+  t.innerHTML='<tr><td colspan="12" style="text-align:center;">Memuat data pembayaran...</td></tr>';
+  try{
+    if(roleUser!=="siswa" && !dataSiswa.length) await tampilkanSiswa();
+    if(roleUser!=="siswa") isiFilterKelasPembayaran();
+    const all=await ambilPembayaran();
+    const filterKelas=document.getElementById("filterKelasPembayaran")?.value||"";
+    const filterStatus=document.getElementById("filterStatusPembayaran")?.value||"";
+    const cari=(document.getElementById("cariPembayaran")?.value||"").trim().toLowerCase();
+    const rows=all.filter(x=>(!filterKelas||x.kelas===filterKelas)&&(!filterStatus||x.status===filterStatus)&&(!cari||String(x.siswaNama||"").toLowerCase().includes(cari)||String(x.nis||"").toLowerCase().includes(cari)));
+    dataPembayaran=rows;
+    updateRingkasanPembayaran(rows);
+    renderHomePayment(all);
+    if(!rows.length){t.innerHTML='<tr><td colspan="12" style="text-align:center;">Belum ada data pembayaran yang sesuai.</td></tr>';return;}
+    const bolehEdit=roleUser==="admin";
+    t.innerHTML=rows.map((x,i)=>{
+      const cls=classStatusPembayaran(x.status);
+      const aksi=roleUser==="admin"?`<div class="aksi"><button type="button" class="btn-warning" onclick="editPembayaran('${x.id}')">Edit</button><button type="button" class="btn-danger" onclick="hapusPembayaran('${x.id}')">Hapus</button></div>`:'<span class="payment-readonly">Hanya Lihat</span>';
+      return `<tr><td>${i+1}</td><td><strong>${escapePembayaran(x.siswaNama||"-")}</strong><br><small>${escapePembayaran(x.nis||"-")}</small></td><td>${escapePembayaran(x.kelas||"-")}</td><td>${escapePembayaran(x.tanggal||"-")}</td><td>${escapePembayaran(x.periode||"-")}</td><td>${escapePembayaran(x.jenis||"-")}</td><td>${rupiahPembayaran(x.tagihan)}</td><td>${rupiahPembayaran(x.dibayar)}</td><td>${rupiahPembayaran(x.sisa)}</td><td><span class="payment-status ${cls}">${escapePembayaran(x.status)}</span></td><td style="white-space:pre-wrap;max-width:220px;">${escapePembayaran(x.keterangan||"-")}</td><td>${aksi}</td></tr>`;
+    }).join("");
+  }catch(error){console.error(error);t.innerHTML=`<tr><td colspan="12" style="color:#c62828;text-align:center;">Gagal memuat pembayaran: ${escapePembayaran(error.message)}</td></tr>`;}
+}
+function bukaPanelPembayaran(){
+  if(!["admin","guru","siswa"].includes(roleUser))return;
+  sembunyikanSemuaPanel();
+  const p=document.getElementById("panelPembayaran");if(p)p.style.display="block";
+  document.querySelectorAll(".menu .card").forEach(e=>e.classList.remove("aktif"));
+  document.getElementById("menuPembayaran")?.classList.add("aktif");
+  const tambah=document.getElementById("btnTambahPembayaran");if(tambah)tambah.style.display=roleUser==="admin"?"inline-block":"none";
+  const form=document.getElementById("formPembayaran");if(form)form.style.display="none";
+  isiPilihanSiswaPembayaran().then(tampilkanPembayaran);
+}
+window.editPembayaran=async function(id){
+  if(roleUser!=="admin")return;
+  const x=dataPembayaran.find(a=>a.id===id);if(!x)return;
+  document.getElementById("idPembayaran").value=x.id;
+  document.getElementById("siswaPembayaran").value=x.siswaId||"";
+  document.getElementById("tanggalPembayaran").value=x.tanggal||tanggalPembayaranHariIni();
+  document.getElementById("periodePembayaran").value=x.periode||"";
+  document.getElementById("jenisPembayaran").value=x.jenis||"SPP";
+  document.getElementById("tagihanPembayaran").value=x.tagihan||0;
+  document.getElementById("dibayarPembayaran").value=x.dibayar||0;
+  document.getElementById("keteranganPembayaran").value=x.keterangan||"";
+  document.getElementById("judulFormPembayaran").textContent="Edit Pembayaran";
+  document.getElementById("formPembayaran").style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+window.hapusPembayaran=async function(id){
+  if(roleUser!=="admin")return;
+  const x=dataPembayaran.find(a=>a.id===id);if(!x)return;
+  if(!confirm(`Hapus data pembayaran ${x.siswaNama||"siswa"} - ${x.jenis||"pembayaran"}?`))return;
+  try{await deleteDoc(doc(db,"pembayaranSiswa",id));pesanPembayaran("Data pembayaran berhasil dihapus.","sukses");await tampilkanPembayaran();await muatPembayaranHome();}catch(e){console.error(e);pesanPembayaran("Gagal menghapus pembayaran: "+e.message,"error");}
+};
+document.getElementById("menuPembayaran")?.addEventListener("click",bukaPanelPembayaran);
+document.getElementById("btnTambahPembayaran")?.addEventListener("click",async()=>{
+  if(roleUser!=="admin")return;
+  await isiPilihanSiswaPembayaran();kosongkanFormPembayaran();
+  document.getElementById("formPembayaran").style.display="block";
+  document.getElementById("tanggalPembayaran").value=tanggalPembayaranHariIni();
+  document.getElementById("siswaPembayaran").focus();
+});
+document.getElementById("btnBatalPembayaran")?.addEventListener("click",()=>{kosongkanFormPembayaran();document.getElementById("formPembayaran").style.display="none";});
+document.getElementById("btnSimpanPembayaran")?.addEventListener("click",async()=>{
+  if(roleUser!=="admin"){pesanPembayaran("Hanya Admin yang dapat menambah atau mengubah pembayaran siswa.","error");return;}
+  const id=document.getElementById("idPembayaran").value.trim();
+  const siswaId=document.getElementById("siswaPembayaran").value;
+  const tanggal=document.getElementById("tanggalPembayaran").value;
+  const periode=document.getElementById("periodePembayaran").value.trim();
+  const jenis=document.getElementById("jenisPembayaran").value;
+  const tagihan=Number(document.getElementById("tagihanPembayaran").value||0);
+  const dibayar=Number(document.getElementById("dibayarPembayaran").value||0);
+  const keterangan=document.getElementById("keteranganPembayaran").value.trim();
+  if(!siswaId||!tanggal||!jenis){pesanPembayaran("Siswa, tanggal, dan jenis pembayaran wajib diisi.","error");return;}
+  if(tagihan<0||dibayar<0||dibayar>tagihan){pesanPembayaran("Nominal dibayar tidak boleh melebihi nominal tagihan.","error");return;}
+  const siswa=dataSiswa.find(x=>x.id===siswaId);if(!siswa){pesanPembayaran("Data siswa tidak ditemukan.","error");return;}
+  const status=statusPembayaran(tagihan,dibayar);
+  const payload={siswaId,siswaNama:siswa.nama||"",nis:siswa.nis||"",kelas:siswa.kelas||"",tanggal,periode,jenis,tagihan,dibayar,sisa:Math.max(tagihan-dibayar,0),status,keterangan,diperbaruiPada:serverTimestamp(),diperbaruiOlehUid:currentUser?.uid||"",diperbaruiOlehNama:profilUser?.nama||currentUser?.email||"Admin"};
+  try{
+    if(id) await updateDoc(doc(db,"pembayaranSiswa",id),payload);
+    else await addDoc(collection(db,"pembayaranSiswa"),{...payload,dibuatPada:serverTimestamp(),dibuatOlehUid:currentUser?.uid||"",dibuatOlehNama:profilUser?.nama||currentUser?.email||"Admin"});
+    pesanPembayaran(id?"Data pembayaran berhasil diperbarui.":"Data pembayaran berhasil ditambahkan.","sukses");
+    document.getElementById("formPembayaran").style.display="none";kosongkanFormPembayaran();
+    await tampilkanPembayaran();await muatPembayaranHome();
+  }catch(e){console.error(e);pesanPembayaran("Gagal menyimpan pembayaran: "+e.message,"error");}
+});
+document.getElementById("btnRefreshPembayaran")?.addEventListener("click",tampilkanPembayaran);
+document.getElementById("filterKelasPembayaran")?.addEventListener("change",tampilkanPembayaran);
+document.getElementById("filterStatusPembayaran")?.addEventListener("change",tampilkanPembayaran);
+document.getElementById("cariPembayaran")?.addEventListener("input",()=>{clearTimeout(window.__paymentTimer);window.__paymentTimer=setTimeout(tampilkanPembayaran,250);});
+
+/* =========================
    MENU E-RAPOR
 ========================= */
 let dataERaporSiswa=[];
@@ -5177,8 +5415,8 @@ function pesanERapor(teks,tipe){
 }
 
 function hideAllPanelsERapor(){
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda","panelPembayaran"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPembayaran","menuPengumuman","menuERapor","menuAkun","menuPembayaran"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
 async function siapkanERapor(){
@@ -5313,9 +5551,9 @@ function kosongkanFormAkun(){
 }
 
 function bukaPanelAkun(){
-  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda"].forEach(id=>document.getElementById(id).style.display="none");
+  ["panelSiswa","panelGuru","panelKelas","panelMapel","panelJadwal","panelNilai","panelAbsensi","panelPengumuman","panelERapor","panelAkun","panelAgenda","panelPembayaran"].forEach(id=>document.getElementById(id).style.display="none");
   document.getElementById("panelAkun").style.display="block";
-  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPengumuman","menuERapor","menuAkun"].forEach(id=>document.getElementById(id).classList.remove("aktif"));
+  ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPembayaran","menuPengumuman","menuERapor","menuAkun","menuPembayaran"].forEach(id=>document.getElementById(id).classList.remove("aktif"));
   document.getElementById("menuAkun").classList.add("aktif");
   const user=auth.currentUser;
   document.getElementById("akunEmailSekarang").textContent=user?.email || "-";
@@ -5477,6 +5715,7 @@ window.hapusAgendaAkademik=async function(id){
 
 document.getElementById("btnHomeAgenda")?.addEventListener("click",bukaPanelAgenda);
 document.getElementById("btnKelolaAgendaHome")?.addEventListener("click",bukaPanelAgenda);
+document.getElementById("btnHomePembayaran")?.addEventListener("click",()=>document.getElementById("menuPembayaran")?.click());
 document.getElementById("btnTambahAgenda")?.addEventListener("click",()=>{
   if(roleUser!=="admin"&&roleUser!=="guru")return;
   kosongkanFormAgenda();
