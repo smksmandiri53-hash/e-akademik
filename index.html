@@ -1079,17 +1079,6 @@
     </div>
 
 
-    <!-- FILTER JURUSAN SISWA -->
-    <div id="filterJurusanSiswa" style="display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 12px;">
-      <button type="button" class="btn-primary filter-jurusan-siswa aktif" data-jurusan="SEMUA">👥 Semua Siswa</button>
-      <button type="button" class="btn-secondary filter-jurusan-siswa" data-jurusan="TKJ">🖥️ TKJ</button>
-      <button type="button" class="btn-secondary filter-jurusan-siswa" data-jurusan="Pemasaran">📈 Pemasaran</button>
-      <button type="button" class="btn-secondary filter-jurusan-siswa" data-jurusan="TBSM">🔧 TBSM</button>
-      <button type="button" class="btn-secondary filter-jurusan-siswa" data-jurusan="AKL">📚 AKL</button>
-    </div>
-    <div id="filterKelasSiswa" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;"></div>
-    <div id="infoFilterJurusanSiswa" style="margin:0 0 12px;color:#666;font-size:13px;"></div>
-
     <div class="table-wrapper">
 
       <table>
@@ -3724,154 +3713,186 @@ document
    TAMPILKAN SISWA
 ========================= */
 
-let filterJurusanSiswaAktif = "SEMUA";
-let filterKelasSiswaAktif = "SEMUA";
-
-function daftarKelasUntukJurusan(jurusan) {
-  if (jurusan === "SEMUA") return [];
-  const set = new Set();
-  dataSiswa.forEach((siswa) => {
-    if (String(siswa.jurusan || "").trim().toLowerCase() === String(jurusan).trim().toLowerCase()) {
-      const kelas = String(siswa.kelas || "").trim();
-      if (kelas) set.add(kelas);
-    }
-  });
-  return Array.from(set).sort((a,b) => a.localeCompare(b, "id", {numeric:true}));
-}
-
-function renderFilterJurusanSiswa() {
-  const tombol = document.querySelectorAll(".filter-jurusan-siswa");
-  tombol.forEach((btn) => {
-    const aktif = btn.dataset.jurusan === filterJurusanSiswaAktif;
-    btn.classList.toggle("aktif", aktif);
-    btn.classList.toggle("btn-primary", aktif);
-    btn.classList.toggle("btn-secondary", !aktif);
-  });
-
-  const areaKelas = document.getElementById("filterKelasSiswa");
-  if (areaKelas) {
-    areaKelas.innerHTML = "";
-    if (filterJurusanSiswaAktif !== "SEMUA") {
-      const tombolSemua = document.createElement("button");
-      tombolSemua.type = "button";
-      tombolSemua.className = (filterKelasSiswaAktif === "SEMUA" ? "btn-primary" : "btn-secondary");
-      tombolSemua.textContent = "📂 Semua Kelas";
-      tombolSemua.dataset.kelas = "SEMUA";
-      tombolSemua.classList.add("filter-kelas-siswa");
-      areaKelas.appendChild(tombolSemua);
-
-      daftarKelasUntukJurusan(filterJurusanSiswaAktif).forEach((kelas) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = (filterKelasSiswaAktif === kelas ? "btn-primary" : "btn-secondary");
-        btn.textContent = "🏫 " + kelas;
-        btn.dataset.kelas = kelas;
-        btn.classList.add("filter-kelas-siswa");
-        areaKelas.appendChild(btn);
-      });
-    }
-  }
-
-  const info = document.getElementById("infoFilterJurusanSiswa");
-  if (info) {
-    if (filterJurusanSiswaAktif === "SEMUA") {
-      info.textContent = "Menampilkan semua jurusan dan kelas.";
-    } else if (filterKelasSiswaAktif === "SEMUA") {
-      info.textContent = "Menampilkan semua kelas jurusan " + filterJurusanSiswaAktif + ".";
-    } else {
-      info.textContent = "Menampilkan kelas " + filterKelasSiswaAktif + " jurusan " + filterJurusanSiswaAktif + ".";
-    }
-  }
-}
-
-function tampilkanSiswaTerfilter() {
-  const tabel = document.getElementById("tabelSiswa");
-  if (!tabel) return;
-
-  const daftar = dataSiswa.filter((siswa) => {
-    const cocokJurusan = filterJurusanSiswaAktif === "SEMUA" ||
-      String(siswa.jurusan || "").trim().toLowerCase() === filterJurusanSiswaAktif.trim().toLowerCase();
-    const cocokKelas = filterKelasSiswaAktif === "SEMUA" ||
-      String(siswa.kelas || "").trim().toLowerCase() === filterKelasSiswaAktif.trim().toLowerCase();
-    return cocokJurusan && cocokKelas;
-  });
-
-  renderFilterJurusanSiswa();
-
-  if (daftar.length === 0) {
-    tabel.innerHTML = `
-      <tr>
-        <td colspan="9" style="text-align:center;">
-          Belum ada data siswa untuk pilihan jurusan/kelas ini.
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  tabel.innerHTML = "";
-  daftar.forEach((siswa, index) => {
-    const baris = document.createElement("tr");
-    baris.innerHTML = `
-      <td>${index + 1}</td>
-      <td style="text-align:center;">${fotoHtml(cariFotoProfil(siswa), siswa.nama)}</td>
-      <td>${siswa.nama || "-"}</td>
-      <td>${siswa.nis || "-"}</td>
-      <td>${siswa.tingkat || "-"}</td>
-      <td>${siswa.jurusan || "-"}</td>
-      <td>${siswa.kelas || "-"}</td>
-      <td>${siswa.status || "-"}</td>
-      <td>
-        <div class="aksi">
-          <button class="btn-warning" onclick="editSiswa('${siswa.id}')">Edit</button>
-          <button class="btn-danger" onclick="hapusSiswa('${siswa.id}')">Hapus</button>
-        </div>
-      </td>
-    `;
-    tabel.appendChild(baris);
-  });
-}
-
 async function tampilkanSiswa() {
+
   await muatDataProfilFoto();
-  const tabel = document.getElementById("tabelSiswa");
-  if (!tabel) return;
+
+  const tabel =
+    document.getElementById("tabelSiswa");
+
+
   try {
-    tabel.innerHTML = `<tr><td colspan="9" style="text-align:center;">Memuat data...</td></tr>`;
-    const snapshot = await getDocs(collection(db, "siswa"));
+
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="9"
+          style="text-align:center;">
+
+          Memuat data...
+
+        </td>
+
+      </tr>
+
+    `;
+
+
+    const snapshot =
+      await getDocs(
+        collection(db, "siswa")
+      );
+
+
     dataSiswa = [];
+
+
     snapshot.forEach((dokumen) => {
-      dataSiswa.push({ id: dokumen.id, ...dokumen.data() });
+
+      dataSiswa.push({
+
+        id: dokumen.id,
+
+        ...dokumen.data()
+
+      });
+
     });
-    if (dataSiswa.length === 0) {
-      tabel.innerHTML = `<tr><td colspan="9" style="text-align:center;">Belum ada data siswa.</td></tr>`;
-      renderFilterJurusanSiswa();
+
+
+    if (
+      dataSiswa.length === 0
+    ) {
+
+      tabel.innerHTML = `
+
+        <tr>
+
+          <td
+            colspan="9"
+            style="text-align:center;">
+
+            Belum ada data siswa.
+
+          </td>
+
+        </tr>
+
+      `;
+
       return;
+
     }
-    tampilkanSiswaTerfilter();
+
+
+    tabel.innerHTML = "";
+
+
+    dataSiswa.forEach(
+      (siswa, index) => {
+
+
+        const baris =
+          document.createElement("tr");
+
+
+        baris.innerHTML = `
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td style="text-align:center;">
+            ${fotoHtml(cariFotoProfil(siswa),siswa.nama)}
+          </td>
+
+          <td>
+            ${siswa.nama || "-"}
+          </td>
+
+          <td>
+            ${siswa.nis || "-"}
+          </td>
+
+          <td>
+            ${siswa.tingkat || "-"}
+          </td>
+
+          <td>
+            ${siswa.jurusan || "-"}
+          </td>
+
+          <td>
+            ${siswa.kelas || "-"}
+          </td>
+
+          <td>
+            ${siswa.status || "-"}
+          </td>
+
+          <td>
+
+            <div class="aksi">
+
+              <button
+                class="btn-warning"
+                onclick="editSiswa('${siswa.id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="btn-danger"
+                onclick="hapusSiswa('${siswa.id}')">
+
+                Hapus
+
+              </button>
+
+            </div>
+
+          </td>
+
+        `;
+
+
+        tabel.appendChild(baris);
+
+      }
+    );
+
+
   } catch (error) {
+
     console.error(error);
-    tabel.innerHTML = `<tr><td colspan="9" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
+
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="8"
+          style="color:red;text-align:center;">
+
+          Gagal mengambil data:
+          ${error.message}
+
+        </td>
+
+      </tr>
+
+    `;
+
   }
+
 }
 
-document.addEventListener("click", (event) => {
-  const tombolJurusan = event.target.closest(".filter-jurusan-siswa");
-  if (tombolJurusan) {
-    filterJurusanSiswaAktif = tombolJurusan.dataset.jurusan || "SEMUA";
-    filterKelasSiswaAktif = "SEMUA";
-    tampilkanSiswaTerfilter();
-    return;
-  }
-
-  const tombolKelas = event.target.closest(".filter-kelas-siswa");
-  if (tombolKelas) {
-    filterKelasSiswaAktif = tombolKelas.dataset.kelas || "SEMUA";
-    tampilkanSiswaTerfilter();
-  }
-});
-
-renderFilterJurusanSiswa();
 
 /* =========================
    EDIT SISWA
