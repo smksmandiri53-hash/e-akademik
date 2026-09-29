@@ -2038,6 +2038,68 @@ let profilUser = null;
 let roleUser = "";
 let currentUser = null;
 
+async function hubungkanAkunSiswaKeDataManual(user) {
+  // Menghubungkan akun siswa mandiri dengan data siswa yang dibuat Guru/Wali Kelas.
+  // Kunci pencocokan utama adalah NIS agar nama yang sama tidak tertukar.
+  if (roleUser !== "siswa") return true;
+
+  const siswaIdSaatIni = String(profilUser?.siswaId || "").trim();
+  if (siswaIdSaatIni) {
+    try {
+      const snap = await getDoc(doc(db, "siswa", siswaIdSaatIni));
+      if (snap.exists()) return true;
+    } catch (e) {
+      console.warn("Pengecekan data siswa terhubung gagal:", e);
+    }
+  }
+
+  const nis = String(
+    profilUser?.nis || profilUser?.NIS || profilUser?.nisSiswa || ""
+  ).trim();
+
+  if (!nis) {
+    console.warn("Akun siswa belum memiliki NIS. Data manual belum dapat dicocokkan.");
+    return false;
+  }
+
+  try {
+    const q = query(collection(db, "siswa"), where("nis", "==", nis));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      console.warn("Data siswa manual dengan NIS " + nis + " belum ditemukan.");
+      return false;
+    }
+
+    if (snap.size > 1) {
+      console.warn("Ditemukan lebih dari satu data siswa dengan NIS " + nis + ". Akun tidak dihubungkan otomatis untuk mencegah salah data.");
+      return false;
+    }
+
+    const dok = snap.docs[0];
+    const data = dok.data() || {};
+
+    // Pastikan identitas dasar cocok sebelum menghubungkan akun.
+    const namaAkun = String(profilUser?.nama || "").trim().toLowerCase();
+    const namaData = String(data.nama || "").trim().toLowerCase();
+    if (namaAkun && namaData && namaAkun !== namaData) {
+      console.warn("NIS cocok tetapi nama berbeda. Akun tidak dihubungkan otomatis demi keamanan.");
+      return false;
+    }
+
+    await updateDoc(doc(db, "users", user.uid), {
+      siswaId: dok.id
+    });
+
+    profilUser.siswaId = dok.id;
+    console.log("Akun siswa berhasil dihubungkan ke data siswa:", dok.id);
+    return true;
+  } catch (e) {
+    console.error("Gagal menghubungkan akun siswa dengan data manual:", e);
+    return false;
+  }
+}
+
 async function muatProfilPengguna(user) {
   try {
     const snapProfil = await getDoc(doc(db, "users", user.uid));
@@ -2063,12 +2125,17 @@ async function muatProfilPengguna(user) {
     const siswaIdRaw = profilUser.siswaId ?? profilUser.siswaID ?? profilUser.studentId ?? profilUser.idSiswa ?? "";
     profilUser.siswaId = typeof siswaIdRaw === "string" ? siswaIdRaw.trim() : siswaIdRaw;
 
+    // Jika akun siswa dibuat mandiri dan belum mempunyai siswaId,
+    // coba hubungkan otomatis dengan data siswa yang sudah dimasukkan Guru/Wali Kelas.
     if (roleUser === "siswa" && !profilUser.siswaId) {
-      document.getElementById("emailAdmin").textContent = "Login sebagai: " + (profilUser.nama || user.email || "Siswa") + " (" + (user.email || "") + ")";
-      document.getElementById("roleUser").textContent = "Role: SISWA • siswaId belum terbaca. UID akun: " + user.uid;
-      document.getElementById("judulDashboard").textContent = "Akun Siswa Belum Terhubung";
-      console.error("Profil siswa tidak memiliki siswaId. Pastikan users/" + user.uid + " memiliki field siswaId yang berisi ID dokumen pada koleksi siswa.");
-      return false;
+      const terhubung = await hubungkanAkunSiswaKeDataManual(user);
+      if (!terhubung) {
+        document.getElementById("emailAdmin").textContent = "Login sebagai: " + (profilUser.nama || user.email || "Siswa") + " (" + (user.email || "") + ")";
+        document.getElementById("roleUser").textContent = "Role: SISWA • data siswa belum terhubung";
+        document.getElementById("judulDashboard").textContent = "Akun Siswa Belum Terhubung";
+        console.error("Akun siswa belum terhubung. Pastikan NIS pada users/" + user.uid + " sama dengan NIS pada koleksi siswa.");
+        return false;
+      }
     }
     fotoProfilUrl = profilUser.fotoData || profilUser.fotoUrl || "";
     if (fotoProfilUrl) {
