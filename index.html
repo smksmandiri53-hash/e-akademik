@@ -52,7 +52,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig={
@@ -73,18 +73,44 @@ $("tabDaftar").onclick=()=>{$("tabDaftar").classList.add("active");$("tabLogin")
 $("regRole").onchange=toggleRoleFields;
 
 $("btnLogin").onclick=async()=>{
- const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
+ const email=$("loginEmail").value.trim().toLowerCase(),password=$("loginPassword").value;
  if(!email||!password)return msg("Email dan password wajib diisi.");
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg("Format email tidak valid.");
  $("btnLogin").disabled=true;
- try{await signInWithEmailAndPassword(auth,email,password);location.href="dashboard.html";}
- catch(e){
-   let t="Login gagal.";
-   if(e.code==="auth/invalid-credential")t="Email atau password salah.";
-   else if(e.code==="auth/user-not-found")t="Akun belum terdaftar.";
-   else if(e.code==="auth/too-many-requests")t="Terlalu banyak percobaan. Coba lagi nanti.";
-   else if(e.message)t=e.message;
+ $("btnLogin").textContent="Memeriksa...";
+ clearMsg();
+ try{
+   const cred=await signInWithEmailAndPassword(auth,email,password);
+   if(!cred.user){throw new Error("Akun Firebase tidak ditemukan setelah login.");}
+   msg("Login berhasil. Membuka dashboard...",true);
+   setTimeout(()=>{location.replace("dashboard.html");},250);
+ }catch(e){
+   console.error("LOGIN ERROR",e.code,e.message);
+   let t="Login gagal. ";
+   switch(e.code){
+     case "auth/invalid-credential":
+     case "auth/invalid-login-credentials":
+     case "auth/wrong-password":
+     case "auth/user-not-found":
+       t+="Email atau password tidak cocok dengan akun Firebase."; break;
+     case "auth/user-disabled":
+       t+="Akun ini dinonaktifkan di Firebase Authentication."; break;
+     case "auth/operation-not-allowed":
+       t+="Metode login Email/Password belum diaktifkan di Firebase Authentication."; break;
+     case "auth/network-request-failed":
+       t+="Koneksi internet ke Firebase bermasalah. Periksa internet lalu coba lagi."; break;
+     case "auth/too-many-requests":
+       t+="Terlalu banyak percobaan login. Tunggu beberapa saat sebelum mencoba lagi."; break;
+     case "auth/internal-error":
+       t+="Terjadi kesalahan sementara pada layanan Firebase. Silakan coba lagi."; break;
+     default:
+       t+=(e.message||e.code||"Terjadi kesalahan yang tidak diketahui.");
+   }
    msg(t);
- }finally{$("btnLogin").disabled=false;}
+ }finally{
+   $("btnLogin").disabled=false;
+   $("btnLogin").textContent="Masuk ke Dashboard";
+ }
 };
 
 $("btnDaftar").onclick=async()=>{
