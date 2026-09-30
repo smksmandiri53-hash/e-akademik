@@ -3046,33 +3046,75 @@ document.getElementById("btnBatalMapel").addEventListener("click", () => {
 });
 
 document.getElementById("btnSimpanMapel").addEventListener("click", async () => {
-  const id = document.getElementById("idMapel").value;
+  const tombol = document.getElementById("btnSimpanMapel");
+  if (tombol.disabled) return;
+
+  const id = document.getElementById("idMapel").value.trim();
   const kode = document.getElementById("kodeMapel").value.trim();
   const nama = document.getElementById("namaMapel").value.trim();
   const tingkat = document.getElementById("tingkatMapel").value;
   const guru = document.getElementById("guruMapel").value;
-  const status = document.getElementById("statusMapel").value;
+  const status = document.getElementById("statusMapel").value || "Aktif";
 
+  if (!currentUser) {
+    tampilkanPesanMapel("Sesi login tidak ditemukan. Silakan login kembali.", "error");
+    return;
+  }
+  if (!["admin", "guru"].includes(roleUser)) {
+    tampilkanPesanMapel("Akun ini tidak memiliki hak untuk mengelola mata pelajaran.", "error");
+    return;
+  }
   if (!kode || !nama || !tingkat) {
     tampilkanPesanMapel("Kode, nama mata pelajaran, dan tingkat wajib diisi.", "error");
     return;
   }
 
+  tombol.disabled = true;
+  const teksLama = tombol.textContent;
+  tombol.textContent = "Menyimpan...";
+
   try {
-    const data = { kode, nama, tingkat, guru: guru || "-", status };
+    const data = {
+      kode,
+      nama,
+      tingkat,
+      guru: guru || "-",
+      status,
+      updatedAt: serverTimestamp()
+    };
+
     if (id) {
       await updateDoc(doc(db, "mataPelajaran", id), data);
       tampilkanPesanMapel("Mata pelajaran berhasil diperbarui.", "sukses");
     } else {
-      await addDoc(collection(db, "mataPelajaran"), data);
+      // Buat ID di client lalu setDoc. Ini menjaga alur tambah tetap aman
+      // dan tidak mengubah struktur koleksi mataPelajaran yang sudah ada.
+      const refBaru = doc(collection(db, "mataPelajaran"));
+      await setDoc(refBaru, {
+        ...data,
+        createdByUid: currentUser.uid,
+        dibuatPada: serverTimestamp()
+      });
       tampilkanPesanMapel("Mata pelajaran berhasil ditambahkan.", "sukses");
     }
+
     formMapel.style.display = "none";
     kosongkanFormMapel();
-    tampilkanMapel();
+    await tampilkanMapel();
   } catch (error) {
-    console.error(error);
-    tampilkanPesanMapel("Gagal menyimpan data: " + error.message, "error");
+    console.error("SIMPAN MAPEL ERROR", error?.code, error?.message, error);
+    let pesan = "Gagal menyimpan data mata pelajaran.";
+    if (error?.code === "permission-denied" || error?.code === "firestore/permission-denied") {
+      pesan += " Firebase Rules menolak akun Guru. Pastikan Rules koleksi mataPelajaran mengizinkan Admin dan Guru.";
+    } else if (error?.code === "unavailable") {
+      pesan += " Koneksi ke Firebase sedang bermasalah.";
+    } else {
+      pesan += " " + (error?.message || "Silakan coba lagi.");
+    }
+    tampilkanPesanMapel(pesan, "error");
+  } finally {
+    tombol.disabled = false;
+    tombol.textContent = teksLama;
   }
 });
 
