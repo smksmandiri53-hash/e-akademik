@@ -2348,18 +2348,11 @@ onAuthStateChanged(auth, async (user) => {
     const profilBerhasil = await muatProfilPengguna(user);
     if (profilBerhasil) {
       if (roleUser === "siswa") { await tampilkanDataSaya(); }
-      else {
-        await tampilkanSiswa();
-        await tampilkanGuru();
-        mulaiPantauanSiswaRealtime();
-        mulaiPantauanGuruRealtime();
-        await tampilkanPersetujuanNilai();
-      }
+      else { await tampilkanSiswa(); await tampilkanPersetujuanNilai(); }
       await muatPembayaranHome();
     }
   } else {
     if (unsubscribeSiswaRealtime) { unsubscribeSiswaRealtime(); unsubscribeSiswaRealtime = null; }
-    if (unsubscribeGuruRealtime) { unsubscribeGuruRealtime(); unsubscribeGuruRealtime = null; }
     window.location.href = "index.html";
   }
 });
@@ -4749,170 +4742,186 @@ document
    TAMPILKAN GURU
 ========================= */
 
-let unsubscribeGuruRealtime = null;
-
-function renderTabelGuru() {
-  const tabel = document.getElementById("tabelGuru");
-  if (!tabel) return;
-  if (!dataGuru.length) {
-    tabel.innerHTML = '<tr><td colspan="8" style="text-align:center;">Belum ada data guru.</td></tr>';
-    return;
-  }
-  tabel.innerHTML = "";
-  dataGuru.forEach((guru, index) => {
-    const baris = document.createElement("tr");
-    baris.innerHTML = `
-      <td>${index + 1}</td>
-      <td style="text-align:center;">${fotoHtml(cariFotoProfil(guru),guru.nama)}</td>
-      <td>${guru.nama || "-"}</td>
-      <td>${guru.nip || "-"}</td>
-      <td>${guru.nuptk || "-"}</td>
-      <td>${guru.mapel || "-"}</td>
-      <td>${guru.status || "-"}</td>
-      <td><div class="aksi">
-        <button class="btn-warning" onclick="editGuru('${guru.id}')">Edit</button>
-        <button class="btn-danger" onclick="hapusGuru('${guru.id}')">Hapus</button>
-      </div></td>`;
-    tabel.appendChild(baris);
-  });
-}
-
-function mulaiPantauanGuruRealtime() {
-  if (unsubscribeGuruRealtime) {
-    unsubscribeGuruRealtime();
-    unsubscribeGuruRealtime = null;
-  }
-  if (!currentUser || !["admin","guru"].includes(roleUser)) return;
-
-  const tabel = document.getElementById("tabelGuru");
-  if (tabel) tabel.innerHTML = '<tr><td colspan="8" style="text-align:center;">Memantau data guru...</td></tr>';
-
-  let guruSnapshot = null;
-  let usersSnapshot = null;
-  let sedangMemperbaiki = false;
-
-  const renderGabunganGuru = async () => {
-    const guruMap = new Map();
-    const usersGuru = [];
-
-    if (guruSnapshot) {
-      guruSnapshot.forEach(d => guruMap.set(d.id, { id: d.id, ...d.data() }));
-    }
-
-    if (usersSnapshot) {
-      usersSnapshot.forEach(d => {
-        const u = d.data() || {};
-        if (u.role !== "guru") return;
-        usersGuru.push({ id: d.id, ...u });
-        const guruId = String(u.guruId || d.id).trim() || d.id;
-        if (!guruMap.has(guruId)) {
-          guruMap.set(guruId, {
-            id: guruId,
-            uid: u.uid || d.id,
-            nama: u.nama || "",
-            email: u.email || "",
-            nip: u.nip || "-",
-            nuptk: u.nuptk || "-",
-            mapel: u.mapel || "",
-            kelasWali: u.kelasWali || "",
-            status: u.status || "Aktif",
-            akunUid: u.uid || d.id,
-            _dariAkun: true
-          });
-        }
-      });
-    }
-
-    dataGuru = Array.from(guruMap.values());
-    dataGuru.sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"));
-
-    // Jika Admin menemukan akun Guru yang belum memiliki dokumen guru/{uid},
-    // buat dokumen akademiknya otomatis. Guru biasa tetap hanya membaca data.
-    if (roleUser === "admin" && !sedangMemperbaiki && usersSnapshot && guruSnapshot) {
-      const yangBelumAda = usersGuru.filter(u => {
-        const guruId = String(u.guruId || u.uid || u.id || "").trim();
-        return guruId && !guruSnapshot.docs.some(d => d.id === guruId);
-      });
-      if (yangBelumAda.length) {
-        sedangMemperbaiki = true;
-        try {
-          for (const u of yangBelumAda) {
-            const guruId = String(u.guruId || u.uid || u.id || "").trim();
-            await setDoc(doc(db, "guru", guruId), {
-              uid: u.uid || u.id,
-              akunUid: u.uid || u.id,
-              nama: u.nama || "",
-              nip: u.nip || "-",
-              nuptk: u.nuptk || "-",
-              mapel: u.mapel || "",
-              kelasWali: u.kelasWali || "",
-              email: u.email || "",
-              status: u.status || "Aktif",
-              diperbaruiPada: serverTimestamp()
-            }, { merge: true });
-          }
-        } catch (e) {
-          console.error("Pemulihan data guru gagal:", e);
-        } finally {
-          sedangMemperbaiki = false;
-        }
-      }
-    }
-
-    try { await muatDataProfilFoto(); } catch(e) { console.warn("Foto guru belum tersinkron:", e); }
-    renderTabelGuru();
-    const stat = document.getElementById("statGuru");
-    if (stat) stat.textContent = String(dataGuru.length);
-  };
-
-  const stopGuru = onSnapshot(collection(db, "guru"), async snapshot => {
-    guruSnapshot = snapshot;
-    await renderGabunganGuru();
-  }, error => console.error("Pantauan koleksi guru gagal:", error));
-
-  const stopUsers = onSnapshot(collection(db, "users"), async snapshot => {
-    usersSnapshot = snapshot;
-    await renderGabunganGuru();
-  }, error => console.error("Pantauan akun guru gagal:", error));
-
-  unsubscribeGuruRealtime = () => {
-    stopGuru();
-    stopUsers();
-  };
-}
-
 async function tampilkanGuru() {
+
   await muatDataProfilFoto();
-  const tabel = document.getElementById("tabelGuru");
+
+  const tabel =
+    document.getElementById(
+      "tabelGuru"
+    );
+
+
   try {
-    tabel.innerHTML = '<tr><td colspan="8" style="text-align:center;">Memuat data...</td></tr>';
-    const [guruSnapshot, usersSnapshot] = await Promise.all([
-      getDocs(collection(db, "guru")),
-      getDocs(collection(db, "users"))
-    ]);
-    const guruMap = new Map();
-    guruSnapshot.forEach(d => guruMap.set(d.id, { id:d.id, ...d.data() }));
-    usersSnapshot.forEach(d => {
-      const u = d.data() || {};
-      if (u.role !== "guru") return;
-      const guruId = String(u.guruId || d.id).trim() || d.id;
-      if (!guruMap.has(guruId)) {
-        guruMap.set(guruId, {
-          id:guruId, uid:u.uid || d.id, akunUid:u.uid || d.id,
-          nama:u.nama || "", email:u.email || "", nip:u.nip || "-",
-          nuptk:u.nuptk || "-", mapel:u.mapel || "", kelasWali:u.kelasWali || "",
-          status:u.status || "Aktif", _dariAkun:true
+
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="8"
+          style="text-align:center;">
+
+          Memuat data...
+
+        </td>
+
+      </tr>
+
+    `;
+
+
+    const snapshot =
+      await getDocs(
+        collection(db, "guru")
+      );
+
+
+    dataGuru = [];
+
+
+    snapshot.forEach(
+      (dokumen) => {
+
+        dataGuru.push({
+
+          id: dokumen.id,
+
+          ...dokumen.data()
+
         });
+
       }
-    });
-    dataGuru = Array.from(guruMap.values());
-    dataGuru.sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
-    renderTabelGuru();
-    const stat = document.getElementById("statGuru"); if (stat) stat.textContent = String(dataGuru.length);
+    );
+
+
+    if (
+      dataGuru.length === 0
+    ) {
+
+      tabel.innerHTML = `
+
+        <tr>
+
+          <td
+            colspan="8"
+            style="text-align:center;">
+
+            Belum ada data guru.
+
+          </td>
+
+        </tr>
+
+      `;
+
+      return;
+
+    }
+
+
+    tabel.innerHTML = "";
+
+
+    dataGuru.forEach(
+      (guru, index) => {
+
+
+        const baris =
+          document.createElement(
+            "tr"
+          );
+
+
+        baris.innerHTML = `
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td style="text-align:center;">
+            ${fotoHtml(cariFotoProfil(guru),guru.nama)}
+          </td>
+
+          <td>
+            ${guru.nama || "-"}
+          </td>
+
+          <td>
+            ${guru.nip || "-"}
+          </td>
+
+          <td>
+            ${guru.nuptk || "-"}
+          </td>
+
+          <td>
+            ${guru.mapel || "-"}
+          </td>
+
+          <td>
+            ${guru.status || "-"}
+          </td>
+
+          <td>
+
+            <div class="aksi">
+
+              <button
+                class="btn-warning"
+                onclick="editGuru('${guru.id}')">
+
+                Edit
+
+              </button>
+
+
+              <button
+                class="btn-danger"
+                onclick="hapusGuru('${guru.id}')">
+
+                Hapus
+
+              </button>
+
+            </div>
+
+          </td>
+
+        `;
+
+
+        tabel.appendChild(baris);
+
+      }
+    );
+
+
   } catch (error) {
+
     console.error(error);
-    tabel.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Gagal mengambil data: ${error.message}</td></tr>`;
+
+
+    tabel.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="7"
+          style="color:red;text-align:center;">
+
+          Gagal mengambil data:
+          ${error.message}
+
+        </td>
+
+      </tr>
+
+    `;
+
   }
+
 }
 
 
@@ -5624,7 +5633,7 @@ function renderHomePayment(rows){
   const el=document.getElementById("homePaymentSummary");if(!el)return;
   if(!rows.length){el.innerHTML='<div style="color:#7b8992;font-size:10px;">Belum ada data pembayaran.</div>';return;}
   const terbaru=[...rows].sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||""))).slice(0,4);
-  el.innerHTML=terbaru.map(x=>`<div class="payment-home-row"><strong>${escapePembayaran(x.siswaNama||"-")} · ${escapePembayaran(x.jenis||"-")}</strong><span>${rupiahPembayaran(x.dibayar||0)} · ${escapePembayaran(x.status||"-")}</span></div>`).join("");
+  el.innerHTML=terbaru.map(x=>`<div class="payment-home-row"><strong>${escapePembayaran(x.siswaNama||"-")} • ${escapePembayaran(x.jenis||"-")}</strong><span>${rupiahPembayaran(x.dibayar||0)} • ${escapePembayaran(x.status||"-")}</span></div>`).join("");
 }
 async function ambilPembayaran(){
   let snap;
