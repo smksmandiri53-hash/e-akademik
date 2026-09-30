@@ -1468,6 +1468,55 @@
 
     <div id="pesanNilai" class="pesan"></div>
 
+    <!-- Filter Data Nilai: hanya menyaring tampilan, tidak mengubah data Firestore -->
+    <div id="filterNilai" class="form-grid" style="margin:0 0 18px 0;">
+      <div class="field">
+        <label>Filter Kelas</label>
+        <select id="filterKelasNilai">
+          <option value="">Semua Kelas</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Filter Siswa</label>
+        <select id="filterSiswaNilai">
+          <option value="">Semua Siswa</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Filter Mata Pelajaran</label>
+        <select id="filterMapelNilai">
+          <option value="">Semua Mata Pelajaran</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Filter Guru</label>
+        <select id="filterGuruNilai">
+          <option value="">Semua Guru</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Filter Semester</label>
+        <select id="filterSemesterNilai">
+          <option value="">Semua Semester</option>
+          <option value="Ganjil">Ganjil</option>
+          <option value="Genap">Genap</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Filter Status</label>
+        <select id="filterStatusNilai">
+          <option value="">Semua Status</option>
+          <option value="menunggu">Menunggu Persetujuan</option>
+          <option value="disetujui">Disetujui</option>
+          <option value="ditolak">Ditolak</option>
+        </select>
+      </div>
+      <div class="field" style="display:flex;align-items:end;">
+        <button type="button" class="btn-secondary" id="btnResetFilterNilai" style="width:100%;">Reset Filter</button>
+      </div>
+    </div>
+    <div id="infoFilterNilai" style="margin:-4px 0 15px 0;color:#666;font-size:14px;"></div>
+
     <div id="formNilai">
       <h3 id="judulFormNilai">Tambah Nilai</h3>
       <input type="hidden" id="idNilai">
@@ -5608,94 +5657,190 @@ window.tolakNilai = async function(id) {
   }
 };
 
+function normalisasiFilterNilai(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function isiPilihanFilterNilai(data) {
+  const filterKelas = document.getElementById("filterKelasNilai");
+  const filterSiswa = document.getElementById("filterSiswaNilai");
+  const filterMapel = document.getElementById("filterMapelNilai");
+  const filterGuru = document.getElementById("filterGuruNilai");
+  const filterSemester = document.getElementById("filterSemesterNilai");
+  const filterStatus = document.getElementById("filterStatusNilai");
+  if (!filterKelas || !filterSiswa || !filterMapel || !filterGuru || !filterSemester || !filterStatus) return;
+
+  const nilaiSebelumnya = {
+    kelas: filterKelas.value,
+    siswa: filterSiswa.value,
+    mapel: filterMapel.value,
+    guru: filterGuru.value,
+    semester: filterSemester.value,
+    status: filterStatus.value
+  };
+
+  const unik = (items) => [...new Set(items.map(v => String(v ?? "").trim()).filter(Boolean))]
+    .sort((a,b) => a.localeCompare(b, "id"));
+
+  const isi = (el, nilaiDefault, values) => {
+    el.innerHTML = `<option value="">${nilaiDefault}</option>`;
+    values.forEach(v => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      el.appendChild(o);
+    });
+  };
+
+  isi(filterKelas, "Semua Kelas", unik(data.map(n => n.kelas)));
+  isi(filterSiswa, "Semua Siswa", unik(data.map(n => n.siswaNama)));
+  isi(filterMapel, "Semua Mata Pelajaran", unik(data.map(n => n.mapel)));
+  isi(filterGuru, "Semua Guru", unik(data.map(n => n.guru)));
+  isi(filterSemester, "Semua Semester", ["Ganjil", "Genap"].filter(v => data.some(n => normalisasiFilterNilai(n.semester) === normalisasiFilterNilai(v))));
+  filterStatus.innerHTML = '<option value="">Semua Status</option>';
+  [
+    ["menunggu", "Menunggu Persetujuan"],
+    ["disetujui", "Disetujui"],
+    ["ditolak", "Ditolak"]
+  ].filter(([v]) => data.some(n => normalisasiFilterNilai(n.status || "menunggu") === v))
+   .forEach(([value, label]) => {
+     const o = document.createElement("option");
+     o.value = value;
+     o.textContent = label;
+     filterStatus.appendChild(o);
+   });
+
+  // Pulihkan pilihan filter yang masih tersedia setelah data diperbarui.
+  if ([...filterKelas.options].some(o => o.value === nilaiSebelumnya.kelas)) filterKelas.value = nilaiSebelumnya.kelas;
+  if ([...filterSiswa.options].some(o => o.value === nilaiSebelumnya.siswa)) filterSiswa.value = nilaiSebelumnya.siswa;
+  if ([...filterMapel.options].some(o => o.value === nilaiSebelumnya.mapel)) filterMapel.value = nilaiSebelumnya.mapel;
+  if ([...filterGuru.options].some(o => o.value === nilaiSebelumnya.guru)) filterGuru.value = nilaiSebelumnya.guru;
+  if ([...filterSemester.options].some(o => o.value === nilaiSebelumnya.semester)) filterSemester.value = nilaiSebelumnya.semester;
+  if ([...filterStatus.options].some(o => o.value === nilaiSebelumnya.status)) filterStatus.value = nilaiSebelumnya.status;
+}
+
+function terapkanFilterNilai() {
+  const filterKelas = normalisasiFilterNilai(document.getElementById("filterKelasNilai")?.value);
+  const filterSiswa = normalisasiFilterNilai(document.getElementById("filterSiswaNilai")?.value);
+  const filterMapel = normalisasiFilterNilai(document.getElementById("filterMapelNilai")?.value);
+  const filterGuru = normalisasiFilterNilai(document.getElementById("filterGuruNilai")?.value);
+  const filterSemester = normalisasiFilterNilai(document.getElementById("filterSemesterNilai")?.value);
+  const filterStatus = normalisasiFilterNilai(document.getElementById("filterStatusNilai")?.value);
+
+  return dataNilai.filter(n => {
+    const status = normalisasiFilterNilai(n.status || "menunggu");
+    return (!filterKelas || normalisasiFilterNilai(n.kelas) === filterKelas) &&
+           (!filterSiswa || normalisasiFilterNilai(n.siswaNama) === filterSiswa) &&
+           (!filterMapel || normalisasiFilterNilai(n.mapel) === filterMapel) &&
+           (!filterGuru || normalisasiFilterNilai(n.guru) === filterGuru) &&
+           (!filterSemester || normalisasiFilterNilai(n.semester) === filterSemester) &&
+           (!filterStatus || status === filterStatus);
+  });
+}
+
+function renderTabelNilai(dataTampil) {
+  const tabel = document.getElementById("tabelNilai");
+  const info = document.getElementById("infoFilterNilai");
+  if (!tabel) return;
+
+  if (info) {
+    info.textContent = `Menampilkan ${dataTampil.length} dari ${dataNilai.length} data nilai.`;
+  }
+
+  if (!dataTampil.length) {
+    tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Tidak ada data nilai yang sesuai dengan filter.</td></tr>';
+    return;
+  }
+
+  tabel.innerHTML = "";
+  dataTampil.forEach((n, index) => {
+    const tr = document.createElement("tr");
+    const statusKey = normalisasiFilterNilai(n.status || "menunggu");
+    const statusLabel = statusKey === "disetujui"
+      ? '<span style="color:#198754;font-weight:bold;">Disetujui</span>'
+      : statusKey === "ditolak"
+        ? '<span style="color:#dc3545;font-weight:bold;">Ditolak</span>'
+        : '<span style="color:#856404;font-weight:bold;">Menunggu Persetujuan</span>';
+
+    let aksi = "";
+    if (roleUser === "siswa") {
+      aksi = '<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>';
+    } else if (roleUser === "admin") {
+      aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
+              <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
+    } else if (roleUser === "guru") {
+      if (statusKey === "disetujui") {
+        aksi = '<span style="color:#198754;font-weight:bold;">Resmi</span>';
+      } else {
+        aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
+      }
+    }
+
+    tr.innerHTML = `<td>${index + 1}</td>
+      <td>${n.siswaNama || "-"}</td>
+      <td>${n.kelas || "-"}</td>
+      <td>${n.mapel || "-"}</td>
+      <td>${n.guru || "-"}</td>
+      <td>${n.semester || "-"}</td>
+      <td>${n.tugas ?? "-"}</td>
+      <td>${n.uts ?? "-"}</td>
+      <td>${n.uas ?? "-"}</td>
+      <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
+      <td>${statusLabel}${statusKey === "ditolak" && n.rejectionReason ? `<br><small style="color:#dc3545;">Alasan: ${n.rejectionReason}</small>` : ""}</td>
+      <td><div class="aksi">${aksi}</div></td>`;
+    tabel.appendChild(tr);
+  });
+}
+
 async function tampilkanNilai() {
   const tabel = document.getElementById("tabelNilai");
   tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Memuat data...</td></tr>';
 
   try {
     let snapshot;
-
-    // Firestore Rules bukan filter. Karena itu query harus sesuai hak akses masing-masing role.
     if (roleUser === "admin") {
-      // Admin dapat melihat seluruh nilai.
       snapshot = await getDocs(collection(db, "nilai"));
     } else if (roleUser === "guru") {
-      // Guru hanya melihat nilai yang dia ajukan sendiri, termasuk yang masih menunggu, ditolak, dan sudah disetujui.
-      snapshot = await getDocs(
-        query(
-          collection(db, "nilai"),
-          where("submittedByUid", "==", currentUser?.uid || "")
-        )
-      );
+      snapshot = await getDocs(query(collection(db, "nilai"), where("submittedByUid", "==", currentUser?.uid || "")));
     } else if (roleUser === "siswa") {
-      // Siswa hanya melihat nilai miliknya yang sudah disahkan Admin.
-      snapshot = await getDocs(
-        query(
-          collection(db, "nilai"),
-          where("siswaId", "==", profilUser?.siswaId || ""),
-          where("status", "==", "disetujui")
-        )
-      );
+      snapshot = await getDocs(query(
+        collection(db, "nilai"),
+        where("siswaId", "==", profilUser?.siswaId || ""),
+        where("status", "==", "disetujui")
+      ));
     } else {
       snapshot = { forEach: () => {} };
     }
 
     dataNilai = [];
-    snapshot.forEach(d => {
-      dataNilai.push({ id: d.id, ...d.data() });
-    });
+    snapshot.forEach(d => dataNilai.push({ id: d.id, ...d.data() }));
+    dataNilai.sort((a,b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
 
-    dataNilai.sort((a, b) => String(a.siswaNama || "").localeCompare(String(b.siswaNama || ""), "id"));
-
-    if (!dataNilai.length) {
-      tabel.innerHTML = '<tr><td colspan="12" style="text-align:center;">Belum ada data nilai.</td></tr>';
-      return;
-    }
-
-    tabel.innerHTML = "";
-    dataNilai.forEach((n, index) => {
-      const tr = document.createElement("tr");
-      const statusLabel = n.status === "disetujui"
-        ? '<span style="color:#198754;font-weight:bold;">Disetujui</span>'
-        : n.status === "ditolak"
-          ? '<span style="color:#dc3545;font-weight:bold;">Ditolak</span>'
-          : '<span style="color:#856404;font-weight:bold;">Menunggu Persetujuan</span>';
-
-      let aksi = "";
-
-      if (roleUser === "siswa") {
-        aksi = '<span style="color:#198754;font-weight:bold;">Hanya Lihat</span>';
-      } else if (roleUser === "admin") {
-        // Admin selalu memiliki kontrol penuh, termasuk menghapus nilai yang sudah disetujui.
-        aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>
-                <button type="button" class="btn-danger" onclick="hapusNilai('${n.id}')">Hapus</button>`;
-      } else if (roleUser === "guru") {
-        if (n.status === "disetujui") {
-          aksi = '<span style="color:#198754;font-weight:bold;">Resmi</span>';
-        } else {
-          aksi = `<button type="button" class="btn-warning" onclick="editNilai('${n.id}')">Edit</button>`;
-        }
-      }
-
-      tr.innerHTML = `<td>${index + 1}</td>
-        <td>${n.siswaNama || "-"}</td>
-        <td>${n.kelas || "-"}</td>
-        <td>${n.mapel || "-"}</td>
-        <td>${n.guru || "-"}</td>
-        <td>${n.semester || "-"}</td>
-        <td>${n.tugas ?? "-"}</td>
-        <td>${n.uts ?? "-"}</td>
-        <td>${n.uas ?? "-"}</td>
-        <td><strong>${n.nilaiAkhir ?? "-"}</strong></td>
-        <td>${statusLabel}${n.status === "ditolak" && n.rejectionReason ? `<br><small style="color:#dc3545;">Alasan: ${n.rejectionReason}</small>` : ""}</td>
-        <td><div class="aksi">${aksi}</div></td>`;
-      tabel.appendChild(tr);
-    });
+    isiPilihanFilterNilai(dataNilai);
+    const hasilFilter = terapkanFilterNilai();
+    renderTabelNilai(hasilFilter);
   } catch (error) {
     console.error("Gagal mengambil data nilai:", error);
     tabel.innerHTML = `<tr><td colspan="12" style="color:red;text-align:center;">Gagal mengambil data nilai: ${error.message}</td></tr>`;
   }
 }
+
+["filterKelasNilai","filterSiswaNilai","filterMapelNilai","filterGuruNilai","filterSemesterNilai","filterStatusNilai"].forEach(id => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    renderTabelNilai(terapkanFilterNilai());
+  });
+});
+
+document.getElementById("btnResetFilterNilai")?.addEventListener("click", () => {
+  ["filterKelasNilai","filterSiswaNilai","filterMapelNilai","filterGuruNilai","filterSemesterNilai","filterStatusNilai"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  renderTabelNilai(terapkanFilterNilai());
+});
 
 window.editNilai = async function(id) {
   const n = dataNilai.find(item => item.id === id);
