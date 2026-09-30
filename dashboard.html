@@ -3961,24 +3961,117 @@ function mulaiPantauanSiswaRealtime() {
     unsubscribeSiswaRealtime = null;
   }
   if (!currentUser || !["admin","guru"].includes(roleUser)) return;
+
   const tabel = document.getElementById("tabelSiswa");
   if (tabel) tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Memantau data siswa...</td></tr>';
-  unsubscribeSiswaRealtime = onSnapshot(collection(db, "siswa"), async (snapshot) => {
-    dataSiswa = [];
-    snapshot.forEach(d => dataSiswa.push({id:d.id, ...d.data()}));
+
+  // Pantau dua sumber agar akun siswa baru tetap masuk meskipun dokumen
+  // siswa/{uid} terlambat dibuat. Dokumen users/{uid} dipakai sebagai
+  // sumber pemulihan, lalu dashboard Admin/Guru membuat dokumen siswa
+  // secara otomatis jika memang belum ada.
+  let siswaSnapshot = null;
+  let usersSnapshot = null;
+  let sedangMemperbaiki = false;
+
+  const renderGabungan = async () => {
+    const siswaMap = new Map();
+    const usersSiswa = [];
+
+    if (siswaSnapshot) {
+      siswaSnapshot.forEach(d => siswaMap.set(d.id, { id: d.id, ...d.data() }));
+    }
+
+    if (usersSnapshot) {
+      usersSnapshot.forEach(d => {
+        const u = d.data() || {};
+        if (u.role !== "siswa") return;
+        usersSiswa.push({ id: d.id, ...u });
+
+        const siswaId = String(u.siswaId || d.id).trim() || d.id;
+        if (!siswaMap.has(siswaId)) {
+          // Tampilkan segera dari users agar tidak menunggu refresh.
+          siswaMap.set(siswaId, {
+            id: siswaId,
+            uid: u.uid || d.id,
+            nama: u.nama || "",
+            email: u.email || "",
+            nis: u.nis || "",
+            tingkat: u.tingkat || "",
+            jurusan: u.jurusan || "",
+            kelas: u.kelas || "",
+            status: u.status || "Aktif",
+            siswaId,
+            akunUid: u.uid || d.id,
+            _dariAkun: true
+          });
+        }
+      });
+    }
+
+    dataSiswa = Array.from(siswaMap.values());
+
+    // Jika users/{uid} sudah ada tetapi siswa/{uid} belum ada, pulihkan
+    // dokumen siswa secara otomatis. Ini tidak mengubah fitur lama; hanya
+    // memastikan pendaftaran akun siswa selalu menghasilkan Data Siswa.
+    if (!sedangMemperbaiki && usersSnapshot) {
+      const yangBelumAda = usersSiswa.filter(u => {
+        const siswaId = String(u.siswaId || u.uid || "").trim() || u.uid;
+        return siswaId && !siswaSnapshot?.docs.some(d => d.id === siswaId);
+      });
+
+      if (yangBelumAda.length) {
+        sedangMemperbaiki = true;
+        try {
+          for (const u of yangBelumAda) {
+            const siswaId = String(u.siswaId || u.uid || "").trim() || u.uid;
+            await setDoc(doc(db, "siswa", siswaId), {
+              nama: u.nama || "",
+              nis: u.nis || "",
+              tingkat: u.tingkat || "",
+              jurusan: u.jurusan || "",
+              kelas: u.kelas || "",
+              status: u.status || "Aktif",
+              siswaId,
+              akunUid: u.uid || u.id,
+              email: u.email || "",
+              diperbaruiPada: serverTimestamp()
+            }, { merge: true });
+          }
+        } catch (e) {
+          console.error("Pemulihan data siswa gagal:", e);
+        } finally {
+          sedangMemperbaiki = false;
+        }
+      }
+    }
+
     try { await muatDataProfilFoto(); } catch(e) { console.warn("Foto siswa belum tersinkron:", e); }
     renderTabelSiswa();
-    // Menjaga pilihan siswa pada form Nilai tetap mengikuti data terbaru.
     if (typeof isiPilihanSiswaNilai === "function") {
       try { await isiPilihanSiswaNilai(); } catch(e) {}
     }
     const stat = document.getElementById("statSiswa");
     if (stat) stat.textContent = String(dataSiswa.length);
-  }, (error) => {
-    console.error("Pantauan realtime siswa gagal:", error);
-    // Tetap gunakan pembacaan biasa agar fitur lama tidak berhenti.
-    tampilkanSiswa();
+  };
+
+  const stopSiswa = onSnapshot(collection(db, "siswa"), async snapshot => {
+    siswaSnapshot = snapshot;
+    await renderGabungan();
+  }, error => {
+    console.error("Pantauan koleksi siswa gagal:", error);
   });
+
+  const stopUsers = onSnapshot(collection(db, "users"), async snapshot => {
+    usersSnapshot = snapshot;
+    await renderGabungan();
+  }, error => {
+    console.error("Pantauan akun siswa gagal:", error);
+  });
+
+  unsubscribeSiswaRealtime = () => {
+    stopSiswa();
+    stopUsers();
+  };
 }
 
 function renderTabelSiswa() {
