@@ -4458,9 +4458,60 @@ document
           );
 
 
+        } else if (roleUser === "guru" && currentUser) {
+
+          // Security Rules DATA GURU membatasi Guru membuat dokumen
+          // dengan ID UID akun sendiri. Jangan gunakan addDoc() (ID acak).
+          const guruIdProfil = (profilUser && profilUser.guruId)
+            ? String(profilUser.guruId)
+            : "";
+
+          // Jika ada hubungan lama yang valid, gunakan dokumen tersebut.
+          // Jika belum ada, gunakan UID akun agar sesuai dengan Rules.
+          let guruId = currentUser.uid;
+          let refGuru = doc(db, "guru", guruIdProfil || guruId);
+          let guruLama = await getDoc(refGuru);
+
+          if (!guruLama.exists() && guruIdProfil && guruIdProfil !== currentUser.uid) {
+            guruId = currentUser.uid;
+            refGuru = doc(db, "guru", guruId);
+            guruLama = await getDoc(refGuru);
+          } else if (guruIdProfil) {
+            guruId = guruIdProfil;
+          }
+
+          const dataGuruAkun = {
+            ...data,
+            uid: currentUser.uid,
+            akunUid: currentUser.uid,
+            email: currentUser.email || "",
+            kelasWali: profilUser?.kelasWali || ""
+          };
+
+          if (guruLama.exists()) {
+            await updateDoc(refGuru, dataGuruAkun);
+          } else {
+            await setDoc(refGuru, dataGuruAkun);
+          }
+
+          // Simpan hubungan akun -> data guru agar data guru tetap
+          // terhubung dengan akun yang sedang login.
+          await updateDoc(
+            doc(db, "users", currentUser.uid),
+            { guruId }
+          );
+
+          tampilkanPesanGuru(
+            guruLama.exists()
+              ? "Data guru berhasil diperbarui."
+              : "Data guru berhasil ditambahkan dan terhubung ke akun Guru.",
+            "sukses"
+          );
+
         } else {
 
 
+          // Admin tetap menggunakan ID otomatis seperti sebelumnya.
           await addDoc(
             collection(db, "guru"),
             data
