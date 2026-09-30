@@ -4936,37 +4936,136 @@ function normalisasiNamaGuru(nama) {
     .replace(/\s+/g, " ");
 }
 
+function waktuDokumenGuru(guru) {
+  const nilai = guru?.diperbaruiPada || guru?.dibuatPada || guru?.createdAt || guru?.updatedAt;
+  if (!nilai) return 0;
+  try {
+    if (typeof nilai.toMillis === "function") return nilai.toMillis();
+    if (nilai instanceof Date) return nilai.getTime();
+    const angka = Number(nilai);
+    if (Number.isFinite(angka) && angka > 0) return angka;
+    const tanggal = Date.parse(String(nilai));
+    return Number.isFinite(tanggal) ? tanggal : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+/*
+ * Normalisasi satu dokumen Guru.
+ * Beberapa data lama memakai variasi nama field, jadi semuanya dibaca
+ * tanpa mengubah data Firestore yang sudah ada.
+ */
+function normalisasiDokumenGuru(id, data) {
+  const g = data || {};
+  return {
+    id: String(id || g.id || g.uid || g.akunUid || "").trim(),
+    ...g,
+    nama: g.nama || g.namaGuru || g.namaLengkap || g.name || "",
+    nip: g.nip || g.NIP || "-",
+    nuptk: g.nuptk || g.NUPTK || "-",
+    mapel: g.mapel || g.mataPelajaran || g.mataPelajaranNama || "",
+    kelasWali: g.kelasWali || g.waliKelas || g.kelas || "",
+    status: g.status || "Aktif"
+  };
+}
+
+/*
+ * Gabungkan DATA GURU sebagai sumber utama.
+ * Prinsip penting: SEMUA dokumen pada koleksi guru yang mempunyai nama
+ * tetap dimasukkan ke tabel. Data users hanya dipakai untuk melengkapi /
+ * menghubungkan akun, bukan menggantikan dokumen guru secara membabi buta.
+ */
+function gabungkanDataGuruFirestore(guruSnapshot, usersSnapshot) {
+  const daftar = [];
+  const byId = new Map();
+  const byUid = new Map();
+
+  if (guruSnapshot) {
+    guruSnapshot.forEach(d => {
+      const guru = normalisasiDokumenGuru(d.id, d.data());
+      if (!guru.id) guru.id = d.id;
+      if (!guru.nama) return;
+      daftar.push(guru);
+      byId.set(guru.id, guru);
+      const uid = String(guru.akunUid || guru.uid || "").trim();
+      if (uid) byUid.set(uid, guru);
+    });
+  }
+
+  if (usersSnapshot) {
+    usersSnapshot.forEach(d => {
+      const u = d.data() || {};
+      if (String(u.role || "").trim().toLowerCase() !== "guru") return;
+
+      const uid = String(u.uid || d.id || "").trim();
+      if (!uid) return;
+      const guruId = String(u.guruId || uid).trim() || uid;
+      let guru = byUid.get(uid) || byId.get(guruId);
+
+      if (!guru) {
+        guru = normalisasiDokumenGuru(guruId, u);
+        guru.uid = uid;
+        guru.akunUid = uid;
+        guru._dariAkun = true;
+        if (guru.nama) {
+          daftar.push(guru);
+          byId.set(guru.id, guru);
+          byUid.set(uid, guru);
+        }
+      } else {
+        // Jangan mengganti data guru yang sudah ada. Hanya lengkapi field kosong.
+        const tambahan = normalisasiDokumenGuru(guru.id, u);
+        ["uid", "akunUid", "email", "nama", "nip", "nuptk", "mapel", "kelasWali", "status"].forEach(field => {
+          const lama = String(guru[field] ?? "").trim();
+          const baru = tambahan[field];
+          if (!lama && baru !== undefined && String(baru).trim()) guru[field] = baru;
+        });
+        guru.uid = guru.uid || uid;
+        guru.akunUid = guru.akunUid || uid;
+      }
+    });
+  }
+
+  return daftar;
+}
+
+/*
+ * Hanya gabungkan data yang benar-benar merupakan record akun yang sama.
+ * Guru berbeda dengan nama sama tidak lagi saling menghilangkan.
+ */
 function hapusDuplikatGuruBerdasarkanNama(daftar) {
   const hasil = [];
-  const berdasarkanNama = new Map();
+  const berdasarkanIdentitas = new Map();
 
   for (const guru of daftar) {
-    const namaKey = normalisasiNamaGuru(guru.nama);
+    const uid = String(guru.akunUid || guru.uid || "").trim();
+    const email = String(guru.email || "").trim().toLowerCase();
+    const key = uid ? `uid:${uid}` : (email ? `email:${email}` : `doc:${guru.id}`);
 
-    // Data tanpa nama tetap ditampilkan karena tidak aman untuk digabung.
-    if (!namaKey) {
-      hasil.push(guru);
-      continue;
-    }
-
-    const sebelumnya = berdasarkanNama.get(namaKey);
+    const sebelumnya = berdasarkanIdentitas.get(key);
     if (!sebelumnya) {
       const salinan = { ...guru };
-      berdasarkanNama.set(namaKey, salinan);
+      berdasarkanIdentitas.set(key, salinan);
       hasil.push(salinan);
       continue;
     }
 
-    // Jika nama sama, cukup satu baris. Isi yang kosong dilengkapi dari data duplikat.
-    const bidang = [
-      "uid", "akunUid", "email", "nip", "nuptk", "mapel",
-      "kelasWali", "status", "foto", "fotoUrl", "fotoProfil"
-    ];
-    for (const field of bidang) {
-      const nilaiLama = String(sebelumnya[field] ?? "").trim();
-      const nilaiBaru = String(guru[field] ?? "").trim();
-      if (!nilaiLama && nilaiBaru) sebelumnya[field] = guru[field];
-    }
+    // Jika ada record identitas yang sama, pilih yang lebih baru.
+    const waktuLama = waktuDokumenGuru(sebelumnya);
+    const waktuBaru = waktuDokumenGuru(guru);
+    const utama = waktuBaru > waktuLama ? guru : sebelumnya;
+    const cadangan = utama === guru ? sebelumnya : guru;
+
+    ["uid", "akunUid", "email", "nama", "nip", "nuptk", "mapel", "kelasWali", "status", "foto", "fotoUrl", "fotoProfil"].forEach(field => {
+      if (!String(utama[field] ?? "").trim() && String(cadangan[field] ?? "").trim()) {
+        utama[field] = cadangan[field];
+      }
+    });
+
+    const index = hasil.indexOf(sebelumnya);
+    if (utama !== sebelumnya && index >= 0) hasil[index] = utama;
+    berdasarkanIdentitas.set(key, utama);
   }
 
   return hasil;
@@ -5010,185 +5109,71 @@ function mulaiPantauanGuruRealtime() {
 
   let guruSnapshot = null;
   let usersSnapshot = null;
-  let sedangMemperbaiki = false;
+  let renderTimer = null;
 
   const renderGabunganGuru = async () => {
-    const guruMap = new Map();
+    if (!guruSnapshot && !usersSnapshot) return;
 
-    // 1. Ambil seluruh dokumen guru yang sudah ada.
-    if (guruSnapshot) {
-      guruSnapshot.forEach(d => {
-        const g = d.data() || {};
-        const key = String(g.akunUid || g.uid || d.id || "").trim();
-        if (!key) return;
-        guruMap.set(key, { id:d.id, ...g });
-      });
+    try {
+      dataGuru = hapusDuplikatGuruBerdasarkanNama(
+        gabungkanDataGuruFirestore(guruSnapshot, usersSnapshot)
+      );
+      dataGuru.sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"));
+
+      try { await muatDataProfilFoto(); } catch(e) { console.warn("Foto guru belum tersinkron:", e); }
+      renderTabelGuru();
+      const stat = document.getElementById("statGuru");
+      if (stat) stat.textContent = String(dataGuru.length);
+    } catch (e) {
+      console.error("Render data Guru gagal:", e);
     }
-
-    const guruYangPerluDisinkronkan = [];
-
-    // 2. USERS menjadi sumber identitas akun Guru.
-    //    Ini memastikan akun Guru tetap tampil walaupun data guru lama berbeda.
-    if (usersSnapshot) {
-      usersSnapshot.forEach(d => {
-        const u = d.data() || {};
-        const roleAkun = String(u.role || "").trim().toLowerCase();
-        if (roleAkun !== "guru") return;
-
-        const uid = String(u.uid || d.id || "").trim();
-        if (!uid) return;
-        const guruId = String(u.guruId || uid).trim() || uid;
-        const lama = guruMap.get(uid) || guruMap.get(guruId) || {};
-
-        // Data akun diprioritaskan agar nama/mapel akun mandiri selalu terlihat.
-        guruMap.set(uid, {
-          id: lama.id || guruId,
-          uid,
-          akunUid: uid,
-          nama: u.nama || lama.nama || "",
-          email: u.email || lama.email || "",
-          nip: u.nip || lama.nip || "-",
-          nuptk: u.nuptk || lama.nuptk || "-",
-          mapel: u.mapel || lama.mapel || "",
-          kelasWali: u.kelasWali || lama.kelasWali || "",
-          status: u.status || lama.status || "Aktif",
-          _dariAkun: true
-        });
-
-        if (!guruSnapshot || !guruSnapshot.docs.some(g => {
-          const x=g.data()||{};
-          return String(x.akunUid || x.uid || g.id || "").trim() === uid;
-        })) {
-          guruYangPerluDisinkronkan.push({guruId, uid, data:u});
-        }
-      });
-    }
-
-    dataGuru = hapusDuplikatGuruBerdasarkanNama(Array.from(guruMap.values()));
-    dataGuru.sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
-
-    // 3. Admin memperbaiki dokumen guru yang belum ada.
-    if (String(roleUser || "").toLowerCase() === "admin" && !sedangMemperbaiki && guruYangPerluDisinkronkan.length) {
-      sedangMemperbaiki = true;
-      try {
-        for (const item of guruYangPerluDisinkronkan) {
-          const u=item.data;
-          await setDoc(doc(db,"guru",item.guruId),{
-            uid:item.uid,
-            akunUid:item.uid,
-            nama:u.nama||"",
-            nip:u.nip||"-",
-            nuptk:u.nuptk||"-",
-            mapel:u.mapel||"",
-            kelasWali:u.kelasWali||"",
-            email:u.email||"",
-            status:u.status||"Aktif",
-            diperbaruiPada:serverTimestamp()
-          },{merge:true});
-        }
-      } catch(e) {
-        console.error("Sinkronisasi data guru gagal:",e);
-      } finally {
-        sedangMemperbaiki=false;
-      }
-    }
-
-    try { await muatDataProfilFoto(); } catch(e) { console.warn("Foto guru belum tersinkron:",e); }
-    renderTabelGuru();
-    const stat=document.getElementById("statGuru");
-    if(stat) stat.textContent=String(dataGuru.length);
   };
 
-  const stopGuru = onSnapshot(collection(db,"guru"), async snapshot => {
-    guruSnapshot=snapshot;
-    await renderGabunganGuru();
-  }, error => console.error("Pantauan koleksi guru gagal:",error));
+  const jadwalkanRender = () => {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(renderGabunganGuru, 0);
+  };
 
-  const stopUsers = onSnapshot(collection(db,"users"), async snapshot => {
-    usersSnapshot=snapshot;
-    await renderGabunganGuru();
-  }, error => console.error("Pantauan akun guru gagal:",error));
+  const stopGuru = onSnapshot(collection(db,"guru"), snapshot => {
+    guruSnapshot = snapshot;
+    jadwalkanRender();
+  }, error => console.error("Pantauan koleksi guru gagal:", error));
 
-  unsubscribeGuruRealtime=()=>{ stopGuru(); stopUsers(); };
+  const stopUsers = onSnapshot(collection(db,"users"), snapshot => {
+    usersSnapshot = snapshot;
+    jadwalkanRender();
+  }, error => console.error("Pantauan akun guru gagal:", error));
+
+  unsubscribeGuruRealtime = () => {
+    clearTimeout(renderTimer);
+    stopGuru();
+    stopUsers();
+  };
 }
 
 async function tampilkanGuru() {
   try {
-    const tabel=document.getElementById("tabelGuru");
-    if (tabel) tabel.innerHTML='<tr><td colspan="8" style="text-align:center;">Memuat data guru...</td></tr>';
+    const tabel = document.getElementById("tabelGuru");
+    if (tabel) tabel.innerHTML = '<tr><td colspan="8" style="text-align:center;">Memuat data guru...</td></tr>';
 
     const [guruSnapshot, usersSnapshot] = await Promise.all([
       getDocs(collection(db,"guru")),
       getDocs(collection(db,"users"))
     ]);
 
-    const guruMap = new Map();
+    dataGuru = hapusDuplikatGuruBerdasarkanNama(
+      gabungkanDataGuruFirestore(guruSnapshot, usersSnapshot)
+    );
+    dataGuru.sort((a,b) => String(a.nama || "").localeCompare(String(b.nama || ""), "id"));
 
-    // Dokumen guru lama tetap dipertahankan.
-    guruSnapshot.forEach(d=>{
-      const g=d.data()||{};
-      const key=String(g.akunUid||g.uid||d.id||"").trim();
-      if(!key) return;
-      guruMap.set(key,{id:d.id,...g});
-    });
-
-    // Akun users role=guru selalu ditampilkan dan diprioritaskan.
-    const perluSinkron=[];
-    usersSnapshot.forEach(d=>{
-      const u=d.data()||{};
-      const roleAkun=String(u.role||"").trim().toLowerCase();
-      if(roleAkun!=="guru") return;
-      const uid=String(u.uid||d.id||"").trim();
-      if(!uid) return;
-      const guruId=String(u.guruId||uid).trim()||uid;
-      const lama=guruMap.get(uid)||guruMap.get(guruId)||{};
-
-      guruMap.set(uid,{
-        id:lama.id||guruId,
-        uid, akunUid:uid,
-        nama:u.nama||lama.nama||"",
-        email:u.email||lama.email||"",
-        nip:u.nip||lama.nip||"-",
-        nuptk:u.nuptk||lama.nuptk||"-",
-        mapel:u.mapel||lama.mapel||"",
-        kelasWali:u.kelasWali||lama.kelasWali||"",
-        status:u.status||lama.status||"Aktif",
-        _dariAkun:true
-      });
-
-      const adaDokumen=guruSnapshot.docs.some(g=>{
-        const x=g.data()||{};
-        return String(x.akunUid||x.uid||g.id||"").trim()===uid;
-      });
-      if(!adaDokumen) perluSinkron.push({guruId,uid,u});
-    });
-
-    // Admin membuat/memperbaiki dokumen guru secara otomatis.
-    if(String(roleUser||"").toLowerCase()==="admin" && perluSinkron.length){
-      for(const item of perluSinkron){
-        const u=item.u;
-        try{
-          await setDoc(doc(db,"guru",item.guruId),{
-            uid:item.uid, akunUid:item.uid,
-            nama:u.nama||"", nip:u.nip||"-", nuptk:u.nuptk||"-",
-            mapel:u.mapel||"", kelasWali:u.kelasWali||"",
-            email:u.email||"", status:u.status||"Aktif",
-            diperbaruiPada:serverTimestamp()
-          },{merge:true});
-        }catch(e){ console.error("Sinkronisasi Guru gagal:",e); }
-      }
-    }
-
-    dataGuru=hapusDuplikatGuruBerdasarkanNama(Array.from(guruMap.values()));
-    dataGuru.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"));
     await muatDataProfilFoto();
     renderTabelGuru();
-    const stat=document.getElementById("statGuru");
-    if(stat) stat.textContent=String(dataGuru.length);
-  }catch(error){
-    console.error("tampilkanGuru:",error);
-    const tabel=document.getElementById("tabelGuru");
-    if(tabel) tabel.innerHTML=`<tr><td colspan="8" style="color:red;text-align:center;">Gagal mengambil data Guru: ${String(error.message||error).replace(/</g,"&lt;")}</td></tr>`;
+    const stat = document.getElementById("statGuru");
+    if (stat) stat.textContent = String(dataGuru.length);
+  } catch(error) {
+    console.error("tampilkanGuru:", error);
+    const tabel = document.getElementById("tabelGuru");
+    if (tabel) tabel.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Gagal mengambil data Guru: ${String(error.message || error).replace(/</g,"&lt;")}</td></tr>`;
   }
 }
 
