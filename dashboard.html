@@ -2035,7 +2035,8 @@ import {
   where,
   updateDoc,
   deleteDoc,
-  doc
+  doc,
+  onSnapshot
 }
 from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -2351,6 +2352,7 @@ onAuthStateChanged(auth, async (user) => {
       await muatPembayaranHome();
     }
   } else {
+    if (unsubscribeSiswaRealtime) { unsubscribeSiswaRealtime(); unsubscribeSiswaRealtime = null; }
     window.location.href = "index.html";
   }
 });
@@ -3951,6 +3953,50 @@ document
    TAMPILKAN SISWA
 ========================= */
 
+let unsubscribeSiswaRealtime = null;
+
+function mulaiPantauanSiswaRealtime() {
+  if (unsubscribeSiswaRealtime) {
+    unsubscribeSiswaRealtime();
+    unsubscribeSiswaRealtime = null;
+  }
+  if (!currentUser || !["admin","guru"].includes(roleUser)) return;
+  const tabel = document.getElementById("tabelSiswa");
+  if (tabel) tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Memantau data siswa...</td></tr>';
+  unsubscribeSiswaRealtime = onSnapshot(collection(db, "siswa"), async (snapshot) => {
+    dataSiswa = [];
+    snapshot.forEach(d => dataSiswa.push({id:d.id, ...d.data()}));
+    try { await muatDataProfilFoto(); } catch(e) { console.warn("Foto siswa belum tersinkron:", e); }
+    renderTabelSiswa();
+    // Menjaga pilihan siswa pada form Nilai tetap mengikuti data terbaru.
+    if (typeof isiPilihanSiswaNilai === "function") {
+      try { await isiPilihanSiswaNilai(); } catch(e) {}
+    }
+    const stat = document.getElementById("statSiswa");
+    if (stat) stat.textContent = String(dataSiswa.length);
+  }, (error) => {
+    console.error("Pantauan realtime siswa gagal:", error);
+    // Tetap gunakan pembacaan biasa agar fitur lama tidak berhenti.
+    tampilkanSiswa();
+  });
+}
+
+function renderTabelSiswa() {
+  const tabel = document.getElementById("tabelSiswa");
+  if (!tabel) return;
+  if (!dataSiswa.length) {
+    tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Belum ada data siswa.</td></tr>';
+    return;
+  }
+  dataSiswa.sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
+  tabel.innerHTML = "";
+  dataSiswa.forEach((siswa,index) => {
+    const baris=document.createElement("tr");
+    baris.innerHTML=`<td>${index+1}</td><td style="text-align:center;">${fotoHtml(cariFotoProfil(siswa),siswa.nama)}</td><td>${siswa.nama||"-"}</td><td>${siswa.nis||"-"}</td><td>${siswa.tingkat||"-"}</td><td>${siswa.jurusan||"-"}</td><td>${siswa.kelas||"-"}</td><td>${siswa.status||"-"}</td><td><div class="aksi"><button class="btn-warning" onclick="editSiswa('${siswa.id}')">Edit</button><button class="btn-danger" onclick="hapusSiswa('${siswa.id}')">Hapus</button></div></td>`;
+    tabel.appendChild(baris);
+  });
+}
+
 async function tampilkanSiswa() {
 
   await muatDataProfilFoto();
@@ -4000,6 +4046,10 @@ async function tampilkanSiswa() {
 
     });
 
+
+    renderTabelSiswa();
+    const stat = document.getElementById("statSiswa"); if (stat) stat.textContent = String(dataSiswa.length);
+    return;
 
     if (
       dataSiswa.length === 0
