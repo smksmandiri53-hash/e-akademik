@@ -2115,6 +2115,101 @@ let profilUser = null;
 let roleUser = "";
 let currentUser = null;
 
+async function pastikanKeterhubunganSiswa(user) {
+  if (!user || roleUser !== "siswa") return true;
+
+  try {
+    const siswaIdSaatIni = String(
+      profilUser?.siswaId ?? profilUser?.siswaID ?? profilUser?.studentId ?? profilUser?.idSiswa ?? ""
+    ).trim();
+
+    // 1. Jika users/{uid}.siswaId sudah ada, pastikan dokumen siswa memang ada.
+    if (siswaIdSaatIni) {
+      const snap = await getDoc(doc(db, "siswa", siswaIdSaatIni));
+      if (snap.exists()) {
+        profilUser.siswaId = siswaIdSaatIni;
+        return true;
+      }
+    }
+
+    const nis = String(profilUser?.nis || "").trim();
+    if (!nis) {
+      console.warn("Akun siswa belum mempunyai NIS untuk proses pencocokan otomatis.");
+      return false;
+    }
+
+    let siswaSnap = null;
+
+    // 2. Cari berdasarkan akunUid terlebih dahulu.
+    try {
+      const byUid = await getDocs(query(
+        collection(db, "siswa"),
+        where("akunUid", "==", user.uid)
+      ));
+      if (!byUid.empty) siswaSnap = byUid;
+    } catch (e) {
+      console.warn("Pencarian siswa berdasarkan akunUid gagal:", e);
+    }
+
+    // 3. Jika belum ditemukan, cari berdasarkan NIS.
+    if (!siswaSnap || siswaSnap.empty) {
+      const byNis = await getDocs(query(
+        collection(db, "siswa"),
+        where("nis", "==", nis)
+      ));
+      siswaSnap = byNis;
+    }
+
+    if (!siswaSnap || siswaSnap.empty) {
+      console.warn("Data siswa belum ditemukan berdasarkan NIS:", nis);
+      return false;
+    }
+
+    // Jangan pernah memilih secara acak jika NIS ternyata ganda.
+    if (siswaSnap.size > 1) {
+      console.error("Ditemukan lebih dari satu data siswa dengan NIS yang sama:", nis);
+      return false;
+    }
+
+    const siswaDoc = siswaSnap.docs[0];
+    const siswaData = siswaDoc.data() || {};
+    const siswaId = siswaDoc.id;
+
+    // Jangan mengambil data siswa yang sudah terikat ke akun lain.
+    if (siswaData.akunUid && String(siswaData.akunUid) !== String(user.uid)) {
+      console.error("Data siswa dengan NIS tersebut sudah terhubung ke akun lain.");
+      return false;
+    }
+
+    // Simpan hubungan pada data siswa. Jika Rules mengizinkan proses claim,
+    // data lama langsung terhubung ke akun baru.
+    try {
+      await updateDoc(doc(db, "siswa", siswaId), {
+        akunUid: user.uid,
+        siswaId: siswaId
+      });
+    } catch (e) {
+      console.warn("Data siswa ditemukan, tetapi belum dapat ditulis sebagai akunUid/siswaId:", e);
+    }
+
+    // Simpan siswaId ke profil users agar login berikutnya tidak perlu mencari lagi.
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        siswaId: siswaId
+      });
+    } catch (e) {
+      // Tetap gunakan ID ini untuk sesi yang sedang berjalan.
+      console.warn("siswaId belum dapat disimpan ke users; dashboard tetap menggunakan ID hasil pencocokan:", e);
+    }
+
+    profilUser = { ...(profilUser || {}), siswaId };
+    return true;
+  } catch (error) {
+    console.error("Gagal melakukan auto-link akun siswa:", error);
+    return false;
+  }
+}
+
 async function muatProfilPengguna(user) {
   try {
     const snapProfil = await getDoc(doc(db, "users", user.uid));
@@ -2140,12 +2235,17 @@ async function muatProfilPengguna(user) {
     const siswaIdRaw = profilUser.siswaId ?? profilUser.siswaID ?? profilUser.studentId ?? profilUser.idSiswa ?? "";
     profilUser.siswaId = typeof siswaIdRaw === "string" ? siswaIdRaw.trim() : siswaIdRaw;
 
-    if (roleUser === "siswa" && !profilUser.siswaId) {
-      document.getElementById("emailAdmin").textContent = "Login sebagai: " + (profilUser.nama || user.email || "Siswa") + " (" + (user.email || "") + ")";
-      document.getElementById("roleUser").textContent = "Role: SISWA • siswaId belum terbaca. UID akun: " + user.uid;
-      document.getElementById("judulDashboard").textContent = "Akun Siswa Belum Terhubung";
-      console.error("Profil siswa tidak memiliki siswaId. Pastikan users/" + user.uid + " memiliki field siswaId yang berisi ID dokumen pada koleksi siswa.");
-      return false;
+    // Untuk siswa, jangan langsung menghentikan dashboard ketika siswaId kosong.
+    // Sistem akan mencari data siswa berdasarkan akunUid/NIS dan menghubungkannya otomatis.
+    if (roleUser === "siswa") {
+      const terhubung = await pastikanKeterhubunganSiswa(user);
+      if (!terhubung) {
+        document.getElementById("emailAdmin").textContent = "Login sebagai: " + (profilUser.nama || user.email || "Siswa") + " (" + (user.email || "") + ")";
+        document.getElementById("roleUser").textContent = "Role: SISWA • Data siswa belum ditemukan berdasarkan NIS.";
+        document.getElementById("judulDashboard").textContent = "Data Siswa Belum Ditemukan";
+        console.warn("Akun siswa belum dapat dihubungkan. Periksa NIS pada users/" + user.uid + ".");
+        return false;
+      }
     }
     fotoProfilUrl = profilUser.fotoData || profilUser.fotoUrl || "";
     if (fotoProfilUrl) {
@@ -2212,7 +2312,8 @@ async function muatRingkasanDashboard(){
   const welcomeText=document.getElementById("homeWelcomeText");
   try{
     if(roleUser === "siswa"){
-      const siswaId=profilUser?.siswaId || currentUser?.uid || "";
+      const siswaId=String(profilUser?.siswaId || "").trim();
+      if (!siswaId) throw new Error("siswaId belum tersedia pada akun siswa.");
       const siswaSnap=await getDoc(doc(db,"siswa",siswaId));
       const nilaiSnap=await getDocs(query(collection(db,"nilai"),where("siswaId","==",siswaId),where("status","==","disetujui")));
       const absSnap=await getDocs(query(collection(db,"absensi"),where("siswaId","==",siswaId)));
@@ -2359,7 +2460,9 @@ document.addEventListener("click", event => {
 async function tampilkanDataSaya(){
   const box=document.getElementById("dataPribadiSiswa");if(!box)return;box.innerHTML="Memuat data siswa...";
   try{
-    const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));
+    const siswaId=String(profilUser?.siswaId || "").trim();
+    if (!siswaId) throw new Error("Akun siswa belum terhubung ke data siswa.");
+    const snap=await getDoc(doc(db,"siswa",siswaId));
     const userSnap=await getDoc(doc(db,"users",currentUser.uid));
     if(!snap.exists()){box.innerHTML='<div style="color:#dc3545;">Data siswa tidak ditemukan. Hubungi Admin.</div>';return;}
     const s={id:snap.id,...snap.data()};
