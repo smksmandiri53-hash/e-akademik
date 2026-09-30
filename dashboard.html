@@ -1116,6 +1116,36 @@
     </div>
 
 
+    <!-- FILTER DATA SISWA -->
+    <div id="filterSiswaBox" style="margin:20px 0;padding:16px;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <strong style="font-size:15px;">🔎 Filter Data Siswa</strong>
+          <div style="font-size:12px;color:#64748b;margin-top:3px;">Pilih tingkat dan jurusan untuk menampilkan siswa yang diinginkan.</div>
+        </div>
+        <button type="button" class="btn-secondary" id="btnResetFilterSiswa" style="padding:8px 14px;">Reset Filter</button>
+      </div>
+      <div class="form-grid" style="margin-top:0;">
+        <div class="field">
+          <label for="filterTingkatSiswa">Tingkat</label>
+          <select id="filterTingkatSiswa">
+            <option value="">Semua Tingkat</option>
+            <option value="X">X</option>
+            <option value="XI">XI</option>
+            <option value="XII">XII</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filterJurusanSiswa">Jurusan</label>
+          <select id="filterJurusanSiswa">
+            <option value="">Semua Jurusan</option>
+          </select>
+        </div>
+      </div>
+      <div id="hasilFilterSiswa" style="margin-top:10px;font-size:13px;color:#64748b;"></div>
+    </div>
+
+
     <div class="table-wrapper">
 
       <table>
@@ -4081,24 +4111,115 @@ function mulaiPantauanSiswaRealtime() {
   };
 }
 
+function normalisasiFilterSiswa(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function isiPilihanFilterJurusanSiswa() {
+  const select = document.getElementById("filterJurusanSiswa");
+  if (!select) return;
+
+  const sebelumnya = select.value;
+  const jurusanMap = new Map();
+
+  dataSiswa.forEach(siswa => {
+    const asli = String(siswa.jurusan || "").trim();
+    if (!asli) return;
+    const key = normalisasiFilterSiswa(asli);
+    if (!jurusanMap.has(key)) jurusanMap.set(key, asli);
+  });
+
+  const daftar = Array.from(jurusanMap.values())
+    .sort((a,b) => a.localeCompare(b, "id"));
+
+  select.innerHTML = '<option value="">Semua Jurusan</option>';
+  daftar.forEach(jurusan => {
+    const option = document.createElement("option");
+    option.value = jurusan;
+    option.textContent = jurusan;
+    select.appendChild(option);
+  });
+
+  const masihAda = daftar.some(j => normalisasiFilterSiswa(j) === normalisasiFilterSiswa(sebelumnya));
+  select.value = masihAda ? sebelumnya : "";
+}
+
+function ambilSiswaTerfilter() {
+  const tingkat = normalisasiFilterSiswa(document.getElementById("filterTingkatSiswa")?.value || "");
+  const jurusan = normalisasiFilterSiswa(document.getElementById("filterJurusanSiswa")?.value || "");
+
+  return dataSiswa.filter(siswa => {
+    const cocokTingkat = !tingkat || normalisasiFilterSiswa(siswa.tingkat) === tingkat;
+    const cocokJurusan = !jurusan || normalisasiFilterSiswa(siswa.jurusan) === jurusan;
+    return cocokTingkat && cocokJurusan;
+  });
+}
+
 function renderTabelSiswa() {
   const tabel = document.getElementById("tabelSiswa");
   if (!tabel) return;
-  if (!dataSiswa.length) {
-    tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Belum ada data siswa.</td></tr>';
+
+  isiPilihanFilterJurusanSiswa();
+
+  const siswaTerfilter = ambilSiswaTerfilter()
+    .sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
+
+  const hasil = document.getElementById("hasilFilterSiswa");
+  if (hasil) {
+    const adaFilter = !!(document.getElementById("filterTingkatSiswa")?.value || document.getElementById("filterJurusanSiswa")?.value);
+    hasil.textContent = adaFilter
+      ? `Menampilkan ${siswaTerfilter.length} dari ${dataSiswa.length} siswa.`
+      : `Total ${dataSiswa.length} siswa.`;
+  }
+
+  if (!siswaTerfilter.length) {
+    tabel.innerHTML = '<tr><td colspan="9" style="text-align:center;">Tidak ada siswa yang sesuai dengan filter.</td></tr>';
     return;
   }
-  dataSiswa.sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
+
   tabel.innerHTML = "";
-  dataSiswa.forEach((siswa,index) => {
+  siswaTerfilter.forEach((siswa,index) => {
     const baris=document.createElement("tr");
     baris.innerHTML=`<td>${index+1}</td><td style="text-align:center;">${fotoHtml(cariFotoProfil(siswa),siswa.nama)}</td><td>${siswa.nama||"-"}</td><td>${siswa.nis||"-"}</td><td>${siswa.tingkat||"-"}</td><td>${siswa.jurusan||"-"}</td><td>${siswa.kelas||"-"}</td><td>${siswa.status||"-"}</td><td><div class="aksi"><button class="btn-warning" onclick="editSiswa('${siswa.id}')">Edit</button><button class="btn-danger" onclick="hapusSiswa('${siswa.id}')">Hapus</button></div></td>`;
     tabel.appendChild(baris);
   });
 }
 
+function resetFilterSiswa() {
+  const tingkat = document.getElementById("filterTingkatSiswa");
+  const jurusan = document.getElementById("filterJurusanSiswa");
+  if (tingkat) tingkat.value = "";
+  if (jurusan) jurusan.value = "";
+  renderTabelSiswa();
+}
+
+function pasangFilterSiswa() {
+  const tingkat = document.getElementById("filterTingkatSiswa");
+  const jurusan = document.getElementById("filterJurusanSiswa");
+  const reset = document.getElementById("btnResetFilterSiswa");
+
+  if (tingkat && !tingkat.dataset.terpasang) {
+    tingkat.addEventListener("change", renderTabelSiswa);
+    tingkat.dataset.terpasang = "1";
+  }
+  if (jurusan && !jurusan.dataset.terpasang) {
+    jurusan.addEventListener("change", renderTabelSiswa);
+    jurusan.dataset.terpasang = "1";
+  }
+  if (reset && !reset.dataset.terpasang) {
+    reset.addEventListener("click", resetFilterSiswa);
+    reset.dataset.terpasang = "1";
+  }
+}
+
+pasangFilterSiswa();
+
 async function tampilkanSiswa() {
 
+  pasangFilterSiswa();
   await muatDataProfilFoto();
 
   const tabel =
