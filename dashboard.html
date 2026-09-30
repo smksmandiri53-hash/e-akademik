@@ -4911,19 +4911,52 @@ async function tampilkanGuru() {
     ]);
     const guruMap = new Map();
     guruSnapshot.forEach(d => guruMap.set(d.id, { id:d.id, ...d.data() }));
+
+    // SINKRONISASI LANGSUNG: setiap akun users dengan role guru
+    // yang belum mempunyai dokumen guru akan dibuat otomatis.
+    // Ini menangani akun lama yang sudah berhasil mendaftar mandiri
+    // tetapi proses penyimpanan guru sebelumnya gagal/terputus.
+    const guruYangBelumTersimpan = [];
     usersSnapshot.forEach(d => {
       const u = d.data() || {};
       if (u.role !== "guru") return;
       const guruId = String(u.guruId || d.id).trim() || d.id;
       if (!guruMap.has(guruId)) {
-        guruMap.set(guruId, {
+        const dataGuruMandiri = {
           id:guruId, uid:u.uid || d.id, akunUid:u.uid || d.id,
           nama:u.nama || "", email:u.email || "", nip:u.nip || "-",
           nuptk:u.nuptk || "-", mapel:u.mapel || "", kelasWali:u.kelasWali || "",
           status:u.status || "Aktif", _dariAkun:true
-        });
+        };
+        guruMap.set(guruId, dataGuruMandiri);
+        guruYangBelumTersimpan.push({ guruId, data:u });
       }
     });
+
+    // Admin langsung memperbaiki dokumen guru yang hilang.
+    // Tidak mengubah data guru yang sudah ada.
+    if (roleUser === "admin" && guruYangBelumTersimpan.length) {
+      for (const item of guruYangBelumTersimpan) {
+        const u = item.data;
+        try {
+          await setDoc(doc(db, "guru", item.guruId), {
+            uid: u.uid || item.guruId,
+            akunUid: u.uid || item.guruId,
+            nama: u.nama || "",
+            nip: u.nip || "-",
+            nuptk: u.nuptk || "-",
+            mapel: u.mapel || "",
+            kelasWali: u.kelasWali || "",
+            email: u.email || "",
+            status: u.status || "Aktif",
+            diperbaruiPada: serverTimestamp()
+          }, { merge:true });
+        } catch (syncError) {
+          console.error("Gagal sinkron akun Guru " + item.guruId + ":", syncError);
+        }
+      }
+    }
+
     dataGuru = Array.from(guruMap.values());
     dataGuru.sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
     renderTabelGuru();
