@@ -160,76 +160,152 @@ $("tabDaftar").onclick=()=>{$("tabDaftar").classList.add("active");$("tabLogin")
 $("regRole").onchange=toggleRoleFields;
 
 $("btnLogin").onclick=async()=>{
- const email=$("loginEmail").value.trim().toLowerCase(),password=$("loginPassword").value;
- if(!email||!password)return msg("Email dan password wajib diisi.");
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg("Format email tidak valid.");
- $("btnLogin").disabled=true;
- $("btnLogin").textContent="Memeriksa...";
- clearMsg();
- try{
-   const cred=await signInWithEmailAndPassword(auth,email,password);
-   if(!cred.user){throw new Error("Akun Firebase tidak ditemukan setelah login.");}
-   msg("Login berhasil. Membuka dashboard...",true);
-   setTimeout(()=>{location.replace("dashboard.html");},250);
- }catch(e){
-   console.error("LOGIN ERROR",e.code,e.message);
-   let t="Login gagal. ";
-   switch(e.code){
-     case "auth/invalid-credential":
-     case "auth/invalid-login-credentials":
-     case "auth/wrong-password":
-     case "auth/user-not-found":
-       t+="Email atau password tidak cocok dengan akun Firebase."; break;
-     case "auth/user-disabled":
-       t+="Akun ini dinonaktifkan di Firebase Authentication."; break;
-     case "auth/operation-not-allowed":
-       t+="Metode login Email/Password belum diaktifkan di Firebase Authentication."; break;
-     case "auth/network-request-failed":
-       t+="Koneksi internet ke Firebase bermasalah. Periksa internet lalu coba lagi."; break;
-     case "auth/too-many-requests":
-       t+="Terlalu banyak percobaan login. Tunggu beberapa saat sebelum mencoba lagi."; break;
-     case "auth/internal-error":
-       t+="Terjadi kesalahan sementara pada layanan Firebase. Silakan coba lagi."; break;
-     default:
-       t+=(e.message||e.code||"Terjadi kesalahan yang tidak diketahui.");
-   }
-   msg(t);
- }finally{
-   $("btnLogin").disabled=false;
-   $("btnLogin").textContent="Masuk ke Dashboard";
- }
+  const email=$("loginEmail").value.trim().toLowerCase();
+  const password=$("loginPassword").value;
+  if(!email||!password)return msg("Email dan password wajib diisi.");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg("Format email tidak valid.");
+  $("btnLogin").disabled=true;
+  $("btnLogin").textContent="Memeriksa...";
+  clearMsg();
+  try{
+    // Pastikan sesi lama tidak mengganggu proses login.
+    if(auth.currentUser) await signOut(auth);
+
+    const cred=await signInWithEmailAndPassword(auth,email,password);
+    if(!cred?.user?.uid)throw new Error("Firebase tidak mengembalikan akun setelah login.");
+
+    msg("Login berhasil. Membuka dashboard...",true);
+    setTimeout(()=>{location.replace("dashboard.html");},250);
+  }catch(e){
+    console.error("LOGIN ERROR",e?.code,e?.message,e);
+    let t="Login gagal. ";
+    switch(e?.code){
+      case "auth/invalid-credential":
+      case "auth/invalid-login-credentials":
+      case "auth/wrong-password":
+      case "auth/user-not-found":
+        t+="Firebase menolak kredensial login. Pastikan email dan password benar serta akun dibuat pada project Firebase yang sama."; break;
+      case "auth/user-disabled":
+        t+="Akun ini dinonaktifkan di Firebase Authentication."; break;
+      case "auth/operation-not-allowed":
+        t+="Metode login Email/Password belum diaktifkan di Firebase Authentication."; break;
+      case "auth/network-request-failed":
+        t+="Koneksi ke Firebase bermasalah. Periksa internet lalu coba lagi."; break;
+      case "auth/too-many-requests":
+        t+="Terlalu banyak percobaan login. Tunggu beberapa saat sebelum mencoba lagi."; break;
+      case "auth/invalid-api-key":
+      case "auth/api-key-not-valid":
+        t+="Konfigurasi Firebase tidak valid. Periksa API key dan project Firebase."; break;
+      case "auth/app-not-authorized":
+        t+="Domain website ini belum diizinkan pada Firebase Authentication."; break;
+      case "auth/unauthorized-domain":
+        t+="Domain website ini belum diizinkan pada Firebase Authentication."; break;
+      case "auth/internal-error":
+        t+="Terjadi kesalahan sementara pada layanan Firebase. Silakan coba lagi."; break;
+      default:
+        t+=(e?.message||e?.code||"Terjadi kesalahan yang tidak diketahui.");
+    }
+    msg(t);
+  }finally{
+    $("btnLogin").disabled=false;
+    $("btnLogin").textContent="Masuk ke Dashboard";
+  }
 };
 
 $("btnDaftar").onclick=async()=>{
- const role=$("regRole").value,nama=$("regNama").value.trim(),email=$("regEmail").value.trim(),p=$("regPassword").value,p2=$("regPassword2").value;
- if(!nama||!email||!p||!p2)return msg("Nama, email, password, dan konfirmasi password wajib diisi.");
- if(p.length<6)return msg("Password minimal 6 karakter.");
- if(p!==p2)return msg("Konfirmasi password tidak sama.");
- if(role==="siswa" && !$("regNis").value.trim())return msg("NIS siswa wajib diisi.");
- if(role==="guru" && !$("regMapel").value.trim())return msg("Mata pelajaran Guru wajib diisi.");
- $("btnDaftar").disabled=true;
- try{
-   const cred=await createUserWithEmailAndPassword(auth,email,p),uid=cred.user.uid;
-   if(role==="siswa"){
-     const nis=$("regNis").value.trim(),tingkat=$("regTingkat").value,jurusan=$("regJurusan").value,kelas=$("regKelas").value;
-     await setDoc(doc(db,"users",uid),{uid,nama,email,role:"siswa",siswaId:uid,nis,tingkat,jurusan,kelas,status:"Aktif",dibuatPada:serverTimestamp()});
-     await setDoc(doc(db,"siswa",uid),{nama,nis,tingkat,jurusan,kelas,status:"Aktif",siswaId:uid,akunUid:uid,email,dibuatPada:serverTimestamp()});
-   }else{
-     const nip=$("regNip").value.trim(),nuptk=$("regNuptk").value.trim(),mapel=$("regMapel").value.trim(),kelasWali=$("regWali").value;
-     await setDoc(doc(db,"users",uid),{uid,nama,email,role:"guru",nip,nuptk,mapel,kelasWali,status:"Aktif",dibuatPada:serverTimestamp()});
-     await setDoc(doc(db,"guru",uid),{uid,nama,nip:nip||"-",nuptk:nuptk||"-",mapel,status:"Aktif",kelasWali,email,akunUid:uid,dibuatPada:serverTimestamp()});
-   }
-   msg("Akun berhasil dibuat dan langsung aktif. Mengarahkan ke dashboard...",true);
-   setTimeout(()=>location.href="dashboard.html",700);
- }catch(e){
-   console.error(e);
-   let t="Pendaftaran gagal: "+(e.message||"Kesalahan tidak diketahui");
-   if(e.code==="auth/email-already-in-use")t="Email tersebut sudah digunakan. Gunakan email lain.";
-   else if(e.code==="auth/invalid-email")t="Format email tidak valid.";
-   else if(e.code==="auth/weak-password")t="Password terlalu lemah. Gunakan minimal 6 karakter.";
-   msg(t);
-   try{await signOut(auth);}catch(_){ }
- }finally{$("btnDaftar").disabled=false;}
+  const role=$("regRole").value;
+  const nama=$("regNama").value.trim();
+  const email=$("regEmail").value.trim().toLowerCase();
+  const p=$("regPassword").value;
+  const p2=$("regPassword2").value;
+
+  if(!nama||!email||!p||!p2)return msg("Nama, email, password, dan konfirmasi password wajib diisi.");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg("Format email tidak valid.");
+  if(p.length<6)return msg("Password minimal 6 karakter.");
+  if(p!==p2)return msg("Konfirmasi password tidak sama.");
+  if(role==="siswa" && !$("regNis").value.trim())return msg("NIS siswa wajib diisi.");
+  if(role==="guru" && !$("regMapel").value.trim())return msg("Mata pelajaran Guru wajib diisi.");
+
+  $("btnDaftar").disabled=true;
+  $("btnDaftar").textContent="Membuat Akun...";
+  clearMsg();
+
+  let uid="";
+  try{
+    // Pastikan pendaftaran selalu dimulai dari sesi yang bersih.
+    if(auth.currentUser) await signOut(auth);
+
+    const cred=await createUserWithEmailAndPassword(auth,email,p);
+    uid=cred.user.uid;
+
+    if(role==="siswa"){
+      const nis=$("regNis").value.trim();
+      const tingkat=$("regTingkat").value;
+      const jurusan=$("regJurusan").value;
+      const kelas=$("regKelas").value;
+
+      // Buat profil users terlebih dahulu. Setelah ini Rules dapat
+      // mengenali akun sebagai siswa untuk pembuatan dokumen siswa.
+      await setDoc(doc(db,"users",uid),{
+        uid,nama,email,role:"siswa",siswaId:uid,nis,tingkat,jurusan,kelas,
+        status:"Aktif",dibuatPada:serverTimestamp()
+      });
+
+      await setDoc(doc(db,"siswa",uid),{
+        nama,nis,tingkat,jurusan,kelas,status:"Aktif",
+        siswaId:uid,akunUid:uid,email,dibuatPada:serverTimestamp()
+      });
+    }else{
+      const nip=$("regNip").value.trim();
+      const nuptk=$("regNuptk").value.trim();
+      const mapel=$("regMapel").value.trim();
+      const kelasWali=$("regWali").value;
+
+      await setDoc(doc(db,"users",uid),{
+        uid,nama,email,role:"guru",nip,nuptk,mapel,kelasWali,
+        status:"Aktif",dibuatPada:serverTimestamp()
+      });
+
+      await setDoc(doc(db,"guru",uid),{
+        uid,nama,nip:nip||"-",nuptk:nuptk||"-",mapel,
+        status:"Aktif",kelasWali,email,akunUid:uid,dibuatPada:serverTimestamp()
+      });
+    }
+
+    msg("Akun berhasil dibuat dan langsung aktif. Mengarahkan ke dashboard...",true);
+    setTimeout(()=>location.replace("dashboard.html"),700);
+  }catch(e){
+    console.error("REGISTER ERROR",e?.code,e?.message,e);
+
+    let t="Pendaftaran gagal. ";
+    switch(e?.code){
+      case "auth/email-already-in-use":
+        t+="Email tersebut sudah digunakan. Jika ini akun Anda, gunakan menu Login."; break;
+      case "auth/invalid-email":
+        t+="Format email tidak valid."; break;
+      case "auth/weak-password":
+        t+="Password terlalu lemah. Gunakan minimal 6 karakter."; break;
+      case "auth/operation-not-allowed":
+        t+="Pendaftaran Email/Password belum diaktifkan di Firebase Authentication."; break;
+      case "auth/network-request-failed":
+        t+="Koneksi ke Firebase bermasalah. Periksa internet lalu coba lagi."; break;
+      case "auth/too-many-requests":
+        t+="Terlalu banyak percobaan. Tunggu beberapa saat lalu coba lagi."; break;
+      case "permission-denied":
+      case "firestore/permission-denied":
+        t+="Akun Firebase berhasil dibuat, tetapi Rules Firestore menolak penyimpanan profil. Pastikan Rules terbaru sudah dipasang."; break;
+      default:
+        t+=(e?.message||e?.code||"Kesalahan tidak diketahui.");
+    }
+
+    msg(t);
+    // Jangan menghapus sesi akun yang baru berhasil dibuat.
+    // Jika Auth sudah berhasil tetapi Firestore gagal, akun tetap ada
+    // sehingga pengguna dapat masuk setelah Rules diperbaiki.
+  }finally{
+    $("btnDaftar").disabled=false;
+    $("btnDaftar").textContent="Buat Akun Sekarang";
+  }
 };
 </script>
 </body>
