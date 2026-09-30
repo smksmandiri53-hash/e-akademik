@@ -4873,12 +4873,16 @@ document
         } else {
 
 
-          // Admin tetap menggunakan ID otomatis seperti sebelumnya.
-          await addDoc(
-            collection(db, "guru"),
-            data
-          );
-
+          // Admin tetap menggunakan ID otomatis seperti sebelumnya, tetapi
+          // sekarang data diberi metadata agar langsung dikenali oleh
+          // sinkronisasi realtime Data Guru.
+          const refGuruBaru = doc(collection(db, "guru"));
+          await setDoc(refGuruBaru, {
+            ...data,
+            createdByUid: currentUser?.uid || "",
+            dibuatPada: serverTimestamp(),
+            diperbaruiPada: serverTimestamp()
+          });
 
           tampilkanPesanGuru(
             "Data guru berhasil ditambahkan.",
@@ -4895,7 +4899,9 @@ document
         kosongkanFormGuru();
 
 
-        tampilkanGuru();
+        // Tunggu pembacaan ulang agar guru yang baru ditambahkan
+        // langsung muncul tanpa harus refresh halaman.
+        await tampilkanGuru();
 
 
       } catch (error) {
