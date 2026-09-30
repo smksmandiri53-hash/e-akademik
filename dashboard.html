@@ -4919,7 +4919,8 @@ async function tampilkanGuru() {
     const guruYangBelumTersimpan = [];
     usersSnapshot.forEach(d => {
       const u = d.data() || {};
-      if (u.role !== "guru") return;
+      const roleAkun = String(u.role || "").trim().toLowerCase();
+      if (roleAkun !== "guru") return;
       const guruId = String(u.guruId || d.id).trim() || d.id;
       if (!guruMap.has(guruId)) {
         const dataGuruMandiri = {
@@ -4932,6 +4933,34 @@ async function tampilkanGuru() {
         guruYangBelumTersimpan.push({ guruId, data:u });
       }
     });
+
+    // PEMULIHAN AKUN GURU YANG DILAPORKAN TIDAK MUNCUL.
+    // Ambil langsung dokumen akun berdasarkan UID sebagai fallback satu kali,
+    // sehingga tidak bergantung hanya pada hasil snapshot koleksi users.
+    const uidGuruBermasalah = "ckjL6wqqk5bditkFUQo1UJp8v0p2";
+    try {
+      const refAkunGuru = doc(db, "users", uidGuruBermasalah);
+      const snapAkunGuru = await getDoc(refAkunGuru);
+      if (snapAkunGuru.exists()) {
+        const u = snapAkunGuru.data() || {};
+        const roleAkun = String(u.role || "").trim().toLowerCase();
+        if (roleAkun === "guru") {
+          const guruId = String(u.guruId || snapAkunGuru.id).trim() || snapAkunGuru.id;
+          if (!guruMap.has(guruId)) {
+            const dataGuruMandiri = {
+              id:guruId, uid:u.uid || snapAkunGuru.id, akunUid:u.uid || snapAkunGuru.id,
+              nama:u.nama || "", email:u.email || "", nip:u.nip || "-",
+              nuptk:u.nuptk || "-", mapel:u.mapel || "", kelasWali:u.kelasWali || "",
+              status:u.status || "Aktif", _dariAkun:true
+            };
+            guruMap.set(guruId, dataGuruMandiri);
+            guruYangBelumTersimpan.push({ guruId, data:u });
+          }
+        }
+      }
+    } catch (fallbackError) {
+      console.warn("Pemulihan langsung akun Guru gagal:", fallbackError);
+    }
 
     // Admin langsung memperbaiki dokumen guru yang hilang.
     // Tidak mengubah data guru yang sudah ada.
