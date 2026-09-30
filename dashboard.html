@@ -1672,7 +1672,7 @@
 
             <th>NUPTK</th>
 
-            <th>Mata Pelajaran</th>
+            <th>Guru Mapel / Wali Kelas</th>
 
             <th>Status</th>
 
@@ -4751,6 +4751,51 @@ document
 
 let unsubscribeGuruRealtime = null;
 
+function normalisasiNamaGuru(nama) {
+  return String(nama || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function hapusDuplikatGuruBerdasarkanNama(daftar) {
+  const hasil = [];
+  const berdasarkanNama = new Map();
+
+  for (const guru of daftar) {
+    const namaKey = normalisasiNamaGuru(guru.nama);
+
+    // Data tanpa nama tetap ditampilkan karena tidak aman untuk digabung.
+    if (!namaKey) {
+      hasil.push(guru);
+      continue;
+    }
+
+    const sebelumnya = berdasarkanNama.get(namaKey);
+    if (!sebelumnya) {
+      const salinan = { ...guru };
+      berdasarkanNama.set(namaKey, salinan);
+      hasil.push(salinan);
+      continue;
+    }
+
+    // Jika nama sama, cukup satu baris. Isi yang kosong dilengkapi dari data duplikat.
+    const bidang = [
+      "uid", "akunUid", "email", "nip", "nuptk", "mapel",
+      "kelasWali", "status", "foto", "fotoUrl", "fotoProfil"
+    ];
+    for (const field of bidang) {
+      const nilaiLama = String(sebelumnya[field] ?? "").trim();
+      const nilaiBaru = String(guru[field] ?? "").trim();
+      if (!nilaiLama && nilaiBaru) sebelumnya[field] = guru[field];
+    }
+  }
+
+  return hasil;
+}
+
 function renderTabelGuru() {
   const tabel = document.getElementById("tabelGuru");
   if (!tabel) return;
@@ -4767,7 +4812,7 @@ function renderTabelGuru() {
       <td>${guru.nama || "-"}</td>
       <td>${guru.nip || "-"}</td>
       <td>${guru.nuptk || "-"}</td>
-      <td>${guru.mapel || "-"}</td>
+      <td>${guru.mapel && guru.kelasWali ? "Guru Mapel & Wali Kelas" : (guru.mapel ? "Guru Mapel" : (guru.kelasWali ? "Wali Kelas" : "-"))}</td>
       <td>${guru.status || "-"}</td>
       <td><div class="aksi">
         <button class="btn-warning" onclick="editGuru('${guru.id}')">Edit</button>
@@ -4843,7 +4888,7 @@ function mulaiPantauanGuruRealtime() {
       });
     }
 
-    dataGuru = Array.from(guruMap.values());
+    dataGuru = hapusDuplikatGuruBerdasarkanNama(Array.from(guruMap.values()));
     dataGuru.sort((a,b) => String(a.nama||"").localeCompare(String(b.nama||""), "id"));
 
     // 3. Admin memperbaiki dokumen guru yang belum ada.
@@ -4958,7 +5003,7 @@ async function tampilkanGuru() {
       }
     }
 
-    dataGuru=Array.from(guruMap.values());
+    dataGuru=hapusDuplikatGuruBerdasarkanNama(Array.from(guruMap.values()));
     dataGuru.sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"));
     await muatDataProfilFoto();
     renderTabelGuru();
