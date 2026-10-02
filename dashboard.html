@@ -6076,21 +6076,106 @@ function hideAllPanelsERapor(){
   ["menuSiswa","menuGuru","menuKelas","menuMapel","menuJadwal","menuNilai","menuAbsensi","menuPembayaran","menuPengumuman","menuERapor","menuAkun","menuPembayaran"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove("aktif");});
 }
 
+function normalisasiKelasERapor(value){
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function namaKelasERapor(s){
+  // Mendukung semua bentuk data siswa yang sudah dipakai sistem.
+  const langsung = s.kelas || s.namaKelas || s.kelasNama || "";
+  if(langsung) return String(langsung).trim();
+
+  // Data manual tertentu menyimpan kelas sebagai tingkat + jurusan.
+  const tingkat = String(s.tingkat || "").trim();
+  const jurusan = String(s.jurusan || "").trim();
+  return [tingkat, jurusan].filter(Boolean).join(" ").trim();
+}
+
+function namaKelasDataERapor(k){
+  return String(k?.nama || k?.namaKelas || k?.kelas || "").trim();
+}
+
 async function siapkanERapor(){
-  if(roleUser === "siswa"){const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));if(!snap.exists()){pesanERapor("Data siswa tidak ditemukan. Hubungi Admin.","error");return;}const s={id:snap.id,...snap.data()};const ks=document.getElementById("kelasERapor"),ss=document.getElementById("siswaERapor");ks.innerHTML=`<option value="${String(s.kelas||"").replace(/"/g,"&quot;")}">${s.kelas||"-"}</option>`;ks.value=s.kelas||"";ss.innerHTML=`<option value="${s.id}">${s.nama||"-"} — ${s.nis||"-"}</option>`;ss.value=s.id;ks.disabled=true;ss.disabled=true;return;}
-  const ks=document.getElementById("kelasERapor"), ss=document.getElementById("siswaERapor");ks.disabled=false;ss.disabled=false;await tampilkanSiswa();await tampilkanKelas();
+  if(roleUser === "siswa"){
+    const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));
+    if(!snap.exists()){pesanERapor("Data siswa tidak ditemukan. Hubungi Admin.","error");return;}
+    const s={id:snap.id,...snap.data()};
+    const kelasSiswa=namaKelasERapor(s);
+    const ks=document.getElementById("kelasERapor"),ss=document.getElementById("siswaERapor");
+    ks.innerHTML=`<option value="${String(kelasSiswa||"").replace(/"/g,"&quot;")}">${kelasSiswa||"-"}</option>`;
+    ks.value=kelasSiswa||"";
+    ss.innerHTML=`<option value="${s.id}">${s.nama||"-"} — ${s.nis||"-"}</option>`;
+    ss.value=s.id;ks.disabled=true;ss.disabled=true;return;
+  }
+
+  const ks=document.getElementById("kelasERapor"), ss=document.getElementById("siswaERapor");
+  ks.disabled=false;ss.disabled=false;
+
+  // Pastikan data siswa terbaru sudah dimuat sebelum dropdown e-Rapor dibentuk.
+  await tampilkanSiswa();
+  await tampilkanKelas();
+
   const sebelumnya=ks.value;
   ks.innerHTML='<option value="">-- Pilih Kelas --</option>';
-  dataKelas.filter(k=>(k.status||"Aktif")==="Aktif").sort((a,b)=>String(a.nama||a.namaKelas||a.kelas||"").localeCompare(String(b.nama||b.namaKelas||b.kelas||""),"id")).forEach(k=>{const n=k.nama||k.namaKelas||k.kelas||"";if(n){const o=document.createElement("option");o.value=n;o.textContent=n;ks.appendChild(o);}});
-  if([...ks.options].some(o=>o.value===sebelumnya))ks.value=sebelumnya;
+
+  // Kelas e-Rapor berasal dari data kelas DAN data siswa.
+  // Ini penting untuk siswa yang ditambahkan manual oleh Guru ketika
+  // kelasnya belum/berbeda format di koleksi kelas.
+  const kelasMap=new Map();
+  dataKelas
+    .filter(k=>(k.status||"Aktif")==="Aktif")
+    .forEach(k=>{
+      const n=namaKelasDataERapor(k);
+      const key=normalisasiKelasERapor(n);
+      if(key && !kelasMap.has(key)) kelasMap.set(key,n);
+    });
+
+  dataSiswa
+    .filter(s=>(s.status||"Aktif")==="Aktif")
+    .forEach(s=>{
+      const n=namaKelasERapor(s);
+      const key=normalisasiKelasERapor(n);
+      if(key && !kelasMap.has(key)) kelasMap.set(key,n);
+    });
+
+  Array.from(kelasMap.values())
+    .sort((a,b)=>String(a).localeCompare(String(b),"id"))
+    .forEach(n=>{
+      const o=document.createElement("option");
+      o.value=n;o.textContent=n;ks.appendChild(o);
+    });
+
+  const keySebelumnya=normalisasiKelasERapor(sebelumnya);
+  const optionSebelumnya=[...ks.options].find(o=>normalisasiKelasERapor(o.value)===keySebelumnya);
+  if(optionSebelumnya) ks.value=optionSebelumnya.value;
   isiSiswaERapor();
 }
 
 function isiSiswaERapor(){
-  const kelas=document.getElementById("kelasERapor").value, ss=document.getElementById("siswaERapor"), sebelumnya=ss.value;
+  const kelas=document.getElementById("kelasERapor").value;
+  const kelasNormal=normalisasiKelasERapor(kelas);
+  const ss=document.getElementById("siswaERapor");
+  const sebelumnya=ss.value;
   ss.innerHTML='<option value="">-- Pilih Siswa --</option>';
-  dataSiswa.filter(s=>(s.status||"Aktif")==="Aktif" && (!kelas||s.kelas===kelas)).sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id")).forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=(s.nama||"-")+" — "+(s.nis||"-");ss.appendChild(o);});
-  if([...ss.options].some(o=>o.value===sebelumnya))ss.value=sebelumnya;
+
+  dataSiswa
+    .filter(s=>{
+      if((s.status||"Aktif")!=="Aktif") return false;
+      if(!kelasNormal) return true;
+      return normalisasiKelasERapor(namaKelasERapor(s))===kelasNormal;
+    })
+    .sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"))
+    .forEach(s=>{
+      const o=document.createElement("option");
+      o.value=s.id;
+      o.textContent=(s.nama||"-")+" — "+(s.nis||"-");
+      ss.appendChild(o);
+    });
+
+  if([...ss.options].some(o=>o.value===sebelumnya)) ss.value=sebelumnya;
 }
 
 document.getElementById("menuERapor").addEventListener("click",async()=>{
@@ -6104,7 +6189,14 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");return;}
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
-    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[]; snap.forEach(d=>{const n=d.data(); if(n.siswaId===siswaId && n.kelas===kelas && n.semester===semester)dataERaporNilai.push({id:d.id,...n});});
+    const kelasNormal=normalisasiKelasERapor(kelas);
+    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[];
+    snap.forEach(d=>{
+      const n=d.data();
+      if(n.siswaId===siswaId && normalisasiKelasERapor(n.kelas)===kelasNormal && n.semester===semester){
+        dataERaporNilai.push({id:d.id,...n});
+      }
+    });
     const siswa=dataSiswa.find(s=>s.id===siswaId);
     const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
