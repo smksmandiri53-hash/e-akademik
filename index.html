@@ -102,6 +102,19 @@ button:disabled{opacity:.65;cursor:not-allowed}
           <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Email login"></div>
           <div class="field" style="margin-top:13px"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
           <button class="primary" id="btnLogin">Masuk ke Dashboard</button>
+          <div style="text-align:center;margin-top:10px">
+            <button type="button" id="btnLupaSandi" style="border:0;background:none;color:#0b6b8a;font-weight:700;cursor:pointer;padding:5px 8px">
+              🔑 Lupa Sandi?
+            </button>
+          </div>
+          <div id="resetSandiBox" class="panel" style="display:none;margin-top:12px;padding:16px">
+            <div class="field">
+              <label>Email akun yang terdaftar</label>
+              <input id="resetEmail" type="email" autocomplete="email" placeholder="Masukkan email akun">
+            </div>
+            <button class="primary" id="btnKirimReset" type="button" style="margin-top:10px">Kirim Link Ubah Sandi</button>
+            <div class="note" style="margin-top:8px">Link perubahan sandi akan dikirim ke email akun. Buka email tersebut lalu buat sandi baru.</div>
+          </div>
           <div class="note">Gunakan akun Firebase yang sudah terdaftar. Akun Admin dibuat oleh pengelola sistem.</div>
         </div>
 
@@ -139,7 +152,7 @@ button:disabled{opacity:.65;cursor:not-allowed}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig={
@@ -158,6 +171,56 @@ function toggleRoleFields(){const guru=$("regRole").value==="guru";$("studentFie
 $("tabLogin").onclick=()=>{$("tabLogin").classList.add("active");$("tabDaftar").classList.remove("active");$("panelLogin").classList.add("active");$("panelDaftar").classList.remove("active");clearMsg();};
 $("tabDaftar").onclick=()=>{$("tabDaftar").classList.add("active");$("tabLogin").classList.remove("active");$("panelDaftar").classList.add("active");$("panelLogin").classList.remove("active");clearMsg();};
 $("regRole").onchange=toggleRoleFields;
+
+$("btnLupaSandi").onclick=()=>{
+  const box=$("resetSandiBox");
+  const membuka=box.style.display==="none";
+  box.style.display=membuka?"block":"none";
+  if(membuka){
+    $("resetEmail").value=$("loginEmail").value.trim().toLowerCase();
+    $("resetEmail").focus();
+    clearMsg();
+  }
+};
+
+$("btnKirimReset").onclick=async()=>{
+  const email=$("resetEmail").value.trim().toLowerCase();
+  if(!email)return msg("Masukkan email akun terlebih dahulu.");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg("Format email tidak valid.");
+
+  $("btnKirimReset").disabled=true;
+  $("btnKirimReset").textContent="Mengirim...";
+  clearMsg();
+
+  try{
+    await sendPasswordResetEmail(auth,email);
+    msg("Link untuk mengubah sandi sudah dikirim ke email. Periksa Kotak Masuk, Spam, atau Promosi.",true);
+    $("resetEmail").value=email;
+  }catch(e){
+    console.error("PASSWORD RESET ERROR",e?.code,e?.message,e);
+    let t="Gagal mengirim link ubah sandi. ";
+    switch(e?.code){
+      case "auth/invalid-email":
+        t+="Format email tidak valid."; break;
+      case "auth/user-not-found":
+        t+="Email tersebut tidak ditemukan sebagai akun E-Akademik."; break;
+      case "auth/user-disabled":
+        t+="Akun tersebut dinonaktifkan di Firebase Authentication."; break;
+      case "auth/operation-not-allowed":
+        t+="Fitur Email/Password belum diaktifkan pada Firebase Authentication."; break;
+      case "auth/network-request-failed":
+        t+="Koneksi ke Firebase bermasalah. Periksa internet lalu coba lagi."; break;
+      case "auth/too-many-requests":
+        t+="Terlalu banyak permintaan. Tunggu beberapa saat lalu coba lagi."; break;
+      default:
+        t+=(e?.message||e?.code||"Kesalahan tidak diketahui.");
+    }
+    msg(t);
+  }finally{
+    $("btnKirimReset").disabled=false;
+    $("btnKirimReset").textContent="Kirim Link Ubah Sandi";
+  }
+};
 
 $("btnLogin").onclick=async()=>{
   const email=$("loginEmail").value.trim().toLowerCase();
