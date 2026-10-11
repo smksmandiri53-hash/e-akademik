@@ -6185,47 +6185,97 @@ document.getElementById("menuERapor").addEventListener("click",async()=>{
 document.getElementById("kelasERapor").addEventListener("change",isiSiswaERapor);
 
 document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
-  const kelas=document.getElementById("kelasERapor").value, siswaId=document.getElementById("siswaERapor").value, semester=document.getElementById("semesterERapor").value;
+  const kelas=document.getElementById("kelasERapor").value;
+  const siswaId=document.getElementById("siswaERapor").value;
+  const semester=document.getElementById("semesterERapor").value;
   if(roleUser === "siswa" && siswaId !== profilUser?.siswaId){pesanERapor("Akun siswa hanya dapat melihat rapornya sendiri.","error");return;}
   if(!kelas||!siswaId||!semester){pesanERapor("Kelas, siswa, dan semester wajib dipilih.","error");return;}
   try{
     const kelasNormal=normalisasiKelasERapor(kelas);
-    const snap=await getDocs(collection(db,"nilai")); dataERaporNilai=[];
+    const snap=await getDocs(collection(db,"nilai"));
+    dataERaporNilai=[];
     snap.forEach(d=>{
       const n=d.data();
       if(n.siswaId===siswaId && normalisasiKelasERapor(n.kelas)===kelasNormal && n.semester===semester){
         dataERaporNilai.push({id:d.id,...n});
       }
     });
-    const siswa=dataSiswa.find(s=>s.id===siswaId);
-    const nilaiMap={}; dataERaporNilai.forEach(n=>{nilaiMap[n.mapel||"-" ]=n;});
+    const siswa=dataSiswa.find(s=>s.id===siswaId) || {};
+    const nilaiMap={};
+    dataERaporNilai.forEach(n=>{nilaiMap[String(n.mapel||"-").trim()]=n;});
     const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
-    let total=0; rows.forEach(n=>total+=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4)));
+    const nilaiAkhir=n=>Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));
+    const total=rows.reduce((sum,n)=>sum+nilaiAkhir(n),0);
     const avg=rows.length?total/rows.length:0;
-    const esc=v=>String(v??"-").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+    const esc=v=>String(v??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+    const nilaiTampil=v=>(v===undefined||v===null||v==="")?"—":esc(v);
+    const mapelRows=rows.length?rows.map((n,i)=>`<tr>
+      <td class="center">${i+1}</td>
+      <td>${esc(n.mapel||"-")}</td>
+      <td class="center">${nilaiAkhir(n).toFixed(2)}</td>
+      <td>${esc(n.guru||n.namaGuru||n.guruNama||"-")}</td>
+      <td>${esc(n.keterangan||n.catatan||n.deskripsi||"-")}</td>
+    </tr>`).join(""):`<tr><td colspan="5" class="center">Belum ada data nilai untuk semester ini.</td></tr>`;
+    const namaKepala=esc("SUTRISNO, SS");
+    const waliKelas=esc(siswa.namaWaliKelas||siswa.waliKelas||siswa.namaWali||"________________________");
     document.getElementById("previewERapor").innerHTML=`
-      <div id="lembarRapor" style="background:white;padding:35px;border:1px solid #ddd;max-width:900px;margin:auto;">
-        <div style="text-align:center;border-bottom:3px double #222;padding-bottom:15px;margin-bottom:20px;">
-          <h2 style="margin:0;">E-RAPOR SISWA</h2><h3 style="margin:6px 0;">SMKS MANDIRI BANDAR AGUNG</h3>
-          <p style="margin:0;">Laporan Hasil Belajar Siswa</p>
+      <div id="lembarRapor" class="rapor-sheet">
+        <div class="rapor-school-head">
+          <div class="rapor-school-name">YAYASAN PENDIDIKAN BANDAR AGUNG</div>
+          <div class="rapor-school-sub">( YPBA )</div>
+          <div class="rapor-school-title">SMK MANDIRI BANDAR AGUNG</div>
+          <div>Paket Keahlian: Akuntansi, Pemasaran &amp; TKJ</div>
+          <div>Jalan Panjang Sribhawono KM 55 Kecamatan Bandar Sribhawono</div>
+          <div>Kabupaten Lampung Timur Kode Pos: 34199</div>
+          <div>Email: smkmandiri.12@gmail.com / sutrisno.5412@gmail.com &nbsp; FB: smakba &nbsp; IG: smk_mandiri_ba</div>
+          <div>NIS: 400520 &nbsp;&nbsp; NPSN: 69761848 &nbsp;&nbsp; NSS: 402120817052</div>
         </div>
-        <table style="width:100%;margin-bottom:20px;border-collapse:collapse;">
-          <tr><td style="padding:5px;width:20%;"><b>Nama</b></td><td>${esc(siswa?.nama)}</td><td style="width:20%;"><b>Kelas</b></td><td>${esc(kelas)}</td></tr>
-          <tr><td style="padding:5px;"><b>NIS</b></td><td>${esc(siswa?.nis)}</td><td><b>Semester</b></td><td>${esc(semester)}</td></tr>
+        <h3 class="rapor-heading">LAPORAN HASIL BELAJAR SISWA (E-RAPOR)</h3>
+        <table class="rapor-identitas">
+          <tr><th>Nama</th><td>${esc(siswa.nama||siswa.namaSiswa||"-")}</td><th>Tahun Pelajaran</th><td>${esc(siswa.tahunPelajaran||"2026/2027")}</td></tr>
+          <tr><th>Kelas</th><td>${esc(kelas)}</td><th>Semester</th><td>${esc(semester)}</td></tr>
+          <tr><th>NIS</th><td>${nilaiTampil(siswa.nis||siswa.nisn||siswa.nomorInduk)}</td><th>Tempat, Tanggal Lahir</th><td>${nilaiTampil(siswa.ttl||[siswa.tempatLahir,siswa.tanggalLahir].filter(Boolean).join(", "))}</td></tr>
         </table>
-        <table style="width:100%;border-collapse:collapse;">
-          <thead><tr><th style="border:1px solid #222;padding:8px;">No</th><th style="border:1px solid #222;padding:8px;text-align:left;">Mata Pelajaran</th><th style="border:1px solid #222;padding:8px;">Tugas</th><th style="border:1px solid #222;padding:8px;">UTS</th><th style="border:1px solid #222;padding:8px;">UAS</th><th style="border:1px solid #222;padding:8px;">Nilai Akhir</th></tr></thead>
-          <tbody>${rows.length?rows.map((n,i)=>{const akhir=Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));return `<tr><td style="border:1px solid #222;padding:8px;text-align:center;">${i+1}</td><td style="border:1px solid #222;padding:8px;">${esc(n.mapel)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.tugas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uts)}</td><td style="border:1px solid #222;padding:8px;text-align:center;">${esc(n.uas)}</td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${akhir.toFixed(2)}</b></td></tr>`}).join(""): '<tr><td colspan="6" style="border:1px solid #222;padding:15px;text-align:center;">Belum ada data nilai untuk semester ini.</td></tr>'}</tbody>
-          <tfoot><tr><td colspan="5" style="border:1px solid #222;padding:8px;text-align:right;"><b>Rata-rata</b></td><td style="border:1px solid #222;padding:8px;text-align:center;"><b>${avg.toFixed(2)}</b></td></tr></tfoot>
+        <table class="rapor-nilai">
+          <thead><tr><th style="width:6%">No</th><th style="width:31%">Mata Pelajaran</th><th style="width:12%">Nilai</th><th style="width:23%">Guru</th><th>Keterangan</th></tr></thead>
+          <tbody>${mapelRows}</tbody>
+          <tfoot>
+            <tr><th colspan="2" class="right">JUMLAH</th><th class="center">${total.toFixed(2)}</th><td colspan="2"></td></tr>
+            <tr><th colspan="2" class="right">NILAI RATA-RATA</th><th class="center">${avg.toFixed(2)}</th><td colspan="2"></td></tr>
+            <tr><th colspan="2" class="right">PERINGKAT KELAS</th><th class="center">—</th><td colspan="2">Belum tersedia</td></tr>
+          </tfoot>
         </table>
-        <div style="display:flex;justify-content:space-between;margin-top:55px;text-align:center;gap:30px;"><div style="flex:1;">Mengetahui,<br>Wali Kelas<br><br><br>________________________</div><div style="flex:1;">Orang Tua/Wali<br><br><br><br>________________________</div><div style="flex:1;">Kepala Sekolah<br><br><br><br>________________________</div></div>
-      </div>`;
+        <table class="rapor-attendance">
+          <thead><tr><th colspan="2">Kehadiran</th><th>Jumlah</th></tr></thead>
+          <tbody><tr><td style="width:8%">1.</td><td>Sakit</td><td>—</td></tr>
+          <tr><td>2.</td><td>Izin</td><td>—</td></tr><tr><td>3.</td><td>Alpha</td><td>—</td></tr><tr><td>4.</td><td>Bolos</td><td>—</td></tr></tbody>
+        </table>
+        <div class="rapor-sign-date">Bandar Agung, ................. ${esc(semester==="Ganjil"?"Desember":"Juni")} ${esc((siswa.tahunPelajaran||"2026/2027").split("/")[0])}</div>
+        <div class="rapor-signatures">
+          <div>Kepala Sekolah,<br><br><br><br><strong>${namaKepala}</strong></div>
+          <div>Wali Kelas,<br><br><br><br><strong>${waliKelas}</strong></div>
+        </div>
+      </div>
+      <style>
+        .rapor-sheet{background:#fff;color:#111;max-width:1000px;margin:0 auto;padding:28px 32px;border:1px solid #d7dfe3;font:12px Arial,sans-serif;line-height:1.35}
+        .rapor-school-head{text-align:center;padding-bottom:12px;border-bottom:3px double #111;font-size:10px;line-height:1.45}
+        .rapor-school-name{font-weight:bold;font-size:13px}.rapor-school-sub{font-weight:bold}.rapor-school-title{font-weight:bold;font-size:16px;margin:3px 0}
+        .rapor-heading{text-align:center;font-size:14px;margin:16px 0 12px}
+        .rapor-sheet table{width:100%;border-collapse:collapse;margin:10px 0 16px;min-width:0!important}
+        .rapor-sheet th,.rapor-sheet td{border:1px solid #222;padding:6px 7px;color:#111;background:#fff;font-size:11px;vertical-align:top}
+        .rapor-identitas th{width:17%;text-align:left}.rapor-identitas td{width:33%}
+        .rapor-nilai thead th,.rapor-attendance thead th{background:#f1f1f1;text-align:center}
+        .rapor-sheet .center{text-align:center}.rapor-sheet .right{text-align:right}
+        .rapor-sign-date{text-align:right;margin-top:22px}.rapor-signatures{display:grid;grid-template-columns:1fr 1fr;gap:35px;text-align:center;margin-top:12px;line-height:1.5}
+        @media(max-width:600px){.rapor-sheet{padding:12px}.rapor-sheet th,.rapor-sheet td{padding:4px;font-size:10px}.rapor-school-head{font-size:8px}.rapor-school-title{font-size:13px}}
+        @media print{.rapor-sheet{max-width:none;border:0;padding:0}.rapor-sheet table{page-break-inside:auto}.rapor-sheet tr{page-break-inside:avoid}.rapor-sheet th,.rapor-sheet td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+      </style>`;
   }catch(e){console.error(e);pesanERapor("Gagal mengambil nilai: "+e.message,"error");}
 });
 
 document.getElementById("btnCetakRapor").addEventListener("click",()=>{
   const el=document.getElementById("lembarRapor"); if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
-  const w=window.open("","_blank"); w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;}@page{size:A4;margin:15mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}}</style></head><body>${el.outerHTML}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
+  const w=window.open("","_blank"); w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#111;}@page{size:A4 portrait;margin:12mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}.rapor-sheet{max-width:none;border:0;padding:0;}}</style></head><body>${el.outerHTML}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
 });
 
 
