@@ -1946,6 +1946,7 @@
     <div class="topbar">
       <h2>📄 E-Rapor Siswa</h2>
       <button class="btn-primary" id="btnCetakRapor">🖨️ Cetak Rapor</button>
+      <button class="btn-primary" id="btnUnduhRapor" type="button">⬇️ Unduh Rapor</button>
     </div>
     <div id="pesanERapor" class="pesan"></div>
 
@@ -6193,31 +6194,104 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   try{
     const kelasNormal=normalisasiKelasERapor(kelas);
     const snap=await getDocs(collection(db,"nilai"));
-    dataERaporNilai=[];
-    snap.forEach(d=>{
-      const n=d.data();
-      if(n.siswaId===siswaId && normalisasiKelasERapor(n.kelas)===kelasNormal && n.semester===semester){
-        dataERaporNilai.push({id:d.id,...n});
-      }
+    const semuaNilai=[];
+    snap.forEach(d=>semuaNilai.push({id:d.id,...d.data()}));
+    dataERaporNilai=semuaNilai.filter(n=>
+      String(n.siswaId||"")===String(siswaId) &&
+      normalisasiKelasERapor(n.kelas)===kelasNormal &&
+      String(n.semester||"")===String(semester)
+    );
+
+    const siswa=dataSiswa.find(s=>String(s.id)===String(siswaId)) || {};
+    const jurusanSiswa=String(siswa.jurusan||siswa.programKeahlian||siswa.keahlian||"").trim();
+    const normalisasiJurusan=v=>String(v||"").trim().toLocaleLowerCase("id").replace(/\s+/g," ");
+    const identitasSiswa=s=>({
+      id:String(s.id||s.siswaId||s.uid||""),
+      kelas:normalisasiKelasERapor(namaKelasERapor(s)),
+      jurusan:normalisasiJurusan(s.jurusan||s.programKeahlian||s.keahlian||"")
     });
-    const siswa=dataSiswa.find(s=>s.id===siswaId) || {};
+
     const nilaiMap={};
-    dataERaporNilai.forEach(n=>{nilaiMap[String(n.mapel||"-").trim()]=n;});
-    const rows=Object.values(nilaiMap).sort((a,b)=>String(a.mapel||"").localeCompare(String(b.mapel||""),"id"));
-    const nilaiAkhir=n=>Number(n.nilaiAkhir ?? ((Number(n.tugas)||0)*.3+(Number(n.uts)||0)*.3+(Number(n.uas)||0)*.4));
-    const total=rows.reduce((sum,n)=>sum+nilaiAkhir(n),0);
-    const avg=rows.length?total/rows.length:0;
-    const esc=v=>String(v??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+    dataERaporNilai.forEach(n=>{
+      const key=String(n.mapel||n.mataPelajaran||n.namaMapel||"-").trim().toLocaleLowerCase("id");
+      if(!nilaiMap[key] || (nilaiMap[key].uts==null && n.uts!=null)) nilaiMap[key]=n;
+    });
+    const rows=Object.values(nilaiMap).sort((a,b)=>
+      String(a.mapel||a.mataPelajaran||a.namaMapel||"").localeCompare(String(b.mapel||b.mataPelajaran||b.namaMapel||""),"id")
+    );
+
+    // Nilai E-Rapor menggunakan nilai UTS asli dari Firestore.
+    const nilaiUTS=n=>{
+      if(n.uts===undefined || n.uts===null || n.uts==="") return null;
+      const v=Number(n.uts);
+      return Number.isFinite(v)&&v>=0?v:null;
+    };
+    const rataRataUTS=(records,kelasFilter="")=>{
+      const unik={};
+      records.forEach(n=>{
+        const sem=String(n.semester||"");
+        if(sem!==String(semester)) return;
+        // Saat kelas tersedia pada dokumen nilai, gunakan nilai dari kelas
+        // siswa tersebut agar peringkat tidak tercampur dengan kelas lain.
+        const kelasNilai=String(n.kelas||"").trim();
+        if(kelasFilter && kelasNilai && normalisasiKelasERapor(kelasNilai)!==kelasFilter) return;
+        const key=String(n.mapel||n.mataPelajaran||n.namaMapel||"-").trim().toLocaleLowerCase("id");
+        const val=nilaiUTS(n);
+        if(val===null) return;
+        if(!unik[key] || unik[key].nilai===null) unik[key]={nilai:val};
+      });
+      const vals=Object.values(unik).map(x=>x.nilai);
+      return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    };
+    const skorRapor=rataRataUTS(rows,kelasNormal);
+    const ringkasanSiswa=new Map();
+    dataSiswa.forEach(s=>{
+      const id=String(s.id||s.siswaId||s.uid||"");
+      if(!id) return;
+      const info=identitasSiswa(s);
+      const records=semuaNilai.filter(n=>String(n.siswaId||"")===id);
+      ringkasanSiswa.set(id,{...info,siswa:s,rataRata:rataRataUTS(records,info.kelas)});
+    });
+    // Pastikan siswa yang sedang dibuka tetap masuk perhitungan meskipun
+    // profilnya belum ada di array dataSiswa.
+    ringkasanSiswa.set(String(siswaId),{
+      ...identitasSiswa({...siswa,id:siswaId,kelas:kelas||namaKelasERapor(siswa)}),
+      siswa, rataRata:skorRapor
+    });
+
+    const peringkatDalam=daftar=>{
+      const valid=daftar.map(x=>x.rataRata).filter(v=>v!==null && Number.isFinite(v));
+      if(skorRapor===null || !valid.length) return "—";
+      const lebihTinggi=valid.filter(v=>v>skorRapor+1e-9).length;
+      return String(lebihTinggi+1);
+    };
+    const infoTerpilih=ringkasanSiswa.get(String(siswaId));
+    const cohortKelas=[...ringkasanSiswa.values()].filter(x=>x.kelas===kelasNormal);
+    if(!cohortKelas.some(x=>x.id===String(siswaId))) cohortKelas.push(infoTerpilih);
+    const peringkatKelas=peringkatDalam(cohortKelas);
+
+    const jumlahNilai=rows.map(nilaiUTS).filter(v=>v!==null).length;
+    const avg=jumlahNilai?rows.map(nilaiUTS).filter(v=>v!==null).reduce((sum,v)=>sum+v,0)/jumlahNilai:0;
+    const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
     const nilaiTampil=v=>(v===undefined||v===null||v==="")?"—":esc(v);
-    const mapelRows=rows.length?rows.map((n,i)=>`<tr>
-      <td class="center">${i+1}</td>
-      <td>${esc(n.mapel||"-")}</td>
-      <td class="center">${nilaiAkhir(n).toFixed(2)}</td>
-      <td>${esc(n.guru||n.namaGuru||n.guruNama||"-")}</td>
-      <td>${esc(n.keterangan||n.catatan||n.deskripsi||"-")}</td>
-    </tr>`).join(""):`<tr><td colspan="5" class="center">Belum ada data nilai untuk semester ini.</td></tr>`;
+    const keteranganOtomatis=v=>{
+      if(v===null) return "Nilai UTS belum tersedia";
+      if(v>=75) return "Cukup memahami materi yang disampaikan";
+      return "Peserta didik masih belum mampu memahami materi yang diajarkan dengan baik";
+    };
+    const mapelRows=rows.length?rows.map((n,i)=>{
+      const score=nilaiUTS(n);
+      return `<tr>
+        <td class="center">${i+1}</td>
+        <td>${esc(n.mapel||n.mataPelajaran||n.namaMapel||"-")}</td>
+        <td class="center">${score===null?"—":esc(score)}</td>
+        <td>${esc(n.guru||n.namaGuru||n.guruNama||"-")}</td>
+        <td>${esc(keteranganOtomatis(score))}</td>
+      </tr>`;
+    }).join(""):`<tr><td colspan="5" class="center">Belum ada data nilai untuk semester ini.</td></tr>`;
     const namaKepala=esc("SUTRISNO, SS");
     const waliKelas=esc(siswa.namaWaliKelas||siswa.waliKelas||siswa.namaWali||"________________________");
+    const jurusanTampil=jurusanSiswa||siswa.programKeahlian||siswa.keahlian||"—";
     document.getElementById("previewERapor").innerHTML=`
       <div id="lembarRapor" class="rapor-sheet">
         <div class="rapor-school-head">
@@ -6235,14 +6309,14 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
           <tr><th>Nama</th><td>${esc(siswa.nama||siswa.namaSiswa||"-")}</td><th>Tahun Pelajaran</th><td>${esc(siswa.tahunPelajaran||"2026/2027")}</td></tr>
           <tr><th>Kelas</th><td>${esc(kelas)}</td><th>Semester</th><td>${esc(semester)}</td></tr>
           <tr><th>NIS</th><td>${nilaiTampil(siswa.nis||siswa.nisn||siswa.nomorInduk)}</td><th>Tempat, Tanggal Lahir</th><td>${nilaiTampil(siswa.ttl||[siswa.tempatLahir,siswa.tanggalLahir].filter(Boolean).join(", "))}</td></tr>
+          <tr><th>Jurusan</th><td colspan="3">${esc(jurusanTampil)}</td></tr>
         </table>
         <table class="rapor-nilai">
-          <thead><tr><th style="width:6%">No</th><th style="width:31%">Mata Pelajaran</th><th style="width:12%">Nilai</th><th style="width:23%">Guru</th><th>Keterangan</th></tr></thead>
+          <thead><tr><th style="width:6%">No</th><th style="width:31%">Mata Pelajaran</th><th style="width:12%">Nilai UTS</th><th style="width:23%">Guru</th><th>Keterangan</th></tr></thead>
           <tbody>${mapelRows}</tbody>
           <tfoot>
-            <tr><th colspan="2" class="right">JUMLAH</th><th class="center">${total.toFixed(2)}</th><td colspan="2"></td></tr>
-            <tr><th colspan="2" class="right">NILAI RATA-RATA</th><th class="center">${avg.toFixed(2)}</th><td colspan="2"></td></tr>
-            <tr><th colspan="2" class="right">PERINGKAT KELAS</th><th class="center">—</th><td colspan="2">Belum tersedia</td></tr>
+            <tr><th colspan="2" class="right">RATA-RATA NILAI UTS</th><th class="center">${jumlahNilai?avg.toFixed(2):"—"}</th><td colspan="2"></td></tr>
+            <tr><th colspan="2" class="right">PERINGKAT KELAS</th><th class="center">${peringkatKelas}</th><td colspan="2">Dihitung otomatis dari rata-rata UTS siswa dalam kelas yang sama</td></tr>
           </tfoot>
         </table>
         <table class="rapor-attendance">
@@ -6273,9 +6347,42 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
   }catch(e){console.error(e);pesanERapor("Gagal mengambil nilai: "+e.message,"error");}
 });
 
+function dokumenRaporMandiri(el){
+  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E-Rapor - ${String(el.querySelector(".rapor-identitas")?.innerText||"Siswa").replace(/[<>]/g,"").slice(0,100)}</title><style>
+  *{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4 portrait;margin:10mm}
+  .rapor-sheet{width:100%;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important;color:#111!important;font:10pt/1.3 Arial,sans-serif!important;overflow:visible!important}
+  .rapor-school-head{font-size:8.5pt!important;line-height:1.3!important;padding-bottom:7px!important;border-bottom:3px double #111!important;text-align:center}
+  .rapor-school-name{font-size:11pt!important}.rapor-school-title{font-size:14pt!important;margin:2px 0!important}.rapor-heading{font-size:12pt!important;margin:10px 0!important;text-align:center}
+  .rapor-sheet table{width:100%!important;min-width:0!important;table-layout:fixed;border-collapse:collapse!important;margin:7px 0 10px!important;page-break-inside:auto}
+  .rapor-sheet th,.rapor-sheet td{border:1px solid #222!important;padding:4px 5px!important;font-size:8.5pt!important;line-height:1.25!important;vertical-align:top!important;overflow-wrap:anywhere;word-break:normal;background:#fff!important;color:#111!important}
+  .rapor-sheet tr{page-break-inside:avoid;break-inside:avoid}.rapor-nilai th:nth-child(1),.rapor-nilai td:nth-child(1){width:6%}.rapor-nilai th:nth-child(2),.rapor-nilai td:nth-child(2){width:25%}.rapor-nilai th:nth-child(3),.rapor-nilai td:nth-child(3){width:11%}.rapor-nilai th:nth-child(4),.rapor-nilai td:nth-child(4){width:20%}.rapor-nilai th:nth-child(5),.rapor-nilai td:nth-child(5){width:38%}
+  .rapor-sign-date{margin-top:14px!important}.rapor-signatures{display:grid!important;grid-template-columns:1fr 1fr!important;gap:25px!important;margin-top:8px!important;break-inside:avoid;page-break-inside:avoid}
+  @media screen{body{padding:20px;background:#eee}.rapor-sheet{max-width:190mm!important;margin:0 auto!important;padding:12mm!important;box-shadow:0 1px 8px #bbb!important}}
+  @media print{html,body{width:auto!important;margin:0!important;padding:0!important}.rapor-sheet{padding:0!important;box-shadow:none!important}.rapor-sheet thead{display:table-header-group}.rapor-sheet tfoot{display:table-row-group}}
+  </style></head><body>${el.outerHTML}</body></html>`;
+}
+
 document.getElementById("btnCetakRapor").addEventListener("click",()=>{
-  const el=document.getElementById("lembarRapor"); if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
-  const w=window.open("","_blank"); w.document.write(`<!DOCTYPE html><html><head><title>E-Rapor</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#111;}@page{size:A4 portrait;margin:12mm;}table{page-break-inside:auto;}tr{page-break-inside:avoid;}@media print{body{margin:0;}button{display:none;}.rapor-sheet{max-width:none;border:0;padding:0;}}</style></head><body>${el.outerHTML}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
+  const el=document.getElementById("lembarRapor");
+  if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
+  const w=window.open("","_blank");
+  if(!w){pesanERapor("Jendela cetak diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.","error");return;}
+  w.document.open();w.document.write(dokumenRaporMandiri(el));w.document.close();
+  w.onload=()=>{w.focus();setTimeout(()=>w.print(),350);};
+});
+
+document.getElementById("btnUnduhRapor").addEventListener("click",()=>{
+  const el=document.getElementById("lembarRapor");
+  if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
+  const html=dokumenRaporMandiri(el);
+  const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const nama=(el.querySelector(".rapor-identitas tr td")?.textContent||"Siswa").trim().replace(/[^a-z0-9_-]+/gi,"_").slice(0,60)||"Siswa";
+  a.href=url;a.download=`E-Rapor_${nama}.html`;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  pesanERapor("File E-Rapor berhasil diunduh. Buka file HTML tersebut, lalu pilih Cetak atau Simpan sebagai PDF untuk menghasilkan PDF dengan tata letak yang rapi.","success");
 });
 
 
