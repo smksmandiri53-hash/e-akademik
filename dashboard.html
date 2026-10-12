@@ -6279,15 +6279,33 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
       if(v>=75) return "Cukup memahami materi yang disampaikan";
       return "Peserta didik masih belum mampu memahami materi yang diajarkan dengan baik";
     };
-    const mapelRows=rows.length?rows.map((n,i)=>{
-      const score=nilaiUTS(n);
-      return `<tr>
-        <td class="center">${i+1}</td>
-        <td>${esc(n.mapel||n.mataPelajaran||n.namaMapel||"-")}</td>
-        <td class="center">${score===null?"—":esc(score)}</td>
-        <td>${esc(n.guru||n.namaGuru||n.guruNama||"-")}</td>
-        <td>${esc(keteranganOtomatis(score))}</td>
-      </tr>`;
+    const kelompokMapelERapor=n=>{
+      const raw=String(n.kategoriMapel||n.kelompokMapel||n.jenisMapel||n.kategori||n.jenis||n.tipeMapel||"").toLocaleLowerCase("id");
+      const nama=String(n.mapel||n.mataPelajaran||n.namaMapel||"").toLocaleLowerCase("id");
+      const gabung=raw+" "+nama;
+      if(/pilihan|muatan lokal|mulok|lintas minat/.test(raw)) return "pilihan";
+      if(/kejuruan|produktif|kompetensi keahlian|dasar-dasar program keahlian|konsentrasi keahlian/.test(raw)) return "kejuruan";
+      if(/umum|normatif|adaptif/.test(raw)) return "umum";
+      if(/pilihan|mulok|muatan lokal|bahasa daerah|prakarya dan kewirausahaan pilihan/.test(nama)) return "pilihan";
+      if(/tkj|teknik komputer|jaringan komputer|administrasi sistem|komputer dan jaringan|akuntansi|pemasaran|bisnis ritel|kejuruan|produktif|konsentrasi keahlian|dasar-dasar program keahlian/.test(nama)) return "kejuruan";
+      return "umum";
+    };
+    const urutanKelompok=["umum","kejuruan","pilihan"];
+    const judulKelompok={umum:"MAPEL UMUM",kejuruan:"MAPEL KEJURUAN",pilihan:"MAPEL PILIHAN"};
+    const mapelRows=rows.length?urutanKelompok.map(kelompok=>{
+      const daftar=rows.filter(n=>kelompokMapelERapor(n)===kelompok);
+      if(!daftar.length) return "";
+      const heading=`<tr class="rapor-group-heading"><th colspan="5">${judulKelompok[kelompok]}</th></tr>`;
+      return heading+daftar.map(n=>{
+        const i=rows.indexOf(n), score=nilaiUTS(n);
+        return `<tr>
+          <td class="center">${i+1}</td>
+          <td>${esc(n.mapel||n.mataPelajaran||n.namaMapel||"-")}</td>
+          <td class="center">${score===null?"—":esc(score)}</td>
+          <td>${esc(n.guru||n.namaGuru||n.guruNama||"-")}</td>
+          <td>${esc(keteranganOtomatis(score))}</td>
+        </tr>`;
+      }).join("");
     }).join(""):`<tr><td colspan="5" class="center">Belum ada data nilai untuk semester ini.</td></tr>`;
     const namaKepala=esc("SUTRISNO, SS");
     const waliKelas=esc(siswa.namaWaliKelas||siswa.waliKelas||siswa.namaWali||"________________________");
@@ -6339,6 +6357,7 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
         .rapor-sheet th,.rapor-sheet td{border:1px solid #222;padding:6px 7px;color:#111;background:#fff;font-size:11px;vertical-align:top}
         .rapor-identitas th{width:17%;text-align:left}.rapor-identitas td{width:33%}
         .rapor-nilai thead th,.rapor-attendance thead th{background:#f1f1f1;text-align:center}
+        .rapor-nilai .rapor-group-heading th{background:#dcecf0;text-align:left;font-weight:800;letter-spacing:.5px;padding:8px 7px;border-top:2px solid #365d68}
         .rapor-sheet .center{text-align:center}.rapor-sheet .right{text-align:right}
         .rapor-sign-date{text-align:right;margin-top:22px}.rapor-signatures{display:grid;grid-template-columns:1fr 1fr;gap:35px;text-align:center;margin-top:12px;line-height:1.5}
         @media(max-width:600px){.rapor-sheet{padding:12px}.rapor-sheet th,.rapor-sheet td{padding:4px;font-size:10px}.rapor-school-head{font-size:8px}.rapor-school-title{font-size:13px}}
