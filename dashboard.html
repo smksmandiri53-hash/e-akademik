@@ -6099,6 +6099,36 @@ function namaKelasDataERapor(k){
   return String(k?.nama || k?.namaKelas || k?.kelas || "").trim();
 }
 
+function tanggalIndonesiaERapor(tanggal=new Date()){
+  return new Intl.DateTimeFormat("id-ID",{
+    day:"numeric",month:"long",year:"numeric",timeZone:"Asia/Jakarta"
+  }).format(tanggal);
+}
+
+function cariWaliKelasERapor(kelas,siswa={}){
+  const key=normalisasiKelasERapor(kelas);
+  // Prioritaskan data wali kelas yang terhubung langsung pada dokumen kelas.
+  const dataKelasCocok=(Array.isArray(dataKelas)?dataKelas:[]).find(k=>
+    normalisasiKelasERapor(namaKelasDataERapor(k))===key
+  );
+  const waliDariKelas=dataKelasCocok?.waliKelas || dataKelasCocok?.wali || dataKelasCocok?.namaWaliKelas || "";
+  if(waliDariKelas) return String(waliDariKelas).trim();
+
+  // Fallback: cari guru yang profilnya menyatakan kelas wali yang sama.
+  const guruCocok=(Array.isArray(dataGuru)?dataGuru:[]).find(g=>
+    normalisasiKelasERapor(g.kelasWali || g.waliKelas || g.namaKelasWali || "")===key
+  );
+  if(guruCocok?.nama) return String(guruCocok.nama).trim();
+
+  // Fallback untuk data lama yang menyimpan nama wali langsung di data siswa.
+  return String(siswa.namaWaliKelas || siswa.waliKelas || siswa.namaWali || "").trim() || "________________________";
+}
+
+function perbaruiTanggalCetakERapor(el){
+  const target=el?.querySelector(".tanggal-cetak-rapor");
+  if(target) target.textContent=tanggalIndonesiaERapor(new Date());
+}
+
 async function siapkanERapor(){
   if(roleUser === "siswa"){
     const snap=await getDoc(doc(db,"siswa",profilUser.siswaId));
@@ -6310,7 +6340,8 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
       }).join("");
     }).join(""):`<tr><td colspan="5" class="center">Belum ada data nilai untuk semester ini.</td></tr>`;
     const namaKepala=esc("SUTRISNO, SS");
-    const waliKelas=esc(siswa.namaWaliKelas||siswa.waliKelas||siswa.namaWali||"________________________");
+    const waliKelas=esc(cariWaliKelasERapor(kelas,siswa));
+    const tanggalRapor=tanggalIndonesiaERapor(new Date());
     const jurusanTampil=jurusanSiswa||siswa.programKeahlian||siswa.keahlian||"—";
     document.getElementById("previewERapor").innerHTML=`
       <div id="lembarRapor" class="rapor-sheet">
@@ -6344,7 +6375,7 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
           <tbody><tr><td style="width:8%">1.</td><td>Sakit</td><td>—</td></tr>
           <tr><td>2.</td><td>Izin</td><td>—</td></tr><tr><td>3.</td><td>Alpha</td><td>—</td></tr><tr><td>4.</td><td>Bolos</td><td>—</td></tr></tbody>
         </table>
-        <div class="rapor-sign-date">Bandar Agung, ................. ${esc(semester==="Ganjil"?"Desember":"Juni")} ${esc((siswa.tahunPelajaran||"2026/2027").split("/")[0])}</div>
+        <div class="rapor-sign-date">Bandar Agung, <span class="tanggal-cetak-rapor">${esc(tanggalRapor)}</span></div>
         <div class="rapor-signatures">
           <div>Kepala Sekolah,<br><br><br><br><strong>${namaKepala}</strong></div>
           <div>Wali Kelas,<br><br><br><br><strong>${waliKelas}</strong></div>
@@ -6387,6 +6418,8 @@ function dokumenRaporMandiri(el){
 document.getElementById("btnCetakRapor").addEventListener("click",()=>{
   const el=document.getElementById("lembarRapor");
   if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
+  // Selalu perbarui tanggal tepat sebelum dokumen cetak dibuat.
+  perbaruiTanggalCetakERapor(el);
   const w=window.open("","_blank");
   if(!w){pesanERapor("Jendela cetak diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.","error");return;}
   w.document.open();w.document.write(dokumenRaporMandiri(el));w.document.close();
@@ -6396,6 +6429,8 @@ document.getElementById("btnCetakRapor").addEventListener("click",()=>{
 document.getElementById("btnUnduhRapor").addEventListener("click",()=>{
   const el=document.getElementById("lembarRapor");
   if(!el){pesanERapor("Tampilkan rapor terlebih dahulu.","error");return;}
+  // File unduhan memakai tanggal saat tombol unduh ditekan.
+  perbaruiTanggalCetakERapor(el);
   const html=dokumenRaporMandiri(el);
   const blob=new Blob([html],{type:"text/html;charset=utf-8"});
   const url=URL.createObjectURL(blob);
