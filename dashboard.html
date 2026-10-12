@@ -6281,13 +6281,15 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
     };
     const kelompokMapelERapor=n=>{
       const raw=String(n.kategoriMapel||n.kelompokMapel||n.jenisMapel||n.kategori||n.jenis||n.tipeMapel||"").toLocaleLowerCase("id");
-      const nama=String(n.mapel||n.mataPelajaran||n.namaMapel||"").toLocaleLowerCase("id");
-      const gabung=raw+" "+nama;
+      const nama=String(n.mapel||n.mataPelajaran||n.namaMapel||"").toLocaleLowerCase("id").trim();
+      // Klasifikasi khusus sesuai permintaan sekolah didahulukan agar metadata lama tidak menimpa kategori ini.
+      if(/^(ai|a\.i\.|artificial intelligence)(\b|\s|$)/i.test(nama) || /\bmatematika\s+lanjutan\b/i.test(nama) || /\bcoding\b/i.test(nama)) return "pilihan";
+      if(/^informatika(\b|\s|$)/i.test(nama)) return "kejuruan";
       if(/pilihan|muatan lokal|mulok|lintas minat/.test(raw)) return "pilihan";
       if(/kejuruan|produktif|kompetensi keahlian|dasar-dasar program keahlian|konsentrasi keahlian/.test(raw)) return "kejuruan";
       if(/umum|normatif|adaptif/.test(raw)) return "umum";
       if(/pilihan|mulok|muatan lokal|bahasa daerah|prakarya dan kewirausahaan pilihan/.test(nama)) return "pilihan";
-      if(/tkj|teknik komputer|jaringan komputer|administrasi sistem|komputer dan jaringan|akuntansi|pemasaran|bisnis ritel|kejuruan|produktif|konsentrasi keahlian|dasar-dasar program keahlian/.test(nama)) return "kejuruan";
+      if(/informatika|tkj|teknik komputer|jaringan komputer|administrasi sistem|komputer dan jaringan|akuntansi|pemasaran|bisnis ritel|kejuruan|produktif|konsentrasi keahlian|dasar-dasar program keahlian/.test(nama)) return "kejuruan";
       return "umum";
     };
     const urutanKelompok=["umum","kejuruan","pilihan"];
