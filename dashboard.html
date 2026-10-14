@@ -6525,6 +6525,37 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
         </tr>`;
       }).join("");
     }).join(""):`<tr><td colspan="5" class="center">Belum ada data nilai untuk semester ini.</td></tr>`;
+    // Rekap kehadiran otomatis dari koleksi Firestore "absensi".
+    // Mengikuti semester yang dipilih: Ganjil Juli-Desember, Genap Januari-Juni
+    // pada tahun pelajaran yang tertera di profil siswa (default 2026/2027).
+    const tahunPelajaranAbsensi=String(siswa.tahunPelajaran||"2026/2027");
+    const matchTahun=tahunPelajaranAbsensi.match(/(20\\d{2})\\s*[/\\-]\\s*(20\\d{2})/);
+    const tahunAwalAbsensi=matchTahun?Number(matchTahun[1]):2026;
+    const awalSemesterAbsensi=String(semester).toLowerCase().includes("genap")
+      ? `${tahunAwalAbsensi+1}-01-01`
+      : `${tahunAwalAbsensi}-07-01`;
+    const akhirSemesterAbsensi=String(semester).toLowerCase().includes("genap")
+      ? `${tahunAwalAbsensi+1}-06-30`
+      : `${tahunAwalAbsensi}-12-31`;
+    const absensiSnapERapor=await getDocs(collection(db,"absensi"));
+    const seluruhAbsensiERapor=[];
+    absensiSnapERapor.forEach(d=>seluruhAbsensiERapor.push({id:d.id,...d.data()}));
+    const absensiSiswaERapor=seluruhAbsensiERapor.filter(a=>{
+      const idCocok=String(a.siswaId||"")===String(siswaId);
+      const kelasAbsensi=String(a.kelas||"").trim();
+      const kelasCocok=!kelasAbsensi || normalisasiKelasERapor(kelasAbsensi)===kelasNormal;
+      const tanggal=String(a.tanggal||"").slice(0,10);
+      return idCocok && kelasCocok && tanggal>=awalSemesterAbsensi && tanggal<=akhirSemesterAbsensi;
+    });
+    const rekapKehadiranERapor={hadir:0,sakit:0,izin:0,alpa:0,bolos:0};
+    absensiSiswaERapor.forEach(a=>{
+      const status=String(a.status||"").trim().toLocaleLowerCase("id");
+      if(status==="hadir" || status==="h") rekapKehadiranERapor.hadir++;
+      else if(status==="sakit" || status==="s") rekapKehadiranERapor.sakit++;
+      else if(status==="izin" || status==="i") rekapKehadiranERapor.izin++;
+      else if(status==="bolos" || status==="mangkir") rekapKehadiranERapor.bolos++;
+      else if(status==="alpa" || status==="alpha" || status==="a" || status==="tanpa keterangan") rekapKehadiranERapor.alpa++;
+    });
     const namaKepala=esc("SUTRISNO, SS");
     const waliKelas=esc(cariWaliKelasERapor(kelas,siswa));
     const tanggalRapor=tanggalIndonesiaERapor(new Date());
@@ -6557,9 +6588,14 @@ document.getElementById("btnTampilkanRapor").addEventListener("click",async()=>{
           </tfoot>
         </table>
         <table class="rapor-attendance">
-          <thead><tr><th colspan="2">Kehadiran</th><th>Jumlah</th></tr></thead>
-          <tbody><tr><td style="width:8%">1.</td><td>Sakit</td><td>—</td></tr>
-          <tr><td>2.</td><td>Izin</td><td>—</td></tr><tr><td>3.</td><td>Alpha</td><td>—</td></tr><tr><td>4.</td><td>Bolos</td><td>—</td></tr></tbody>
+          <thead><tr><th colspan="2">Kehadiran Semester ${esc(semester)}</th><th>Jumlah</th></tr></thead>
+          <tbody>
+            <tr><td style="width:8%">1.</td><td>Hadir</td><td class="center">${rekapKehadiranERapor.hadir}</td></tr>
+            <tr><td>2.</td><td>Sakit</td><td class="center">${rekapKehadiranERapor.sakit}</td></tr>
+            <tr><td>3.</td><td>Izin</td><td class="center">${rekapKehadiranERapor.izin}</td></tr>
+            <tr><td>4.</td><td>Alpa</td><td class="center">${rekapKehadiranERapor.alpa}</td></tr>
+            <tr><td>5.</td><td>Bolos</td><td class="center">${rekapKehadiranERapor.bolos}</td></tr>
+          </tbody>
         </table>
         <div class="rapor-sign-date">Bandar Agung, <span class="tanggal-cetak-rapor">${esc(tanggalRapor)}</span></div>
         <div class="rapor-signatures">
